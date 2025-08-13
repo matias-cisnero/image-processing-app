@@ -13,7 +13,7 @@ ventana.minsize(400, 300)
 ventana.maxsize(800, 600)
 ventana.iconbitmap("favicon.ico")
 ventana.config(bg="#dbeefc")
-ventana.attributes("-alpha", 0.4)
+ventana.attributes("-alpha", 0.9)
 ventana.attributes("-topmost", True)
 #ventana.withdraw() # Oculta la ventana
 #ventana.deiconify() # Muestra la venatana si estaba oculta o minimizada
@@ -23,14 +23,7 @@ ventana.attributes("-topmost", True)
 #       Widgets
 #=======================
 
-"""
-Lista de widgets = [Label, Button, Entry, Text, Frame, Canvas, Checkbutton, Radiobutton,
-Scale, Scrollbar, Menubutton, Menu, Listbox, Toplevel]
-"""
-
-# Agregar una etiqueta o widget
-etiqueta = tk.Label(ventana, text="Hola, Tkinter!") # Se coloca en que ventana se debe poner
-etiqueta.pack(pady=20) # "pack" es un gestor de geometría simple
+#[Label, Button, Entry, Text, Frame, Canvas, Checkbutton, Radiobutton, Scale, Scrollbar, Menubutton, Menu, Listbox, Toplevel]
 
 # Iniciar el bucle de eventos
 ventana.mainloop()
