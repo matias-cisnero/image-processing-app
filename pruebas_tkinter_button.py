@@ -16,7 +16,7 @@ ventana.config(bg="#dbeefc")
 def accion(): print("¡Botón presionado!")
 tk.Button(command=accion).pack() # Esto solo lo imprime en consola
 
-tk.Button(text="No tocar", state=tk.DISABLED).pack() # Deshabilita el botón
+tk.Button(text="No tocar", state=tk.DISABLED).pack() # Deshabilita el botón (DISABLED, NORMAL)
 
 # ===========================================================================================================
 # Contenido: [text, textvariable, image, compound]
