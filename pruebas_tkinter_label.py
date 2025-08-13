@@ -50,7 +50,7 @@ tk.Label(text="Posicionamiento", width=20, anchor="w").pack() # Opciones: [n, s,
 
 tk.Label(text="Texto\nmultilínea", justify="right").pack() #\n para salto de linea
 
-tk.Label(text="Relleno", relief="solid", bd=1, padx=10, pady=5).pack()
+tk.Label(text="Relleno", relief="solid", bd=1, padx=10, pady=5).pack() # pad = relleno
 
 tk.Label(text="Este texto muy largo se cortará...", wraplength=150).pack()
 
