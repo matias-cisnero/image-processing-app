@@ -1,8 +1,8 @@
-# Procesamiento de Imágenes con Tkinter
+# 🖼️ Procesamiento de Imágenes con Tkinter
 
-¡Bienvenido! Este proyecto es una aplicación en **Tkinter** (Python) que permite aplicar diversas técnicas de procesamiento digital de imágenes sobre archivos `.RAW` y visualizar los resultados.
+¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) que permite aplicar diversas técnicas de **procesamiento de imágenes**, visualizar los resultados y guardarlos de forma sencilla.
 
-## Contenido del repositorio
+## 📂 Contenido del repositorio
 
 * `procesador_imagenes.py` – El script principal con la interfaz gráfica y filtros disponibles.
 * Archivos de imágenes RAW incluidas para probar:
@@ -12,20 +12,20 @@
   * `LENA.RAW` (256×256)
   * `GIRL2.RAW` (256×256)
   * `FRACTAL.RAW` (200×200)
-* Imágenes procesadas / ejemplos:
+* 🖼️ Otras imágenes de ejemplo:
 
   * `barco.png`, `elefante.png`
-* Otros:
+* 📑 Otros:
 
-  * `README.TXT` (versión anterior)
+  * `README.TXT` (contiene la resolución de las imágenes `.RAW`)
   * `.gitignore`, `pruebas_y_ejemplos`, y demás archivos útiles.
 
-## Requisitos
+## ⚙️ Requisitos
 
 * Python 3.x
-* Librerías:
+* Librerías necesarias:
 
-  * `tkinter` (normalmente incluida en distribuciones estándar de Python)
+  * `tkinter` (incluida por defecto en la mayoría de instalaciones de Python)
   * `numpy`
   * `Pillow` (PIL)
 
@@ -35,7 +35,7 @@ Instalación rápida:
 pip install numpy pillow
 ```
 
-## Cómo ejecutar la aplicación
+## 🚀 Cómo ejecutar la aplicación
 
 Desde la terminal:
 
@@ -43,13 +43,17 @@ Desde la terminal:
 python procesador_imagenes.py
 ```
 
-Se abrirá una ventana con opciones para cargar imágenes de cualquier tipo (incluido `.RAW` y `.PGM`), aplicar filtros y guardar los resultados.
+Se abrirá una ventana con opciones para cargar imágenes de distintos formatos (`.RAW`, `.PGM`, `.PNG`, etc.), aplicar filtros y guardar los resultados.
 
-## Funcionalidades (a personalizar según tu implementación)
+## ✨ Funcionalidades (en desarrollo)
 
-* Cargar imágenes en formato RAW.
-* Filtros disponibles:
+✅ Cargar imágenes en formato **RAW** y otros comunes (PNG, JPEG, PGM...).
+✅ Vista previa de la imagen cargada.
+✅ Guardar la imagen procesada en distintos formatos.
+✅ Realizar un recorte de la imágen.
+✅ Ver y modificar el valor de un pixel en una imagen.
+✅ Restar dos imágenes.
+✅ Informar la cantidad de pixels y promedio de sus valores en una región de la imágen.
+🛠️ Filtros disponibles (en progreso):
 
-  * En proceso...
-* Vista previa en la interfaz y posibilidad de guardar el resultado como imagen (PNG, JPEG, etc.).
-
+* ...
