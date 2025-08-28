@@ -160,6 +160,13 @@ class EditorDeImagenes:
         menu_herramientas.add_separator()
         # --- PASO 2: AÑADIR LA HERRAMIENTA AL MENÚ ---
         menu_herramientas.add_command(label="Herramienta de Plantilla", command=self._iniciar_herramienta_plantilla)
+        submenu_operadores_puntuales = tk.Menu(menu_herramientas, tearoff=0)
+        menu_herramientas.add_cascade(label="Operadores Puntuales", menu=submenu_operadores_puntuales)
+        #submenu_operadores_puntuales.add_command(label="Multiplicar Pixels")#, command=self._iniciar_multiplicar_pixels)
+        #submenu_operadores_puntuales.add_command(label="Transformación Gamma")#, command=self._iniciar_transformacion_gamma)
+        #submenu_operadores_puntuales.add_command(label="Umbralización")#, command=self._iniciar_umbralización)
+        submenu_operadores_puntuales.add_command(label="Negativo", command=self._aplicar_negativo)
+
 
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
@@ -253,6 +260,17 @@ class EditorDeImagenes:
 
     # --- PLANTILLA PARA NUEVA HERRAMIENTA ---
 
+    # 1) Crear la función de acción o transformación con los decoradores @requiere_imagen y @refrescar_imagen
+    # (si es breve simplemente se añade al menú y listo)
+
+    # 2) Crear el panel para la herramienta
+
+    # 3) Registrar el panel en _setup_ui con self.paneles["mi_herramienta"] = self._crear_panel_mi_herramienta(...)
+
+    # 4) Crear la función de inicio que llama a self._cambiar_panel_herramienta("plantilla", "Herramienta de Plantilla")
+
+    # 5) Añadir al menú la función de inicio
+
     def _crear_panel_plantilla(self, parent) -> ttk.Frame:
         """Crea el panel de la interfaz de usuario para la herramienta de plantilla."""
         frame = ttk.Frame(parent, padding=10)
@@ -287,30 +305,45 @@ class EditorDeImagenes:
         Lógica principal de la herramienta.
         Convierte la imagen a NumPy, permite la edición y la revierte a PIL.
         """
-        print("Aplicando transformación de plantilla...")
         
         # 1. Convertir la imagen procesada (PIL) a un array de NumPy
         imagen_np = np.array(self.imagen_procesada)
 
-        # ------------------------------------------------------------------
-        # --- AQUÍ VA TU LÓGICA DE EDICIÓN ---
-        #
-        # Trabaja con la variable `imagen_np`.
-        # Ejemplo: invertir los colores de la imagen.
-        # imagen_np = 255 - imagen_np
-        # 
-        # Por ahora, no hacemos nada para demostrar la plantilla.
-        # ------------------------------------------------------------------
+        # 2. Aplicar transformación
+        imagen_np = 255 - imagen_np
 
         # 3. Convertir el array de NumPy de vuelta a una imagen PIL
         imagen_modificada_pil = Image.fromarray(imagen_np.astype('uint8'), 'RGB')
 
         # 4. Actualizar la imagen procesada con el resultado
         self.imagen_procesada = imagen_modificada_pil
-        
-        print("Transformación completada.")
 
     # --- FIN DE LA PLANTILLA ---
+
+    # --- TRANSFORMACIÓN ---
+    
+    @refrescar_imagen
+    def _aplicar_transformacion(self, transformacion):
+        # 1. Convertir la imagen procesada (PIL) a un array de NumPy
+        imagen_np = np.array(self.imagen_procesada)
+        # 2. Aplicar transformación
+        imagen_np = transformacion(imagen_np)
+        # 3. Convertir el array de NumPy de vuelta a una imagen PIL
+        imagen_modificada_pil = Image.fromarray(imagen_np.astype('uint8'), 'RGB')
+        # 4. Actualizar la imagen procesada con el resultado
+        self.imagen_procesada = imagen_modificada_pil
+        # Log personal por las dudas
+        print(f"Transformacion aplicada correctamente")
+
+    # --- NEGATIVO ---
+
+    @requiere_imagen
+    def _aplicar_negativo(self):
+        self._cambiar_panel_herramienta("instruccion", "Negativo", "Filtro negativo aplicado.")
+
+        def negativo(imagen_np): return 255 - imagen_np
+
+        self._aplicar_transformacion(negativo)
 
     # --- SECCIÓN 2: Lógica de Carga y Manejo de Eventos ---
 
