@@ -26,22 +26,31 @@ def refrescar_imagen(func: Callable) -> Callable:
 # --- DIÁLOGOS EMERGENTES ---
 
 class DialogoBase(tk.Toplevel):
-    """Clase base para todas las ventanas de diálogo, se centra automáticamente."""
+    """Clase base para todas las ventanas de diálogo."""
     def __init__(self, parent):
         super().__init__(parent)
         self.transient(parent)
         self.grab_set()
         self.resultado = None
 
-        self.update_idletasks()
-        width = self.winfo_width()
-        height = self.winfo_height()
-        if width <= 1 or height <= 1:
-            width, height = 300, 150
+    def _finalizar_y_posicionar(self, reference_widget=None):
+        """Calcula el tamaño necesario para el contenido y posiciona la ventana."""
+        self.update_idletasks() # Asegura que el tamaño esté calculado
         
-        x = (self.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry(f'{width}x{height}+{x}+{y}')
+        # Si no se da una referencia, usa la ventana principal
+        if reference_widget is None:
+            reference_widget = self.master
+
+        # Posición de la ventana de referencia
+        ref_x = reference_widget.winfo_rootx()
+        ref_y = reference_widget.winfo_rooty()
+        
+        # Offset para que no aparezca exactamente en la esquina
+        offset_x = 20
+        offset_y = 20
+        
+        # Posicionar la ventana de diálogo
+        self.geometry(f'+{ref_x + offset_x}+{ref_y + offset_y}')
 
 class DialogoDimensiones(DialogoBase):
     """Diálogo para solicitar dimensiones de una imagen RAW."""
@@ -68,6 +77,9 @@ class DialogoDimensiones(DialogoBase):
         ttk.Button(boton_frame, text="Cancelar", command=self.destroy).pack(side=tk.LEFT, padx=5)
         
         self.ancho_entry.focus_set()
+
+        # --- Posicionar al final ---
+        self._finalizar_y_posicionar()
         self.wait_window(self)
 
     def _on_ok(self):
@@ -79,6 +91,22 @@ class DialogoDimensiones(DialogoBase):
             self.destroy()
         except (ValueError, TypeError):
             messagebox.showerror("Error de Entrada", "Por favor, ingrese números enteros válidos y positivos.", parent=self)
+
+class DialogoResultado(DialogoBase):
+    def __init__(self, parent, imagen_pil: Image.Image, titulo: str, guardar_callback: Callable):
+        super().__init__(parent)
+        self.title(titulo)
+        img_tk = ImageTk.PhotoImage(imagen_pil)
+        label_imagen = ttk.Label(self, image=img_tk)
+        label_imagen.image_ref = img_tk
+        label_imagen.pack(padx=10, pady=10)
+        
+        frame_botones = ttk.Frame(self)
+        frame_botones.pack(pady=5, padx=10, fill=tk.X)
+        ttk.Button(frame_botones, text="Guardar...", command=guardar_callback).pack(side=tk.LEFT, expand=True, padx=5)
+        ttk.Button(frame_botones, text="Cerrar", command=self.destroy).pack(side=tk.RIGHT, expand=True, padx=5)
+        self._finalizar_y_posicionar()
+        self.wait_window(self)
 
 class DialogoHerramienta(DialogoBase):
     """Plantilla base para ventanas de herramientas con parámetros."""
@@ -93,38 +121,15 @@ class DialogoHerramienta(DialogoBase):
         frame_botones = ttk.Frame(self)
         frame_botones.pack(pady=10)
         ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
-        ttk.Button(frame_botones, text="Cancelar", command=self._destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
+        
+        self.protocol("WM_DELETE_WINDOW", self._on_cancel)
 
     def _on_apply(self):
-        # Esta función debe ser sobreescrita por las clases hijas
         self.destroy()
 
-    def _destroy(self):
-        # Esta función debe ser sobreescrita por las clases hijas
+    def _on_cancel(self):
         self.destroy()
-
-class DialogoMultiplicar(DialogoHerramienta):
-    """Diálogo para la herramienta de multiplicar por un escalar."""
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Multiplicar por Escalar")
-        
-        self.valor_multiplicador = tk.StringVar(value="1.0")
-        
-        ttk.Label(self.frame_herramienta, text="Valor del escalar:").pack(padx=5, pady=5)
-        ttk.Spinbox(
-            self.frame_herramienta, 
-            from_=-10.0, to=10.0, increment=0.1, 
-            textvariable=self.valor_multiplicador, 
-            width=10
-        ).pack(padx=5, pady=5)
-    
-    def _on_apply(self):
-        try:
-            valor = float(self.valor_multiplicador.get())
-            self.app._aplicar_transformacion(lambda img_np: np.clip(img_np * valor, 0, 255))
-            self.destroy()
-        except (ValueError, TypeError):
-            messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
 
 class DialogoGamma(DialogoHerramienta):
     def __init__(self, parent, app_principal):
@@ -141,18 +146,18 @@ class DialogoGamma(DialogoHerramienta):
             variable=self.valor_gamma,
             resolution=0.1,
             showvalue=True,
+            length=200,
             command=lambda value: self.app._aplicar_gamma(self.copia_imagen, float(value))
             ).pack(padx=5, pady=5)
+        
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _on_apply(self):
-        try:
-            gamma = float(self.valor_gamma.get())
-            self.app._aplicar_gamma(self.copia_imagen, gamma)
-            self.destroy()
-        except (ValueError, TypeError):
-            messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
+        gamma = float(self.valor_gamma.get())
+        self.app._aplicar_gamma(self.copia_imagen, gamma)
+        self.destroy()
     
-    def _destroy(self):
+    def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
 
@@ -171,18 +176,18 @@ class DialogoUmbralizacion(DialogoHerramienta):
             variable=self.valor_umbral,
             resolution=1,
             showvalue=True,
+            length=350,
             command=lambda value: self.app._aplicar_umbralizacion(self.copia_imagen, float(value))
             ).pack(padx=5, pady=5)
+        
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _on_apply(self):
-        try:
-            gamma = float(self.valor_umbral.get())
-            self.app._aplicar_umbralizacion(self.copia_imagen, gamma)
-            self.destroy()
-        except (ValueError, TypeError):
-            messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
+        gamma = float(self.valor_umbral.get())
+        self.app._aplicar_umbralizacion(self.copia_imagen, gamma)
+        self.destroy()
     
-    def _destroy(self):
+    def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
 
@@ -373,10 +378,6 @@ class EditorDeImagenes:
         imagen_np = np.array(self.imagen_procesada)
         resultado_np = transformacion(imagen_np)
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
-        
-    @requiere_imagen
-    def _iniciar_multiplicacion(self):
-        DialogoMultiplicar(self.root, self)
 
     # === Cancelar Cambio
 
@@ -640,6 +641,7 @@ class EditorDeImagenes:
     def _limpiar_resultados_analisis(self):
         for var in self.analisis_vars.values(): var.set("-")
 
+    """
     def _mostrar_ventana_resultado(self, imagen_pil: Image.Image, titulo: str):
         ventana = DialogoBase(self.root)
         ventana.title(titulo)
@@ -653,6 +655,12 @@ class EditorDeImagenes:
         ttk.Button(frame_botones, text="Guardar...", command=lambda: self._guardar_imagen_pil(imagen_pil, f"Guardar {titulo}", ventana)).pack(side=tk.LEFT, expand=True, padx=5)
         ttk.Button(frame_botones, text="Cerrar", command=ventana.destroy).pack(side=tk.RIGHT, expand=True, padx=5)
         ventana.wait_window()
+    """
+
+    def _mostrar_ventana_resultado(self, imagen_pil: Image.Image, titulo: str):
+        def guardar():
+            self._guardar_imagen_pil(imagen_pil, f"Guardar {titulo}")
+        DialogoResultado(self.root, imagen_pil, titulo, guardar)
 
     def _guardar_imagen_pil(self, imagen_pil: Image.Image, titulo_dialogo: str, parent_window=None):
         parent = parent_window if parent_window else self.root
