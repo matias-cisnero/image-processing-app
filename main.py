@@ -184,9 +184,9 @@ class EditorDeImagenes:
         self.zoom_spinbox.pack(side=tk.RIGHT, padx=5)
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
 
-    # ========================================================================================
+    # =======================================================================================
     #                              2. LÓGICA DE HERRAMIENTAS
-    # ========================================================================================
+    # =======================================================================================
         
     # --- Iniciar Dialogo
 
@@ -204,9 +204,9 @@ class EditorDeImagenes:
     @refrescar_imagen
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
-   
-    # ==============================((OPERADORES---PUNTUALES))================================
 
+    # ===============================((OPERADORES_PUNTUALES))================================
+    
     # --- Gamma
 
     @refrescar_imagen
@@ -234,8 +234,14 @@ class EditorDeImagenes:
     @refrescar_imagen
     def _aplicar_negativo(self):
         imagen_np = np.array(self.imagen_procesada)
+        #print(f"Cantidad de pixeles en la imágen {imagen_np.size}")
+        #print(f"Tamaño de la imágen {imagen_np.shape}")
         resultado_np = 255 - imagen_np
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
+    
+    # =============================((NUMEROS_ALEATORIOS))====================================
+
+    # --- 
 
     # ================================((HISTOGRAMAS))========================================
 
@@ -248,6 +254,19 @@ class EditorDeImagenes:
     # --- Números Aleatorios
 
     # ===================================((RUIDO))===========================================
+
+    # -- Aditivo y Multiplicativo
+
+    def _aplicar_ruido(self, tipo, dist, porcentaje):
+        imagen_np = np.array(self.imagen_procesada)
+        cant_pixeles = imagen_np.size
+        cant_pixeles_contaminados = (porcentaje * cant_pixeles) / 100
+
+        #if tipo == "Aditivo":
+            #self.imagen_procesada += Y
+        #elif tipo == "Multiplicativo":
+            #self.imagen_procesada *= Y
+        pass 
 
     # --- Gaussiano
 
@@ -269,7 +288,7 @@ class EditorDeImagenes:
 
     # --- Realce de Bordes
 
-    # ===========================((HERRAMIENTAS---GENERALES))=================================
+    # ===========================((HERRAMIENTAS_GENERALES))==================================
 
     @requiere_imagen
     def _iniciar_resta(self):
