@@ -7,7 +7,7 @@ from typing import Optional, Tuple, Callable
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoGamma, DialogoHerramienta, DialogoResultado, DialogoUmbralizacion
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -65,7 +65,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
         #menu_operadores_puntuales.add_command(label="Transformación Gamma", command=self._iniciar_gamma)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", command=lambda: self._iniciar_dialogo(DialogoGamma))
-        menu_operadores_puntuales.add_command(label="Umbralización", command=self._iniciar_umbralizacion)
+        menu_operadores_puntuales.add_command(label="Umbralización", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
         menu_operadores_puntuales.add_command(label="Negativo", command=self._aplicar_negativo)
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
@@ -184,21 +184,11 @@ class EditorDeImagenes:
         self.zoom_spinbox.pack(side=tk.RIGHT, padx=5)
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
 
-    # --- 2. LÓGICA DE HERRAMIENTAS ---
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_negativo(self):
-        self._aplicar_transformacion(lambda img_np: 255 - img_np)
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_transformacion(self, transformacion: Callable):
-        imagen_np = np.array(self.imagen_procesada)
-        resultado_np = transformacion(imagen_np)
-        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
-
-    # -- Iniciar Dialogo
+    # ========================================================================================
+    #                              2. LÓGICA DE HERRAMIENTAS
+    # ========================================================================================
+        
+    # --- Iniciar Dialogo
 
     @requiere_imagen
     def _iniciar_dialogo(self, dialogo_clase):
@@ -209,18 +199,15 @@ class EditorDeImagenes:
         #print("Sí, jeje, funciona")
         dialogo = dialogo_clase(self.root, self)
 
-    # === Cancelar Cambio
+    # --- Cancelar Cambio
 
     @refrescar_imagen
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
+   
+    # ==============================((OPERADORES---PUNTUALES))================================
 
-    # === Gamma
-    """
-    @requiere_imagen
-    def _iniciar_gamma(self):
-        DialogoGamma(self.root, self)
-    """
+    # --- Gamma
 
     @refrescar_imagen
     def _aplicar_gamma(self, imagen, gamma):
@@ -231,11 +218,7 @@ class EditorDeImagenes:
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
 
-    # === Umbralización
-
-    @requiere_imagen
-    def _iniciar_umbralizacion(self):
-        DialogoUmbralizacion(self.root, self)
+    # --- Umbralización
 
     @refrescar_imagen
     def _aplicar_umbralizacion(self, imagen, umbral):
@@ -244,8 +227,49 @@ class EditorDeImagenes:
         resultado_np = np.where(imagen_np >= umbral, 255, 0)
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
+    
+    # --- Negativo
+    
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_negativo(self):
+        imagen_np = np.array(self.imagen_procesada)
+        resultado_np = 255 - imagen_np
+        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
 
-    # ===
+    # ================================((HISTOGRAMAS))========================================
+
+    # --- Niveles de Gris
+
+    # --- RGB
+
+    # --- Ecualización
+
+    # --- Números Aleatorios
+
+    # ===================================((RUIDO))===========================================
+
+    # --- Gaussiano
+
+    # --- Rayleigh
+
+    # --- Exponencial
+
+    # --- Gas y Pimienta
+
+    # ===================================((FILTROS))=========================================
+
+    # --- Media
+
+    # --- Mediana
+
+    # --- Mediana Ponderada
+
+    # --- Gauss
+
+    # --- Realce de Bordes
+
+    # ===========================((HERRAMIENTAS---GENERALES))=================================
 
     @requiere_imagen
     def _iniciar_resta(self):
