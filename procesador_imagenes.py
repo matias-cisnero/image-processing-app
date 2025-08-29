@@ -93,9 +93,13 @@ class DialogoHerramienta(DialogoBase):
         frame_botones = ttk.Frame(self)
         frame_botones.pack(pady=10)
         ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
-        ttk.Button(frame_botones, text="Cancelar", command=self.destroy).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Cancelar", command=self._destroy).pack(side=tk.LEFT, padx=5)
 
     def _on_apply(self):
+        # Esta función debe ser sobreescrita por las clases hijas
+        self.destroy()
+
+    def _destroy(self):
         # Esta función debe ser sobreescrita por las clases hijas
         self.destroy()
 
@@ -121,6 +125,66 @@ class DialogoMultiplicar(DialogoHerramienta):
             self.destroy()
         except (ValueError, TypeError):
             messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
+
+class DialogoGamma(DialogoHerramienta):
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Transformación Gamma")
+        
+        self.valor_gamma = tk.StringVar(value="1.0")
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=2.0,
+            orient="horizontal",
+            variable=self.valor_gamma,
+            resolution=0.1,
+            showvalue=True,
+            command=lambda value: self.app._aplicar_gamma(self.copia_imagen, float(value))
+            ).pack(padx=5, pady=5)
+
+    def _on_apply(self):
+        try:
+            gamma = float(self.valor_gamma.get())
+            self.app._aplicar_gamma(self.copia_imagen, gamma)
+            self.destroy()
+        except (ValueError, TypeError):
+            messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
+    
+    def _destroy(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoUmbralizacion(DialogoHerramienta):
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Umbralización")
+        
+        self.valor_umbral = tk.StringVar(value="128")
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=255,
+            orient="horizontal",
+            variable=self.valor_umbral,
+            resolution=1,
+            showvalue=True,
+            command=lambda value: self.app._aplicar_umbralizacion(self.copia_imagen, float(value))
+            ).pack(padx=5, pady=5)
+
+    def _on_apply(self):
+        try:
+            gamma = float(self.valor_umbral.get())
+            self.app._aplicar_umbralizacion(self.copia_imagen, gamma)
+            self.destroy()
+        except (ValueError, TypeError):
+            messagebox.showerror("Error de Valor", "Por favor, ingrese un número válido.", parent=self)
+    
+    def _destroy(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -176,8 +240,8 @@ class EditorDeImagenes:
         
         menu_operadores_puntuales = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
-        menu_operadores_puntuales.add_command(label="Transformación Gamma")#, command=self._aplicar_negativo)
-        menu_operadores_puntuales.add_command(label="Umbralización")#, command=self._aplicar_negativo)
+        menu_operadores_puntuales.add_command(label="Transformación Gamma", command=self._iniciar_gamma)
+        menu_operadores_puntuales.add_command(label="Umbralización", command=self._iniciar_umbralizacion)
         menu_operadores_puntuales.add_command(label="Negativo", command=self._aplicar_negativo)
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
@@ -313,6 +377,47 @@ class EditorDeImagenes:
     @requiere_imagen
     def _iniciar_multiplicacion(self):
         DialogoMultiplicar(self.root, self)
+
+    # === Cancelar Cambio
+
+    @refrescar_imagen
+    def _cancelar_cambio(self, imagen):
+        self.imagen_procesada = imagen
+
+    # === 
+
+    # === Gamma
+
+    @requiere_imagen
+    def _iniciar_gamma(self):
+        DialogoGamma(self.root, self)
+
+    @refrescar_imagen
+    def _aplicar_gamma(self, imagen, gamma):
+        imagen_np = np.array(imagen)
+
+        c = (255)**(1-gamma)
+        resultado_np = c*(imagen_np**gamma)
+
+        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
+
+    # ===
+
+    # === Umbralización
+
+    @requiere_imagen
+    def _iniciar_umbralizacion(self):
+        DialogoUmbralizacion(self.root, self)
+
+    @refrescar_imagen
+    def _aplicar_umbralizacion(self, imagen, umbral):
+        imagen_np = np.array(imagen)
+
+        resultado_np = np.where(imagen_np >= umbral, 255, 0)
+
+        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
+
+    # ===
 
     @requiere_imagen
     def _iniciar_resta(self):
