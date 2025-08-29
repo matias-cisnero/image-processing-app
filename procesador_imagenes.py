@@ -132,8 +132,9 @@ class EditorDeImagenes:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("Procesador de Imágenes Avanzado")
+        self.root.title("Procesador de Imágenes")
         self.root.geometry(self.GEOMETRIA_VENTANA)
+        self.root.iconbitmap("favicon.ico")
 
         self.imagen_original: Optional[Image.Image] = None
         self.imagen_procesada: Optional[Image.Image] = None
