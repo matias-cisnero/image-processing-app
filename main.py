@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoRuido, DialogoRuidoGaussiano
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -78,8 +78,8 @@ class EditorDeImagenes:
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
         menu_ruido.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoRuidoGaussiano))
-        menu_ruido.add_command(label="Rayleigh")#, command=self._aplicar_negativo)
-        menu_ruido.add_command(label="Exponencial")#, command=self._aplicar_negativo)
+        menu_ruido.add_command(label="Rayleigh", command=lambda: self._iniciar_dialogo(DialogoRuidoRayleigh))
+        menu_ruido.add_command(label="Exponencial", command=lambda: self._iniciar_dialogo(DialogoRuidoExponencial))
         menu_ruido.add_command(label="Sal y Pimienta")#, command=self._aplicar_negativo)
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
@@ -205,6 +205,19 @@ class EditorDeImagenes:
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
 
+    # --- Escalar array a min = 0 y max = 255
+
+    def _escalar_255(self, imagen_np):
+        """
+        Escala linealmente un array de numpy al rango [0, 255].
+        """
+        min_val = np.min(imagen_np)
+        max_val = np.max(imagen_np)
+        if max_val == min_val:
+            return np.zeros_like(imagen_np, dtype=np.uint8)
+        array_normalizado = 255 * (imagen_np - min_val) / (max_val - min_val)
+        return array_normalizado.astype(np.uint8)
+
     # ===============================((OPERADORES_PUNTUALES))================================
     
     # --- Gamma
@@ -313,26 +326,40 @@ class EditorDeImagenes:
 
     @refrescar_imagen
     def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
+        """
+        Aplica un vector de ruido a una imagen de forma aditiva o multiplicativa.
+        """
         # Transformar la imágen en un formato adecuado
         imagen_np = np.array(imagen).astype(float)
         m, n = imagen_np.shape[:2] # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
 
         # Elección aleatoria de num_contaminados pixels en la imágen
         num_contaminados = int((d * (m * n)) / 100)
+        # num_contaminados = len(vector_ruido)
         D = np.unravel_index(np.random.choice(m * n, num_contaminados, replace=False),(m, n))
 
         # Generar la imagen contaminada I_c
         if tipo == "Aditivo":
-            resultado_np = imagen_np + vector_ruido
+            imagen_np[D] += vector_ruido
         elif tipo == "Multiplicativo":
-            resultado_np = imagen_np * vector_ruido
+            imagen_np[D] *= vector_ruido
         
-        resultado_np = np.clip(resultado_np, 0, 255).astype(np.uint8)
+        #resultado_np = np.clip(imagen_np, 0, 255).astype(np.uint8)
+        resultado_np = self._escalar_255(imagen_np) # Dudoso
         self.imagen_procesada = Image.fromarray(resultado_np)
 
-        # ------------------------------------------
-        #   Tengo que resolver lo de los 3 canales
-        # ------------------------------------------
+    # --- Generar Vector Ruido
+
+    def _generar_vector_ruido(self, distribucion, intensidad, d):
+        imagen_np = np.array(self.imagen_procesada)
+
+        m, n = imagen_np.shape[:2]
+        num_contaminados = int((d * (m * n)) / 100)
+        #print("Estoy funcionando biennn!!")
+
+        vector_aleatorio = distribucion(scale=intensidad, size=(num_contaminados, 1))
+
+        return vector_aleatorio
 
     # --- Gaussiano
 
@@ -344,15 +371,35 @@ class EditorDeImagenes:
         #print(f"Shape de imagen: {imagen_np.shape}")
 
         # Generar los num_contaminados valores aleatorios con dist gauss (en este caso)
-        vector_aleatorio = np.random.normal(loc=0, scale=sigma, size=num_contaminados)
+        vector_aleatorio = np.random.normal(loc=0, scale=sigma, size=(num_contaminados, 1))
 
         return vector_aleatorio
 
     # --- Rayleigh
 
+    def _ruido_rayleigh(self, xi, d):
+        imagen_np = np.array(self.imagen_procesada)
+
+        m, n = imagen_np.shape[:2]
+        num_contaminados = int((d * (m * n)) / 100)
+
+        vector_aleatorio = np.random.rayleigh(scale=xi, size=(num_contaminados, 1))
+
+        return vector_aleatorio
+
     # --- Exponencial
 
-    # --- Gas y Pimienta
+    def _ruido_exponencial(self, lamb, d):
+        imagen_np = np.array(self.imagen_procesada)
+
+        m, n = imagen_np.shape[:2]
+        num_contaminados = int((d * (m * n)) / 100)
+
+        vector_aleatorio = np.random.exponential(scale=lamb, size=(num_contaminados, 1))
+
+        return vector_aleatorio
+
+    # --- Sal y Pimienta
 
     # ===================================((FILTROS))=========================================
 
@@ -609,4 +656,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = EditorDeImagenes(root)
     root.mainloop()
-

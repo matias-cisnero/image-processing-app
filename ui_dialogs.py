@@ -177,17 +177,13 @@ class DialogoRuido(DialogoHerramienta):
     """
     Clase base para diálogos de ruido. Provee UI y lógica común.
     """
-    def __init__(self, parent, app_principal, titulo="Añadir Ruido"):
+    def __init__(self, parent, app_principal, titulo, param_label):
         super().__init__(parent, app_principal, titulo)
         
         self.tipo = tk.StringVar(value="Aditivo")
         self.valor_d = tk.StringVar(value="50")
         self.copia_imagen = self.app.imagen_procesada.copy()
-
-        ttk.Label(self.frame_herramienta, text="Selecciona el tipo de aplicación de ruido").pack(padx=5, pady=5)
-
-        ttk.Radiobutton(self.frame_herramienta, text="Aditivo", variable=self.tipo, value="Aditivo").pack(padx=5, pady=5)
-        ttk.Radiobutton(self.frame_herramienta, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(padx=5, pady=5)
+        self.intensidad = tk.IntVar(value="20")
 
         ttk.Label(self.frame_herramienta, text="Porcentaje de Píxeles a Afectar (%):").pack(padx=5, pady=(10, 0))
         tk.Scale(
@@ -200,6 +196,26 @@ class DialogoRuido(DialogoHerramienta):
             showvalue=True,
             length=350
             ).pack(padx=5, pady=5)
+
+        ttk.Label(self.frame_herramienta, text="Selecciona el tipo de aplicación de ruido").pack(padx=5, pady=5)
+
+        ttk.Radiobutton(self.frame_herramienta, text="Aditivo", variable=self.tipo, value="Aditivo").pack(padx=5, pady=5)
+        ttk.Radiobutton(self.frame_herramienta, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(padx=5, pady=5)
+
+        ttk.Label(self.frame_herramienta, text=param_label).pack(padx=5, pady=(10,0))
+
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=100,
+            orient="horizontal",
+            variable=self.intensidad,
+            resolution=1,
+            showvalue=True,
+            length=350
+            ).pack(padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _generar_vector_ruido(self):
         raise NotImplementedError("La clase hija debe implementar este método.")
@@ -219,13 +235,26 @@ class DialogoRuido(DialogoHerramienta):
 class DialogoRuidoGaussiano(DialogoRuido):
     """
     Diálogo específico para ruido Gaussiano.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Ruido Gaussiano", "Desviación Estándar (σ):")
+
+    def _generar_vector_ruido(self):
+        sigma = int(self.intensidad.get())
+        d = int(self.valor_d.get())
+        #return self.app._ruido_gaussiano(sigma, d)
+        return self.app._generar_vector_ruido(distribucion=np.random.normal, intensidad=sigma, d=d)
+
+class DialogoRuidoRayleigh(DialogoRuido):
+    """
+    Diálogo específico para ruido Rayleigh.
     """   
     def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Ruido Gaussiano")
+        super().__init__(parent, app_principal, "Ruido Rayleigh")
 
-        self.valor_sigma = tk.IntVar(value="50")
+        self.valor_sigma = tk.IntVar(value="20")
 
-        ttk.Label(self.frame_herramienta, text="Desviación Estándar (σ) - Intensidad:").pack(padx=5, pady=(10,0))
+        ttk.Label(self.frame_herramienta, text="Xi (ξ) - Intensidad:").pack(padx=5, pady=(10,0))
         tk.Scale(
             self.frame_herramienta,
             from_=0,
@@ -242,7 +271,35 @@ class DialogoRuidoGaussiano(DialogoRuido):
     def _generar_vector_ruido(self):
         sigma = int(self.valor_sigma.get())
         d = int(self.valor_d.get())
-        return self.app._ruido_gaussiano(sigma, d)
+        return self.app._ruido_rayleigh(sigma, d)
+    
+class DialogoRuidoExponencial(DialogoRuido):
+    """
+    Diálogo específico para ruido Exponencial.
+    """   
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Ruido Exponencial")
+
+        self.valor_sigma = tk.IntVar(value="20")
+
+        ttk.Label(self.frame_herramienta, text="Lambda (λ) - Intensidad:").pack(padx=5, pady=(10,0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=100,
+            orient="horizontal",
+            variable=self.valor_sigma,
+            resolution=1,
+            showvalue=True,
+            length=350
+            ).pack(padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _generar_vector_ruido(self):
+        sigma = int(self.valor_sigma.get())
+        d = int(self.valor_d.get())
+        return self.app._ruido_exponencial(sigma, d)
 
 class DialogoNumerosAleatorios(DialogoBase):
     """Dialogo para mostrar el histograma de números aleatorios"""
