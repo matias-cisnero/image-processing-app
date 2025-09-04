@@ -71,7 +71,7 @@ class EditorDeImagenes:
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
-        menu_histogramas.add_command(label="Niveles de Gris")#, command=self._aplicar_negativo)
+        menu_histogramas.add_command(label="Niveles de Gris", command=self._aplicar_hist_gris)
         menu_histogramas.add_command(label="RGB", command=self._aplicar_hist_rgb)
         menu_histogramas.add_command(label="Ecualización")#, command=self._aplicar_negativo)
         menu_histogramas.add_command(label="Números Aleatorios")#, command=self._aplicar_negativo)
@@ -248,6 +248,18 @@ class EditorDeImagenes:
 
     # --- Niveles de Gris
 
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_hist_gris(self):
+        imagen_gris_pil = self.imagen_procesada.convert('L')
+
+        imagen_np = np.array(imagen_gris_pil).flatten()
+
+        print(f"Shape de imagen escala de grises: {imagen_np.shape}")
+
+        plt.hist(imagen_np, bins=256, range=[0, 256], color='gray', density=True)
+        plt.show()
+
     # --- RGB
 
     @requiere_imagen
@@ -261,23 +273,36 @@ class EditorDeImagenes:
         b = imagen_np[:, :, 2].flatten()
         print(f"Shape de canal r: {imagen_np[:, :, 0].shape} y r enchorizado: {r.flatten().shape}")
 
+        colores = ["red", "green", "blue"]
+        for canal in range(3):
+            banda = imagen_np[:, :, canal].flatten()
+            color = colores[canal]
+
+            plt.hist(banda, bins=256, range=[0, 256], color=color, density=True)
+            plt.show()
+
+        """
         # Frequencia absoluta
         n_r = np.bincount(r, minlength=256)
         #print(n_r.shape)
 
         # Frequencia relativa
+        h_r = n_r / NM
+        NM = r.size
+        eje_x = np.arange(256)
 
-        NM = n_r.shape[0]
-
-        h_r = n_r * (1 / NM)
-
-        plt.hist(h_r, bins="auto", edgecolor="black")
-        plt.ylabel("Frecuencia")
+        plt.figure(figsize=(10, 6))  # Crea una nueva figura para el gráfico
+        plt.bar(eje_x, h_r, color='red', width=1.0) # width=1.0 para que no haya espacios
+        plt.xlabel("Nivel de Intensidad del Píxel")
+        plt.ylabel("Frecuencia Relativa")
+        
+        # Configurar límites y rejilla
+        plt.xlim([0, 255])
+        plt.grid(axis='y', alpha=0.5, linestyle='--')
+        
+        # Mostrar el gráfico
         plt.show()
-
-
-
-
+        """
 
     # --- Ecualización
 
