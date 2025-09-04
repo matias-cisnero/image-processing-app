@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 from typing import Callable
+import numpy as np
 
 # --- DIÁLOGOS EMERGENTES ---
 
@@ -171,3 +172,74 @@ class DialogoUmbralizacion(DialogoHerramienta):
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
+
+class DialogoRuido(DialogoHerramienta):
+    """
+    Clase base para diálogos de ruido. Provee UI y lógica común.
+    """
+    def __init__(self, parent, app_principal, titulo="Añadir Ruido"):
+        super().__init__(parent, app_principal, titulo)
+        
+        self.tipo = tk.StringVar(value="Aditivo")
+        self.valor_d = tk.StringVar(value="50")
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        ttk.Label(self.frame_herramienta, text="Selecciona el tipo de aplicación de ruido").pack(padx=5, pady=5)
+
+        ttk.Radiobutton(self.frame_herramienta, text="Aditivo", variable=self.tipo, value="Aditivo").pack(padx=5, pady=5)
+        ttk.Radiobutton(self.frame_herramienta, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(padx=5, pady=5)
+
+        ttk.Label(self.frame_herramienta, text="Porcentaje de Píxeles a Afectar (%):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=100,
+            orient="horizontal",
+            variable=self.valor_d,
+            resolution=1,
+            showvalue=True,
+            length=350
+            ).pack(padx=5, pady=5)
+
+    def _generar_vector_ruido(self):
+        raise NotImplementedError("La clase hija debe implementar este método.")
+
+    def _on_apply(self):
+        tipo = str(self.tipo.get())
+        vector_ruido = self._generar_vector_ruido()
+        d = int(self.valor_d.get())
+        
+        self.app._aplicar_ruido(self.copia_imagen, tipo, vector_ruido, d)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoRuidoGaussiano(DialogoRuido):
+    """
+    Diálogo específico para ruido Gaussiano.
+    """   
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Ruido Gaussiano")
+
+        self.valor_sigma = tk.IntVar(value="50")
+
+        ttk.Label(self.frame_herramienta, text="Desviación Estándar (σ) - Intensidad:").pack(padx=5, pady=(10,0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=100,
+            orient="horizontal",
+            variable=self.valor_sigma,
+            resolution=1,
+            showvalue=True,
+            length=350
+            ).pack(padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _generar_vector_ruido(self):
+        sigma = int(self.valor_sigma.get())
+        d = int(self.valor_d.get())
+        return self.app._ruido_gaussiano(sigma, d)

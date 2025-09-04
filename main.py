@@ -7,7 +7,7 @@ from typing import Optional, Tuple, Callable
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoRuido, DialogoRuidoGaussiano
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -63,7 +63,6 @@ class EditorDeImagenes:
         
         menu_operadores_puntuales = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
-        #menu_operadores_puntuales.add_command(label="Transformación Gamma", command=self._iniciar_gamma)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", command=lambda: self._iniciar_dialogo(DialogoGamma))
         menu_operadores_puntuales.add_command(label="Umbralización", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
         menu_operadores_puntuales.add_command(label="Negativo", command=self._aplicar_negativo)
@@ -77,7 +76,7 @@ class EditorDeImagenes:
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
-        menu_ruido.add_command(label="Gaussiano")#, command=self._aplicar_negativo)
+        menu_ruido.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoRuidoGaussiano))
         menu_ruido.add_command(label="Rayleigh")#, command=self._aplicar_negativo)
         menu_ruido.add_command(label="Exponencial")#, command=self._aplicar_negativo)
         menu_ruido.add_command(label="Sal y Pimienta")#, command=self._aplicar_negativo)
@@ -257,18 +256,42 @@ class EditorDeImagenes:
 
     # -- Aditivo y Multiplicativo
 
-    def _aplicar_ruido(self, tipo, dist, porcentaje):
-        imagen_np = np.array(self.imagen_procesada)
-        cant_pixeles = imagen_np.size
-        cant_pixeles_contaminados = (porcentaje * cant_pixeles) / 100
+    @refrescar_imagen
+    def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
+        # Transformar la imágen en un formato adecuado
+        imagen_np = np.array(imagen).astype(float)
+        m, n = imagen_np.shape[:2] # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
 
-        #if tipo == "Aditivo":
-            #self.imagen_procesada += Y
-        #elif tipo == "Multiplicativo":
-            #self.imagen_procesada *= Y
-        pass 
+        # Elección aleatoria de num_contaminados pixels en la imágen
+        num_contaminados = int((d * (m * n)) / 100)
+        D = np.unravel_index(np.random.choice(m * n, num_contaminados, replace=False),(m, n))
+
+        # Generar la imagen contaminada I_c
+        if tipo == "Aditivo":
+            resultado_np = imagen_np + vector_ruido
+        elif tipo == "Multiplicativo":
+            resultado_np = imagen_np * vector_ruido
+        
+        resultado_np = np.clip(resultado_np, 0, 255).astype(np.uint8)
+        self.imagen_procesada = Image.fromarray(resultado_np)
+
+        # ------------------------------------------
+        #   Tengo que resolver lo de los 3 canales
+        # ------------------------------------------
 
     # --- Gaussiano
+
+    def _ruido_gaussiano(self, sigma, d):
+        imagen_np = np.array(self.imagen_procesada)
+
+        m, n = imagen_np.shape[:2]
+        num_contaminados = int((d * (m * n)) / 100)
+        #print(f"Shape de imagen: {imagen_np.shape}")
+
+        # Generar los num_contaminados valores aleatorios con dist gauss (en este caso)
+        vector_aleatorio = np.random.normal(loc=0, scale=sigma, size=num_contaminados)
+
+        return vector_aleatorio
 
     # --- Rayleigh
 
