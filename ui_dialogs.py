@@ -243,3 +243,26 @@ class DialogoRuidoGaussiano(DialogoRuido):
         sigma = int(self.valor_sigma.get())
         d = int(self.valor_d.get())
         return self.app._ruido_gaussiano(sigma, d)
+
+class DialogoNumerosAleatorios(DialogoBase):
+    """Dialogo para mostrar el histograma de números aleatorios"""
+    def __init__(self, parent, app_principal, titulo: str):
+        super().__init__(parent)
+        self.app = app_principal
+        self.title(titulo)
+        
+        self.frame_herramienta = ttk.Frame(self, padding=10)
+        self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
+
+        frame_botones = ttk.Frame(self)
+        frame_botones.pack(pady=10)
+        ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _on_apply(self):
+        self.destroy()
+
+    def _on_cancel(self):
+        self.destroy()
