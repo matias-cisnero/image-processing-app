@@ -348,7 +348,7 @@ class EditorDeImagenes:
         resultado_np = self._escalar_255(imagen_np) # Dudoso
         self.imagen_procesada = Image.fromarray(resultado_np)
 
-    # --- Generar Vector Ruido
+    # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
 
     def _generar_vector_ruido(self, distribucion, intensidad, d):
         imagen_np = np.array(self.imagen_procesada)
@@ -358,44 +358,6 @@ class EditorDeImagenes:
         #print("Estoy funcionando biennn!!")
 
         vector_aleatorio = distribucion(scale=intensidad, size=(num_contaminados, 1))
-
-        return vector_aleatorio
-
-    # --- Gaussiano
-
-    def _ruido_gaussiano(self, sigma, d):
-        imagen_np = np.array(self.imagen_procesada)
-
-        m, n = imagen_np.shape[:2]
-        num_contaminados = int((d * (m * n)) / 100)
-        #print(f"Shape de imagen: {imagen_np.shape}")
-
-        # Generar los num_contaminados valores aleatorios con dist gauss (en este caso)
-        vector_aleatorio = np.random.normal(loc=0, scale=sigma, size=(num_contaminados, 1))
-
-        return vector_aleatorio
-
-    # --- Rayleigh
-
-    def _ruido_rayleigh(self, xi, d):
-        imagen_np = np.array(self.imagen_procesada)
-
-        m, n = imagen_np.shape[:2]
-        num_contaminados = int((d * (m * n)) / 100)
-
-        vector_aleatorio = np.random.rayleigh(scale=xi, size=(num_contaminados, 1))
-
-        return vector_aleatorio
-
-    # --- Exponencial
-
-    def _ruido_exponencial(self, lamb, d):
-        imagen_np = np.array(self.imagen_procesada)
-
-        m, n = imagen_np.shape[:2]
-        num_contaminados = int((d * (m * n)) / 100)
-
-        vector_aleatorio = np.random.exponential(scale=lamb, size=(num_contaminados, 1))
 
         return vector_aleatorio
 
