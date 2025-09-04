@@ -4,6 +4,7 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk, ImageChops
 import numpy as np
 from typing import Optional, Tuple, Callable
+import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
@@ -71,7 +72,7 @@ class EditorDeImagenes:
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris")#, command=self._aplicar_negativo)
-        menu_histogramas.add_command(label="RGB")#, command=self._aplicar_negativo)
+        menu_histogramas.add_command(label="RGB", command=self._aplicar_hist_rgb)
         menu_histogramas.add_command(label="Ecualización")#, command=self._aplicar_negativo)
         menu_histogramas.add_command(label="Números Aleatorios")#, command=self._aplicar_negativo)
 
@@ -249,6 +250,35 @@ class EditorDeImagenes:
 
     # --- RGB
 
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_hist_rgb(self):
+        imagen_np = np.array(self.imagen_procesada)
+
+        # Descomposición en canales
+        r = imagen_np[:, :, 0].flatten()
+        g = imagen_np[:, :, 1].flatten()
+        b = imagen_np[:, :, 2].flatten()
+        print(f"Shape de canal r: {imagen_np[:, :, 0].shape} y r enchorizado: {r.flatten().shape}")
+
+        # Frequencia absoluta
+        n_r = np.bincount(r, minlength=256)
+        #print(n_r.shape)
+
+        # Frequencia relativa
+
+        NM = n_r.shape[0]
+
+        h_r = n_r * (1 / NM)
+
+        plt.hist(h_r, bins="auto", edgecolor="black")
+        plt.ylabel("Frecuencia")
+        plt.show()
+
+
+
+
+
     # --- Ecualización
 
     # --- Números Aleatorios
@@ -301,7 +331,7 @@ class EditorDeImagenes:
                 messagebox.showerror("Error de Dimensiones", "Las imágenes deben tener el mismo tamaño.")
                 return
             
-            resultado = ImageChops.subtract(self.imagen_procesada, img2)
+            resultado = ImageChops.subtract(image1=self.imagen_procesada, image2=img2, scale=1.0, offset=0) # mirar
             self._mostrar_ventana_resultado(resultado, "Resultado de la Resta")
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo cargar o procesar la imagen.\n{e}")
