@@ -5,3 +5,4 @@ procesador_imagenes_prueba2.py
 procesador_imagenes_estable.py
 imágenes_personal/
 __pycache__/
+*.pyc
