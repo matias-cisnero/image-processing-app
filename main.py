@@ -11,7 +11,8 @@ from utils import  requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh,DialogoHistogramaExponencial,
                         DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial,
-                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroGaussiano, DialogoFiltroRealce)
+                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
+                        )
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -102,8 +103,8 @@ class EditorDeImagenes:
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
         menu_filtros.add_command(label="Media", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
-        menu_filtros.add_command(label="Mediana")#, command=self._aplicar_negativo)
-        menu_filtros.add_command(label="Mediana Ponderada")#, command=self._aplicar_negativo)
+        menu_filtros.add_command(label="Mediana", command=lambda: self._iniciar_dialogo(DialogoFiltroMediana))
+        menu_filtros.add_command(label="Mediana Ponderada", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
         menu_filtros.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
         menu_filtros.add_command(label="Realce de Bordes", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
 
@@ -400,19 +401,84 @@ class EditorDeImagenes:
                     
                     imagen_filtrada[i, j, c] = valor
 
-        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+        resultado_np = self._escalar_255(imagen_filtrada)
 
         self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Media
 
+    def _filtro_media(self, k):
+        filtro = np.ones((k, k))
+
+        factor = 1 / np.sum(filtro)
+        return (filtro, factor)
+
     # --- Mediana
+
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_filtro_mediana(self, imagen, filtro):
+        imagen_np = np.array(imagen.convert('RGB')).astype(float)
+
+        m, n, _ = imagen_np.shape
+        k, l = filtro.shape
+        pad_h, pad_w = k//2, l//2
+
+        # Padding e imagen filtrada
+        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+        imagen_filtrada = np.zeros_like(imagen_np)
+
+        indices_repeticion = filtro.flatten().astype(int)
+
+        # Bucle para filtrado (c para los canales)
+        for i in range(m):
+            for j in range(n):
+                for c in range(3):
+                    region = imagen_padded[i:i+k, j:j+l, c]
+                    
+                    valores = np.repeat(region.flatten(), indices_repeticion) # Indica cuantas veces se repite cada indice
+
+                    mediana = np.median(valores)
+                    
+                    imagen_filtrada[i, j, c] = mediana
+
+        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+
+        self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Mediana Ponderada
 
-    # --- Gauss
+    def _filtro_mediana_ponderada(self, k):
+        filtro_gauss, _ = self._filtro_gaussiano(k)
+        filtro = (filtro_gauss * 50).astype(int)
+
+        factor = 1
+        return (filtro, factor)
+
+    # --- Gaussiano
+
+    def _filtro_gaussiano(self, k):
+        filtro = np.ones((k, k)).astype(float)
+        u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
+        sigma = (k-1) / 2
+
+        for x in range(k):
+            for y in range(k):
+                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2))
+
+        factor = 1 / np.sum(filtro)
+        #print(f"Factor usado: {1} / {np.sum(filtro)}")
+        return (filtro, factor)
 
     # --- Realce de Bordes
+
+    def _filtro_realce(self, k):
+        filtro = -1 * np.ones((k, k))
+        filtro[k//2, k//2] = k**2 - 1
+
+        factor = 1
+        return (filtro, factor)
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 

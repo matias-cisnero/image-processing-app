@@ -408,7 +408,7 @@ class DialogoFiltro(DialogoHerramienta):
         self.tam_filtro = tk.StringVar(value="3")
         #self.factor = tk.StringVar(value="1")
 
-        ttk.Label(self.frame_herramienta, text="Tamaño de mascara(impar):").pack(padx=5, pady=(10, 0))
+        ttk.Label(self.frame_herramienta, text="Tamaño de mascara (k):").pack(padx=5, pady=(10, 0))
         tk.Scale(
             self.frame_herramienta,
             from_=3,
@@ -423,12 +423,12 @@ class DialogoFiltro(DialogoHerramienta):
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
-    def _actualizar_valor(self):
+    def _actualizar_valor(self, valor):
         pass
 
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
-        filtro = np.ones((k, k))
+        filtro = np.ones((k, k)).astype(int)
         factor = 1
         return (filtro, factor)
 
@@ -452,9 +452,39 @@ class DialogoFiltroMedia(DialogoFiltro):
 
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
-        filtro = np.ones((k, k))
-        factor = 1 / np.sum(filtro)
-        return (filtro, factor)
+        return self.app._filtro_media(k)
+    
+class DialogoFiltroMediana(DialogoFiltro):
+    """
+    Diálogo específico para filtro de la mediana.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de la mediana")
+    
+    def _on_apply(self):
+        filtro, _ = self._obtener_filtro_y_factor()
+        print("Filtro usado:")
+        print(filtro)
+        self.app._aplicar_filtro_mediana(self.copia_imagen, filtro)
+        self.destroy()
+
+class DialogoFiltroMedianaPonderada(DialogoFiltro):
+    """
+    Diálogo específico para filtro de la mediana ponderada.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de la mediana ponderada")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        return self.app._filtro_mediana_ponderada(k)
+    
+    def _on_apply(self):
+        filtro, _ = self._obtener_filtro_y_factor()
+        print("Filtro usado:")
+        print(filtro)
+        self.app._aplicar_filtro_mediana(self.copia_imagen, filtro)
+        self.destroy()
     
 class DialogoFiltroGaussiano(DialogoFiltro):
     """
@@ -473,17 +503,7 @@ class DialogoFiltroGaussiano(DialogoFiltro):
 
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
-        filtro = np.ones((k, k)).astype(float)
-        u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
-        sigma = (k-1) / 2
-
-        for x in range(k):
-            for y in range(k):
-                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2))
-
-        factor = 1 / np.sum(filtro)
-        #print(f"Factor usado: {1} / {np.sum(filtro)}")
-        return (filtro, factor)
+        return self.app._filtro_gaussiano(k)
 
 class DialogoFiltroRealce(DialogoFiltro):
     """
@@ -494,7 +514,4 @@ class DialogoFiltroRealce(DialogoFiltro):
 
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
-        filtro = -1 * np.ones((k, k))
-        filtro[k//2, k//2] = k**2 - 1
-        factor = 1
-        return (filtro, factor)
+        return self.app._filtro_realce(k)
