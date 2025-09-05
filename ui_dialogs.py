@@ -195,7 +195,7 @@ class DialogoHistogramas(DialogoBase):
         self.app = app_principal
         self.title("Histogramas de la Imagen")
 
-        datos = self.app._tomar_datos_aplanados()
+        datos = self.app._tomar_niveles_grisrgb_aplanados()
 
         fig = Figure(figsize=(9, 7), dpi=100)
         ((ax1, ax2), (ax3, ax4)) = fig.subplots(2, 2)

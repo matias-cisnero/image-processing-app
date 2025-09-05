@@ -70,9 +70,8 @@ class EditorDeImagenes:
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
-        menu_histogramas.add_command(label="Niveles de Gris", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="RGB")#, command=self._aplicar_hist_rgb)
-        menu_histogramas.add_command(label="Ecualización", command=self._ecualizar_histograma)
+        menu_histogramas.add_command(label="Niveles de Gris y RGB", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
+        menu_histogramas.add_command(label="Ecualización", command=self._aplicar_ecualizacion_histograma)
         menu_histogramas.add_command(label="Números Aleatorios")#, command=self._aplicar_negativo)
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
@@ -266,59 +265,9 @@ class EditorDeImagenes:
 
     # ================================((HISTOGRAMAS))========================================
 
-    # --- Niveles de Gris
+    # --- Niveles de Gris y RGB
 
-    @requiere_imagen
-    def _aplicar_hist_gris(self):
-        imagen_gris_pil = self.imagen_procesada.convert('L')
-
-        imagen_np = np.array(imagen_gris_pil).flatten()
-
-        print(f"Shape de imagen escala de grises: {imagen_np.shape}")
-
-        plt.hist(imagen_np, bins=256, range=[0, 256], color='gray', density=True)
-        plt.show()
-
-    # --- RGB
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _ecualizar_histograma(self):
-        
-        imagen_gris_pil = self.imagen_procesada.convert('L')
-        datos_gris = np.array(imagen_gris_pil).flatten()
-
-        # Frequencia absoluta
-        n_r = np.bincount(datos_gris, minlength=256)
-
-        # Frequencia relativa
-        NM = datos_gris.size
-        #h_r = n_r / NM              # Frecuencia absoluta / total pixeles
-        eje_x = np.arange(256)
-
-        """
-        sk = np.zeros(256)
-        for k in range(len(sk)):
-            sumatoria = 0
-            for i in range(k):
-                sumatoria += n_r[i] / NM
-            sk[k] = sumatoria
-        sk_sombrero = self._escalar_255(sk) # Discretizamos
-        """
-
-        plt.figure(figsize=(10, 6))  # Crea una nueva figura para el gráfico
-        plt.bar(eje_x, sk_sombrero, color='gray', width=1.0) # width=1.0 para que no haya espacios
-        plt.xlabel("Nivel de Intensidad del Píxel")
-        plt.ylabel("Frecuencia Relativa")
-        
-        # Configurar límites y rejilla
-        plt.xlim([0, 255])
-        plt.grid(axis='y', alpha=0.5, linestyle='--')
-        
-        # Mostrar el gráfico
-        plt.show()
-
-    def _tomar_datos_aplanados(self):
+    def _tomar_niveles_grisrgb_aplanados(self):
         """
         Prepara y devuelve un diccionario con los datos aplanados para los 4 histogramas.
         """
@@ -343,7 +292,30 @@ class EditorDeImagenes:
 
     # --- Ecualización
 
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_ecualizacion_histograma(self):
+        """
+        Realiza la ecualización del histograma.
+        """
+        imagen_np_gris = np.array(self.imagen_procesada.convert('L'))
+        datos_gris = imagen_np_gris.flatten()
+        print(f"Shape de imagen gris: {imagen_np_gris.shape}")
 
+        n_r = np.bincount(datos_gris, minlength=256) # Frequencia absoluta (ni)
+        NM = datos_gris.size # Pixels totales (n)
+        h_r = n_r / NM # Frecuencia relativa (ni/n)
+
+        sk = np.zeros(256)
+
+        for k in range(len(sk)):
+            sk[k] = np.sum(h_r[0:k+1])
+        
+        sk_sombrero = self._escalar_255(sk) # Discretizamos
+
+        resultado_np = sk_sombrero[imagen_np_gris]
+
+        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
 
     # --- Números Aleatorios
 
@@ -410,7 +382,7 @@ class EditorDeImagenes:
 
     @refrescar_imagen
     def _escala_grises(self):
-        self.imagen_procesada = self.imagen_procesada.convert('L')
+        self.imagen_procesada = self.imagen_procesada.convert('L').convert('RGB')
     
     @requiere_imagen
     def _iniciar_resta(self):
