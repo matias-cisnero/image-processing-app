@@ -395,3 +395,56 @@ class DialogoRuidoExponencial(DialogoRuido):
     """   
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Ruido Exponencial", "Lambda (λ):", np.random.exponential)
+
+class DialogoFiltro(DialogoHerramienta):
+    """
+    Clase base para diálogos de filtro. Provee UI y lógica común.
+    """
+    def __init__(self, parent, app_principal, titulo):
+        super().__init__(parent, app_principal, titulo)
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+        self.tam_filtro = tk.StringVar(value="3")
+        #self.factor = tk.StringVar(value="1")
+
+        ttk.Label(self.frame_herramienta, text="Tamaño de mascara(impar):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=3,
+            to=15,
+            orient="horizontal",
+            variable=self.tam_filtro,
+            resolution=2,
+            showvalue=True,
+            length=200
+            ).pack(padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+    
+    def _obtener_filtro_y_factor(self):
+        n = int(self.tam_filtro.get())
+        filtro = np.ones((n, n))
+        factor = 1
+        return (filtro, factor)
+
+    def _on_apply(self):
+        filtro, factor = self._obtener_filtro_y_factor()
+        self.app._aplicar_filtro(self.copia_imagen, filtro, factor)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoFiltroMedia(DialogoFiltro):
+    """
+    Diálogo específico para filtro de la media.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de la media")
+
+    def _obtener_filtro_y_factor(self):
+        n = int(self.tam_filtro.get())
+        filtro = np.ones((n, n))
+        factor = 1 / (n*n)
+        return (filtro, factor)

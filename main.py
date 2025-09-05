@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh, DialogoHistogramaExponencial, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh, DialogoHistogramaExponencial, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial, DialogoFiltro, DialogoFiltroMedia
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -85,7 +85,7 @@ class EditorDeImagenes:
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
-        menu_filtros.add_command(label="Media")#, command=self._aplicar_negativo)
+        menu_filtros.add_command(label="Media", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
         menu_filtros.add_command(label="Mediana")#, command=self._aplicar_negativo)
         menu_filtros.add_command(label="Mediana Ponderada")#, command=self._aplicar_negativo)
         menu_filtros.add_command(label="Gauss")#, command=self._aplicar_negativo)
@@ -356,24 +356,35 @@ class EditorDeImagenes:
 
     # --- Filtrado en el Dominio Espacial
 
-    def _aplicar_filtro(self, imagen, filtro):
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_filtro(self, imagen, filtro, factor):
         """
         Aplica un filtro a la imagen.
         """
-        imagen_np = np.array(imagen).astype(float)
+        imagen_np = np.array(imagen.convert('RGB')).astype(float)
 
-        m, n = imagen_np.shape[:2]
+        m, n, _ = imagen_np.shape
+        k, l = filtro.shape
+        pad_h, pad_w = k//2, l//2
 
-        # imagen_filtrada = imagen_np.copy()
-        # bucle for i, j: # primero a lo ancho y luego a lo alto (top left)
-            # tomar matrizI = pixel (i,j) y 8-vecindad
-            # tomar matrizF = filtro
+        # Padding e imagen filtrada
+        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+        imagen_filtrada = np.zeros_like(imagen_np)
 
-            # resultado = np.sum(matrizI * matrizF)
+        # Bucle para filtrado (c para los canales)
+        for i in range(m):
+            for j in range(n):
+                for c in range(3):
+                    region = imagen_padded[i:i+k, j:j+l, c]
+                    
+                    valor = np.sum(region * filtro) * factor
+                    
+                    imagen_filtrada[i, j, c] = valor
 
-            # imagen_filtrada[i, j] = resultado
+        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
 
-
+        self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Media
 
