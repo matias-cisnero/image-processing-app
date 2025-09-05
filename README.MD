@@ -11,10 +11,9 @@
   * `BARCO.RAW` (290×207)
   * `LENA.RAW` (256×256)
   * `GIRL2.RAW` (256×256)
-  * `FRACTAL.RAW` (200×200)
 * 🖼️ Otras imágenes de ejemplo:
 
-  * `barco.png`, `elefante.png`
+  * `barco.png`, `elefante.png`, `TESTpgm.PGM`
 * 📑 Otros:
 
   * `README.TXT` (contiene la resolución de las imágenes `.RAW`)
@@ -28,11 +27,12 @@
   * `tkinter` (incluida por defecto en la mayoría de instalaciones de Python)
   * `numpy`
   * `Pillow` (PIL)
+  * `Matplotlib`
 
 Instalación rápida:
 
 ```bash
-pip install numpy pillow
+pip install -r requirements.txt
 ```
 
 ## 🚀 Cómo ejecutar la aplicación
@@ -40,7 +40,7 @@ pip install numpy pillow
 Desde la terminal:
 
 ```bash
-python procesador_imagenes.py
+python main.py
 ```
 
 Se abrirá una ventana con opciones para cargar imágenes de distintos formatos (`.RAW`, `.PGM`, `.PNG`, etc.), aplicar filtros y guardar los resultados.
