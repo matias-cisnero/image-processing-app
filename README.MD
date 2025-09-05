@@ -1,32 +1,35 @@
 # 🖼️ Procesamiento de Imágenes con Tkinter
 
-¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) que permite aplicar diversas técnicas de **procesamiento de imágenes**, visualizar los resultados y guardarlos de forma sencilla.
+¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) para **procesamiento digital de imágenes**. Permite aplicar filtros, operadores puntuales, histogramas, ruidos y más, visualizar los resultados y guardarlos fácilmente.
 
 ## 📂 Contenido del repositorio
 
-* `procesador_imagenes.py` – El script principal con la interfaz gráfica y filtros disponibles.
-* Archivos de imágenes RAW incluidas para probar:
+* `procesador_imagenes.py` – Script principal con la interfaz gráfica y todos los filtros disponibles.
+
+* Imágenes RAW para probar:
 
   * `GIRL.RAW` (389×164)
   * `BARCO.RAW` (290×207)
   * `LENA.RAW` (256×256)
   * `GIRL2.RAW` (256×256)
-* 🖼️ Otras imágenes de ejemplo:
+
+* Otras imágenes de ejemplo:
 
   * `barco.png`, `elefante.png`, `TESTpgm.PGM`
-* 📑 Otros:
 
-  * `README.TXT` (contiene la resolución de las imágenes `.RAW`)
-  * `.gitignore`, `pruebas_y_ejemplos`, y demás archivos útiles.
+* Otros archivos:
+
+  * `README.TXT` – Contiene resolución de las imágenes `.RAW`
+  * `.gitignore` y carpetas de ejemplos
 
 ## ⚙️ Requisitos
 
 * Python 3.x
 * Librerías necesarias:
 
-  * `tkinter` (incluida por defecto en la mayoría de instalaciones de Python)
+  * `tkinter` (incluida en la mayoría de instalaciones de Python)
   * `numpy`
-  * `Pillow` (PIL)
+  * `Pillow`
   * `Matplotlib`
 
 Instalación rápida:
@@ -43,17 +46,44 @@ Desde la terminal:
 python main.py
 ```
 
-Se abrirá una ventana con opciones para cargar imágenes de distintos formatos (`.RAW`, `.PGM`, `.PNG`, etc.), aplicar filtros y guardar los resultados.
+Se abrirá una ventana con opciones para cargar imágenes (`.RAW`, `.PGM`, `.PNG`, `.JPEG`), aplicar filtros, operadores y ruidos, y guardar los resultados.
 
-## ✨ Funcionalidades (en desarrollo)
+## ✨ Funcionalidades
 
-✅ Cargar imágenes en formato **RAW** y otros comunes (PNG, JPEG, PGM...).
-✅ Vista previa de la imagen cargada.
-✅ Guardar la imagen procesada en distintos formatos.
-✅ Realizar un recorte de la imágen.
-✅ Ver y modificar el valor de un pixel en una imagen.
-✅ Restar dos imágenes.
-✅ Informar la cantidad de pixels y promedio de sus valores en una región de la imágen.
-🛠️ Filtros disponibles (en progreso):
+### ✅ Operadores puntuales
 
-* ...
+* Transformación gamma (`γ`)
+* Umbralización (`τ`)
+* Negativo (`¬`)
+
+### 📊 Histogramas
+
+* RGB y escala de grises
+* Ecualización de histograma (`≡`)
+* Histogramas de distribución:
+
+  * Gaussiana (`μ`, `σ`)
+  * Rayleigh (`σ`)
+  * Exponencial (`λ`)
+
+### 🎨 Aplicar ruido
+
+* Gaussiano
+* Rayleigh
+* Exponencial
+* Sal y pimienta
+
+### 🛠️ Filtros
+
+* Media (`M`)
+* Mediana (`~x~`)
+* Mediana ponderada (`Mₚ`)
+* Gaussiano
+* Realce de bordes
+
+### 🖱️ Otras herramientas
+
+* Recorte de imágenes
+* Visualización y modificación de un pixel
+* Restar dos imágenes
+* Calcular cantidad de pixeles y promedio de valores en una región

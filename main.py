@@ -5,6 +5,7 @@ from PIL import Image, ImageTk, ImageChops
 import numpy as np
 from typing import Optional, Tuple, Callable
 import matplotlib.pyplot as plt
+import webbrowser
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
@@ -13,6 +14,9 @@ from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, Dialo
                         DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial, DialogoRuidoSalYPimienta,
                         DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
                         )
+
+def abrir_github(event):
+    webbrowser.open_new("https://github.com/matias-cisnero/procesamiento_imagenes")
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -203,11 +207,12 @@ class EditorDeImagenes:
         frame_resta_imagenes = ttk.Labelframe(panel_control, text="Resta de Imagenes", padding=10)
         frame_resta_imagenes.pack(fill=tk.X, pady=5)
 
-        ttk.Label(frame_resta_imagenes, text="(De igual tamaño)").grid(row=0, column=0, columnspan=2, sticky="ew", pady=(10,0))
         ttk.Button(frame_resta_imagenes, text="Restar Imagenes", image=self.icono_resta_imagenes, compound="left", command=self._iniciar_resta).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(10,0))
 
-        #ttk.Label(panel_control, text="github.com/matias-cisnero/procesamiento_imagenes", foreground="blue", image=self.icono_github, compound="left").pack()
-
+        label_github = ttk.Label(panel_control, text="Mi repositorio en GitHub", foreground="blue", cursor="hand2", image=self.icono_github, compound="left")
+        label_github.pack(fill=tk.X, pady=5)
+        label_github.bind("<Button-1>", abrir_github)
+        
     def _crear_controles_zoom(self):
         zoom_frame = ttk.Labelframe(self.root, text="Zoom", padding=5)
         zoom_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
