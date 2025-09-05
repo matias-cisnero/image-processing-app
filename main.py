@@ -128,6 +128,10 @@ class EditorDeImagenes:
         frame_imagen_original = ttk.Labelframe(panel_control, text="Volver a imagen original", padding=10)
         frame_imagen_original.pack(fill=tk.X, pady=5)
         ttk.Button(frame_imagen_original, text="Volver", command=self._volver_imagen_original).pack(fill=tk.X)
+
+        frame_escala_grises = ttk.Labelframe(panel_control, text="Convertir a escala de grises", padding=10)
+        frame_escala_grises.pack(fill=tk.X, pady=5)
+        ttk.Button(frame_escala_grises, text="Convertir", command=self._escala_grises).pack(fill=tk.X)
         
         frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
         frame_pixel.pack(fill=tk.X, pady=5)
@@ -385,6 +389,10 @@ class EditorDeImagenes:
     def _volver_imagen_original(self):
         self.imagen_procesada = self.imagen_original
 
+    @refrescar_imagen
+    def _escala_grises(self):
+        self.imagen_procesada = self.imagen_procesada.convert('L')
+    
     @requiere_imagen
     def _iniciar_resta(self):
         ruta_img2 = filedialog.askopenfilename(title="Seleccionar imagen a restar", filetypes=self.FORMATOS_IMAGEN)

@@ -180,9 +180,9 @@ class DialogoRuido(DialogoHerramienta):
     def __init__(self, parent, app_principal, titulo, param_label, distribucion):
         super().__init__(parent, app_principal, titulo)
         
+        self.copia_imagen = self.app.imagen_procesada.copy()
         self.tipo = tk.StringVar(value="Aditivo")
         self.valor_d = tk.StringVar(value="50")
-        self.copia_imagen = self.app.imagen_procesada.copy()
         self.intensidad = tk.IntVar(value="20")
         self.distribucion = distribucion
 
