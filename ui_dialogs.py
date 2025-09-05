@@ -227,30 +227,85 @@ class DialogoHistogramas(DialogoBase):
         ttk.Button(self, text="Cerrar", command=self.destroy).pack(pady=5)
         self._finalizar_y_posicionar()
 
-class DialogoNumerosAleatorios(DialogoBase):
+class DialogoHistogramaDist(DialogoBase):
     """
-    Dialogo para mostrar el histograma de números aleatorios.
+    Clase base para diálogos que grafican histogramas de distribuciones de forma interactiva.
     """
-    def __init__(self, parent, app_principal, titulo: str):
+    def __init__(self, parent, app_principal, titulo, param_label, distribucion):
         super().__init__(parent)
         self.app = app_principal
         self.title(titulo)
+
+        self.distribucion = distribucion
+        self.intensidad = tk.StringVar(value="25")
+        self.num_muestras = 10000
+
+        self.X_LIM = (-200, 200) # Límite para el eje X (valores generados)
+        self.Y_LIM = (0, 0.1)  # Límite para el eje Y (densidad)
+
+        self.fig = Figure(figsize=(6, 4), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+        frame_slider = ttk.Frame(self)
+        ttk.Label(frame_slider, text=param_label).pack(side=tk.LEFT, padx=5)
+        tk.Scale(
+            frame_slider,
+            from_=1, to=100,
+            orient="horizontal",
+            variable=self.intensidad,
+            resolution=1,
+            showvalue=True,
+            length=350,
+            command=self._actualizar_grafico
+        ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5)
+        frame_slider.pack(fill=tk.X, padx=10, pady=5)
+
+        ttk.Button(self, text="Cerrar", command=self.destroy).pack(pady=5)
         
-        self.frame_herramienta = ttk.Frame(self, padding=10)
-        self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
+        self._finalizar_y_posicionar()
+        self._actualizar_grafico()
 
-        frame_botones = ttk.Frame(self)
-        frame_botones.pack(pady=10)
-        ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
-        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
+    def _actualizar_grafico(self, *args):
+        intensidad = int(self.intensidad.get())
+        
+        vector_resultante = self.app._generar_vector_ruido(self.distribucion, intensidad, self.num_muestras
+        )
+        
+        # Borra y redibuja el histograma
+        self.ax.clear()
+        self.ax.hist(vector_resultante, bins=100, density=True)
+        self.ax.set_xlim(self.X_LIM)
+        self.ax.set_ylim(self.Y_LIM)
+        self.ax.set_title(f"Histograma de Densidad (Intensidad = {intensidad})")
+        self.ax.set_xlabel("Valor")
+        self.ax.set_ylabel("Densidad")
+        self.ax.grid(True, linestyle='--')
+        self.fig.tight_layout()
+        
+        self.canvas.draw()
 
-        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+class DialogoHistogramaGaussiano(DialogoHistogramaDist):
+    """
+    Diálogo específico para histograma Gaussiano.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Histograma Gaussiano", "Desviación Estándar (σ):", np.random.normal)
 
-    def _on_apply(self):
-        self.destroy()
-
-    def _on_cancel(self):
-        self.destroy()
+class DialogoHistogramaRayleigh(DialogoHistogramaDist):
+    """
+    Diálogo específico para histograma Rayleigh.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Histograma Rayleigh", "Parámetro Xi (ξ):", np.random.rayleigh)
+    
+class DialogoHistogramaExponencial(DialogoHistogramaDist):
+    """
+    Diálogo específico para histograma Exponencial.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Histograma Exponencial", "Parámetro de Escala (1/λ):", np.random.exponential)
 
 class DialogoRuido(DialogoHerramienta):
     """
@@ -300,7 +355,13 @@ class DialogoRuido(DialogoHerramienta):
     def _generar_vector_ruido(self):
         intensidad = int(self.intensidad.get())
         d = int(self.valor_d.get())
-        return self.app._generar_vector_ruido(self.distribucion, intensidad, d)
+
+        imagen_np = np.array(self.app.imagen_procesada)
+
+        m, n = imagen_np.shape[:2]
+        num_contaminados = int((d * (m * n)) / 100)
+
+        return self.app._generar_vector_ruido(self.distribucion, intensidad, num_contaminados)
 
     def _on_apply(self):
         tipo = str(self.tipo.get())

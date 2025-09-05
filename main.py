@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh, DialogoHistogramaExponencial, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -72,7 +72,9 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
         menu_histogramas.add_command(label="Ecualización", command=self._aplicar_ecualizacion_histograma)
-        menu_histogramas.add_command(label="Números Aleatorios")#, command=self._aplicar_negativo)
+        menu_histogramas.add_command(label="Generador Gaussiano", command=lambda: self._iniciar_dialogo(DialogoHistogramaGaussiano))
+        menu_histogramas.add_command(label="Generador Rayleigh", command=lambda: self._iniciar_dialogo(DialogoHistogramaRayleigh))
+        menu_histogramas.add_command(label="Generador Exponencial", command=lambda: self._iniciar_dialogo(DialogoHistogramaExponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
@@ -349,14 +351,8 @@ class EditorDeImagenes:
 
     # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
 
-    def _generar_vector_ruido(self, distribucion, intensidad, d):
-        imagen_np = np.array(self.imagen_procesada)
-
-        m, n = imagen_np.shape[:2]
-        num_contaminados = int((d * (m * n)) / 100)
-        #print("Estoy funcionando biennn!!")
-
-        vector_aleatorio = distribucion(scale=intensidad, size=(num_contaminados, 1))
+    def _generar_vector_ruido(self, distribucion, intensidad, longitud):
+        vector_aleatorio = distribucion(scale=intensidad, size=(longitud, 1))
 
         return vector_aleatorio
 
