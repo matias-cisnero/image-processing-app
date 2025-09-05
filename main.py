@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh, DialogoHistogramaExponencial, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial, DialogoFiltro, DialogoFiltroMedia
+from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
+                        DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh,DialogoHistogramaExponencial,
+                        DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial,
+                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroGaussiano, DialogoFiltroRealce)
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -101,8 +104,8 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Media", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
         menu_filtros.add_command(label="Mediana")#, command=self._aplicar_negativo)
         menu_filtros.add_command(label="Mediana Ponderada")#, command=self._aplicar_negativo)
-        menu_filtros.add_command(label="Gauss")#, command=self._aplicar_negativo)
-        menu_filtros.add_command(label="Realce de Bordes")#, command=self._aplicar_negativo)
+        menu_filtros.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
+        menu_filtros.add_command(label="Realce de Bordes", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -413,10 +416,12 @@ class EditorDeImagenes:
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 
+    @requiere_imagen
     @refrescar_imagen
     def _volver_imagen_original(self):
         self.imagen_procesada = self.imagen_original
 
+    @requiere_imagen
     @refrescar_imagen
     def _escala_grises(self):
         self.imagen_procesada = self.imagen_procesada.convert('L').convert('RGB')

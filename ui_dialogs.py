@@ -17,6 +17,7 @@ class DialogoBase(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self.resultado = None
+        self.iconbitmap("favicon.ico")
 
     def _finalizar_y_posicionar(self, reference_widget=None):
         """Calcula el tamaño necesario para el contenido y posiciona la ventana."""
@@ -416,19 +417,25 @@ class DialogoFiltro(DialogoHerramienta):
             variable=self.tam_filtro,
             resolution=2,
             showvalue=True,
-            length=200
+            length=200,
+            command=self._actualizar_valor
             ).pack(padx=5, pady=5)
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
+    def _actualizar_valor(self):
+        pass
+
     def _obtener_filtro_y_factor(self):
-        n = int(self.tam_filtro.get())
-        filtro = np.ones((n, n))
+        k = int(self.tam_filtro.get())
+        filtro = np.ones((k, k))
         factor = 1
         return (filtro, factor)
 
     def _on_apply(self):
         filtro, factor = self._obtener_filtro_y_factor()
+        #print("Filtro usado:")
+        #print(filtro)
         self.app._aplicar_filtro(self.copia_imagen, filtro, factor)
         self.destroy()
     
@@ -444,7 +451,50 @@ class DialogoFiltroMedia(DialogoFiltro):
         super().__init__(parent, app_principal, "Filtro de la media")
 
     def _obtener_filtro_y_factor(self):
-        n = int(self.tam_filtro.get())
-        filtro = np.ones((n, n))
+        k = int(self.tam_filtro.get())
+        filtro = np.ones((k, k))
         factor = 1 / np.sum(filtro)
+        return (filtro, factor)
+    
+class DialogoFiltroGaussiano(DialogoFiltro):
+    """
+    Diálogo específico para filtro gaussiano.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro gaussiano")
+
+        self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Sigma correspondiente (σ): {int((int(self.tam_filtro.get())-1)/2)}")
+        self.label_sigma.pack(padx=5, pady=(0, 10))
+
+    def _actualizar_valor(self, valor):
+        k = int(valor)
+        sigma = int((k-1) / 2)
+        self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        filtro = np.ones((k, k)).astype(float)
+        u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
+        sigma = (k-1) / 2
+
+        for x in range(k):
+            for y in range(k):
+                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2))
+
+        factor = 1 / np.sum(filtro)
+        #print(f"Factor usado: {1} / {np.sum(filtro)}")
+        return (filtro, factor)
+
+class DialogoFiltroRealce(DialogoFiltro):
+    """
+    Diálogo específico para filtro de realce de bordes.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de la realce de bordes")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        filtro = -1 * np.ones((k, k))
+        filtro[k//2, k//2] = k**2 - 1
+        factor = 1
         return (filtro, factor)
