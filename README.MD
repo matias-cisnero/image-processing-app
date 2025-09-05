@@ -1,6 +1,6 @@
 # 🖼️ Procesamiento de Imágenes con Tkinter
 
-¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) para **procesamiento digital de imágenes**. Permite aplicar filtros, operadores puntuales, histogramas, ruidos y más, visualizar los resultados y guardarlos fácilmente.
+¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) para **procesamiento de imágenes y visión por computadora**. Permite aplicar filtros, operadores puntuales, histogramas, ruidos y más, visualizar los resultados y guardarlos fácilmente.
 
 ## 📂 Contenido del repositorio
 
