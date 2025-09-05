@@ -3,11 +3,15 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 from typing import Callable
 import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # --- DIÁLOGOS EMERGENTES ---
 
 class DialogoBase(tk.Toplevel):
-    """Clase base para todas las ventanas de diálogo."""
+    """
+    Clase base para todas las ventanas de diálogo.
+    """
     def __init__(self, parent):
         super().__init__(parent)
         self.transient(parent)
@@ -34,7 +38,9 @@ class DialogoBase(tk.Toplevel):
         self.geometry(f'+{ref_x + offset_x}+{ref_y + offset_y}')
 
 class DialogoDimensiones(DialogoBase):
-    """Diálogo para solicitar dimensiones de una imagen RAW."""
+    """
+    Diálogo para solicitar dimensiones de una imagen RAW.
+    """
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Dimensiones de la Imagen RAW")
@@ -90,7 +96,9 @@ class DialogoResultado(DialogoBase):
         self.wait_window(self)
 
 class DialogoHerramienta(DialogoBase):
-    """Plantilla base para ventanas de herramientas con parámetros."""
+    """
+    Plantilla base para ventanas de herramientas con parámetros.
+    """
     def __init__(self, parent, app_principal, titulo: str):
         super().__init__(parent)
         self.app = app_principal
@@ -113,7 +121,9 @@ class DialogoHerramienta(DialogoBase):
         self.destroy()
 
 class DialogoGamma(DialogoHerramienta):
-    """Diálogo para introducir el valor de Gamma y realizar la transformación."""
+    """
+    Diálogo para introducir el valor de Gamma y realizar la transformación.
+    """
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Transformación Gamma")
         
@@ -144,6 +154,9 @@ class DialogoGamma(DialogoHerramienta):
         self.destroy()
 
 class DialogoUmbralizacion(DialogoHerramienta):
+    """
+    Dialogo para umbralizar una imágen.
+    """
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Umbralización")
         
@@ -171,6 +184,72 @@ class DialogoUmbralizacion(DialogoHerramienta):
     
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoHistogramas(DialogoBase):
+    """
+    Dialogo para mostrar los histogramas RGB y escala de grises.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent)
+        self.app = app_principal
+        self.title("Histogramas de la Imagen")
+
+        datos = self.app._tomar_datos_aplanados()
+
+        fig = Figure(figsize=(9, 7), dpi=100)
+        ((ax1, ax2), (ax3, ax4)) = fig.subplots(2, 2)
+        
+        fig.suptitle('Histogramas de Canales de Color y Niveles de Gris', fontsize=14)
+
+        # gris
+        ax1.hist(datos['gris'], bins=256, range=[0, 256], color='gray', density=True)
+        ax1.set_title("Niveles de Gris")
+
+        # r
+        ax2.hist(datos['rojo'], bins=256, range=[0, 256], color='red', density=True)
+        ax2.set_title("Canal Rojo")
+
+        # g
+        ax3.hist(datos['verde'], bins=256, range=[0, 256], color='green', density=True)
+        ax3.set_title("Canal Verde")
+
+        # b
+        ax4.hist(datos['azul'], bins=256, range=[0, 256], color='blue', density=True)
+        ax4.set_title("Canal Azul")
+        
+        fig.tight_layout(rect=[0, 0.03, 1, 0.95]) # rect ajusta para el suptitle
+
+        canvas = FigureCanvasTkAgg(fig, master=self)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        ttk.Button(self, text="Cerrar", command=self.destroy).pack(pady=5)
+        self._finalizar_y_posicionar()
+
+class DialogoNumerosAleatorios(DialogoBase):
+    """
+    Dialogo para mostrar el histograma de números aleatorios.
+    """
+    def __init__(self, parent, app_principal, titulo: str):
+        super().__init__(parent)
+        self.app = app_principal
+        self.title(titulo)
+        
+        self.frame_herramienta = ttk.Frame(self, padding=10)
+        self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
+
+        frame_botones = ttk.Frame(self)
+        frame_botones.pack(pady=10)
+        ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _on_apply(self):
+        self.destroy()
+
+    def _on_cancel(self):
         self.destroy()
 
 class DialogoRuido(DialogoHerramienta):
@@ -255,26 +334,3 @@ class DialogoRuidoExponencial(DialogoRuido):
     """   
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Ruido Exponencial", "Lambda (λ):", np.random.exponential)
-
-class DialogoNumerosAleatorios(DialogoBase):
-    """Dialogo para mostrar el histograma de números aleatorios"""
-    def __init__(self, parent, app_principal, titulo: str):
-        super().__init__(parent)
-        self.app = app_principal
-        self.title(titulo)
-        
-        self.frame_herramienta = ttk.Frame(self, padding=10)
-        self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
-
-        frame_botones = ttk.Frame(self)
-        frame_botones.pack(pady=10)
-        ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
-        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
-
-        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
-
-    def _on_apply(self):
-        self.destroy()
-
-    def _on_cancel(self):
-        self.destroy()

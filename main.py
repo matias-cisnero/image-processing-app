@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
-from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
+from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion, DialogoHistogramas, DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -70,9 +70,9 @@ class EditorDeImagenes:
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
-        menu_histogramas.add_command(label="Niveles de Gris", command=self._aplicar_hist_gris)
-        menu_histogramas.add_command(label="RGB", command=self._aplicar_hist_rgb)
-        menu_histogramas.add_command(label="Ecualización")#, command=self._aplicar_negativo)
+        menu_histogramas.add_command(label="Niveles de Gris", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
+        menu_histogramas.add_command(label="RGB")#, command=self._aplicar_hist_rgb)
+        menu_histogramas.add_command(label="Ecualización", command=self._ecualizar_histograma)
         menu_histogramas.add_command(label="Números Aleatorios")#, command=self._aplicar_negativo)
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
@@ -269,7 +269,6 @@ class EditorDeImagenes:
     # --- Niveles de Gris
 
     @requiere_imagen
-    @refrescar_imagen
     def _aplicar_hist_gris(self):
         imagen_gris_pil = self.imagen_procesada.convert('L')
 
@@ -284,35 +283,31 @@ class EditorDeImagenes:
 
     @requiere_imagen
     @refrescar_imagen
-    def _aplicar_hist_rgb(self):
-        imagen_np = np.array(self.imagen_procesada)
+    def _ecualizar_histograma(self):
+        
+        imagen_gris_pil = self.imagen_procesada.convert('L')
+        datos_gris = np.array(imagen_gris_pil).flatten()
 
-        # Descomposición en canales
-        r = imagen_np[:, :, 0].flatten()
-        g = imagen_np[:, :, 1].flatten()
-        b = imagen_np[:, :, 2].flatten()
-        print(f"Shape de canal r: {imagen_np[:, :, 0].shape} y r enchorizado: {r.flatten().shape}")
-
-        colores = ["red", "green", "blue"]
-        for canal in range(3):
-            banda = imagen_np[:, :, canal].flatten()
-            color = colores[canal]
-
-            plt.hist(banda, bins=256, range=[0, 256], color=color, density=True)
-            plt.show()
-
-        """
         # Frequencia absoluta
-        n_r = np.bincount(r, minlength=256)
-        #print(n_r.shape)
+        n_r = np.bincount(datos_gris, minlength=256)
 
         # Frequencia relativa
-        h_r = n_r / NM
-        NM = r.size
+        NM = datos_gris.size
+        #h_r = n_r / NM              # Frecuencia absoluta / total pixeles
         eje_x = np.arange(256)
 
+        """
+        sk = np.zeros(256)
+        for k in range(len(sk)):
+            sumatoria = 0
+            for i in range(k):
+                sumatoria += n_r[i] / NM
+            sk[k] = sumatoria
+        sk_sombrero = self._escalar_255(sk) # Discretizamos
+        """
+
         plt.figure(figsize=(10, 6))  # Crea una nueva figura para el gráfico
-        plt.bar(eje_x, h_r, color='red', width=1.0) # width=1.0 para que no haya espacios
+        plt.bar(eje_x, sk_sombrero, color='gray', width=1.0) # width=1.0 para que no haya espacios
         plt.xlabel("Nivel de Intensidad del Píxel")
         plt.ylabel("Frecuencia Relativa")
         
@@ -322,9 +317,33 @@ class EditorDeImagenes:
         
         # Mostrar el gráfico
         plt.show()
+
+    def _tomar_datos_aplanados(self):
         """
+        Prepara y devuelve un diccionario con los datos aplanados para los 4 histogramas.
+        """
+        imagen_np = np.array(self.imagen_procesada)
+        
+        # Datos para el histograma de grises
+        imagen_gris_pil = self.imagen_procesada.convert('L')
+        datos_gris = np.array(imagen_gris_pil).flatten()
+        
+        # Datos para los canales RGB
+        datos_r = imagen_np[:, :, 0].flatten()
+        datos_g = imagen_np[:, :, 1].flatten()
+        datos_b = imagen_np[:, :, 2].flatten()
+        
+        # Devolvemos todo en un diccionario
+        return {
+            'gris': datos_gris,
+            'rojo': datos_r,
+            'verde': datos_g,
+            'azul': datos_b
+        }
 
     # --- Ecualización
+
+
 
     # --- Números Aleatorios
 
