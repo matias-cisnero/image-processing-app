@@ -260,10 +260,6 @@ class EditorDeImagenes:
         #print(f"Tamaño de la imágen {imagen_np.shape}")
         resultado_np = 255 - imagen_np
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
-    
-    # =============================((NUMEROS_ALEATORIOS))====================================
-
-    # --- 
 
     # ================================((HISTOGRAMAS))========================================
 
@@ -319,8 +315,6 @@ class EditorDeImagenes:
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
 
-    # --- Números Aleatorios
-
     # ===================================((RUIDO))===========================================
 
     # -- Aditivo y Multiplicativo
@@ -359,6 +353,27 @@ class EditorDeImagenes:
     # --- Sal y Pimienta
 
     # ===================================((FILTROS))=========================================
+
+    # --- Filtrado en el Dominio Espacial
+
+    def _aplicar_filtro(self, imagen, filtro):
+        """
+        Aplica un filtro a la imagen.
+        """
+        imagen_np = np.array(imagen).astype(float)
+
+        m, n = imagen_np.shape[:2]
+
+        # imagen_filtrada = imagen_np.copy()
+        # bucle for i, j: # primero a lo ancho y luego a lo alto (top left)
+            # tomar matrizI = pixel (i,j) y 8-vecindad
+            # tomar matrizF = filtro
+
+            # resultado = np.sum(matrizI * matrizF)
+
+            # imagen_filtrada[i, j] = resultado
+
+
 
     # --- Media
 
