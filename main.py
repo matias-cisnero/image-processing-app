@@ -13,7 +13,7 @@ from ui_dialogs import DialogoBase, DialogoDimensiones, DialogoResultado, Dialog
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
 class EditorDeImagenes:
-    GEOMETRIA_VENTANA = "1200x700+200+50"
+    GEOMETRIA_VENTANA = "1200x800+200+15"
     FORMATOS_IMAGEN = [("Imágenes Soportadas", "*.jpg *.jpeg *.png *.bmp *.pgm *.raw"), ("Todos los archivos", "*.*")]
     CANALES_RGB = ("R", "G", "B")
     ZOOM_MIN, ZOOM_MAX = 0.1, 3.0
@@ -124,6 +124,10 @@ class EditorDeImagenes:
     def _crear_panel_control_fijo(self, parent: tk.Frame):
         panel_control = ttk.Frame(parent, padding=10)
         panel_control.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
+
+        frame_imagen_original = ttk.Labelframe(panel_control, text="Volver a imagen original", padding=10)
+        frame_imagen_original.pack(fill=tk.X, pady=5)
+        ttk.Button(frame_imagen_original, text="Volver", command=self._volver_imagen_original).pack(fill=tk.X)
         
         frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
         frame_pixel.pack(fill=tk.X, pady=5)
@@ -376,6 +380,10 @@ class EditorDeImagenes:
     # --- Realce de Bordes
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
+
+    @refrescar_imagen
+    def _volver_imagen_original(self):
+        self.imagen_procesada = self.imagen_original
 
     @requiere_imagen
     def _iniciar_resta(self):
