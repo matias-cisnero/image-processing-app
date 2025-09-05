@@ -397,6 +397,43 @@ class DialogoRuidoExponencial(DialogoRuido):
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Ruido Exponencial", "Lambda (λ):", np.random.exponential)
 
+class DialogoRuidoSalYPimienta(DialogoHerramienta):
+    """
+    Diálogo específico para ruido Sal y Pimienta.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Ruido Sal y Pimienta")
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+        self.valor_d = tk.StringVar(value="50")
+
+        ttk.Label(self.frame_herramienta, text="Porcentaje de Píxeles a Afectar (%):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=0,
+            to=100,
+            orient="horizontal",
+            variable=self.valor_d,
+            resolution=2,
+            showvalue=True,
+            length=350
+            ).pack(padx=5, pady=5)
+        
+        ttk.Label(self.frame_herramienta, text="p = (porcentaje / 2) / 100").pack(padx=5, pady=(10, 0))
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _on_apply(self):
+        d = int(self.valor_d.get()) / 2
+        p = d / 100
+        
+        self.app._aplicar_ruido_sal_y_pimienta(self.copia_imagen, p)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
 class DialogoFiltro(DialogoHerramienta):
     """
     Clase base para diálogos de filtro. Provee UI y lógica común.

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from utils import  requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh,DialogoHistogramaExponencial,
-                        DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial,
+                        DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial, DialogoRuidoSalYPimienta,
                         DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
                         )
 
@@ -51,6 +51,22 @@ class EditorDeImagenes:
         self.icono_resta_imagenes = tk.PhotoImage(file="icons/resta_imagenes.png").subsample(5,5)
         self.icono_github = tk.PhotoImage(file="icons/github.png").subsample(5,5)
 
+        self.icono_gamma = tk.PhotoImage(file="icons/gamma.png").subsample(5,5)
+        self.icono_umbralizacion = tk.PhotoImage(file="icons/umbralizacion.png").subsample(5,5)
+        self.icono_negativo = tk.PhotoImage(file="icons/negativo2.png").subsample(5,5)
+
+        self.icono_histograma = tk.PhotoImage(file="icons/histograma.png").subsample(5,5)
+        self.icono_ecualizacion = tk.PhotoImage(file="icons/ecualizacion.png").subsample(5,5)
+        self.icono_normal = tk.PhotoImage(file="icons/normal.png").subsample(5,5)
+        self.icono_rayleigh = tk.PhotoImage(file="icons/rayleigh.png").subsample(5,5)
+        self.icono_exponencial = tk.PhotoImage(file="icons/exponencial.png").subsample(5,5)
+        self.icono_sal_y_pimienta = tk.PhotoImage(file="icons/sal_y_pimienta.png").subsample(5,5)
+
+        self.icono_media = tk.PhotoImage(file="icons/media.png").subsample(5,5)
+        self.icono_mediana = tk.PhotoImage(file="icons/mediana.png").subsample(5,5)
+        self.icono_mediana_ponderada = tk.PhotoImage(file="icons/mediana_ponderada.png").subsample(5,5)
+        self.icono_borde = tk.PhotoImage(file="icons/borde.png").subsample(5,5)
+
         self._setup_ui()
         self._vincular_eventos()
 
@@ -81,32 +97,32 @@ class EditorDeImagenes:
         
         menu_operadores_puntuales = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
-        menu_operadores_puntuales.add_command(label="Transformación Gamma", command=lambda: self._iniciar_dialogo(DialogoGamma))
-        menu_operadores_puntuales.add_command(label="Umbralización", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", command=self._aplicar_negativo)
+        menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.icono_gamma, compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
+        menu_operadores_puntuales.add_command(label="Umbralización", image=self.icono_umbralizacion, compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.icono_negativo, compound="left", command=self._aplicar_negativo)
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
-        menu_histogramas.add_command(label="Niveles de Gris y RGB", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", command=self._aplicar_ecualizacion_histograma)
-        menu_histogramas.add_command(label="Generador Gaussiano", command=lambda: self._iniciar_dialogo(DialogoHistogramaGaussiano))
-        menu_histogramas.add_command(label="Generador Rayleigh", command=lambda: self._iniciar_dialogo(DialogoHistogramaRayleigh))
-        menu_histogramas.add_command(label="Generador Exponencial", command=lambda: self._iniciar_dialogo(DialogoHistogramaExponencial))
+        menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.icono_histograma, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
+        menu_histogramas.add_command(label="Ecualización", image=self.icono_ecualizacion, compound="left", command=self._aplicar_ecualizacion_histograma)
+        menu_histogramas.add_command(label="Generador Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaGaussiano))
+        menu_histogramas.add_command(label="Generador Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaRayleigh))
+        menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaExponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
-        menu_ruido.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoRuidoGaussiano))
-        menu_ruido.add_command(label="Rayleigh", command=lambda: self._iniciar_dialogo(DialogoRuidoRayleigh))
-        menu_ruido.add_command(label="Exponencial", command=lambda: self._iniciar_dialogo(DialogoRuidoExponencial))
-        menu_ruido.add_command(label="Sal y Pimienta")#, command=self._aplicar_negativo)
+        menu_ruido.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoGaussiano))
+        menu_ruido.add_command(label="Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoRayleigh))
+        menu_ruido.add_command(label="Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoExponencial))
+        menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
-        menu_filtros.add_command(label="Media", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
-        menu_filtros.add_command(label="Mediana", command=lambda: self._iniciar_dialogo(DialogoFiltroMediana))
-        menu_filtros.add_command(label="Mediana Ponderada", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
-        menu_filtros.add_command(label="Gaussiano", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
-        menu_filtros.add_command(label="Realce de Bordes", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
+        menu_filtros.add_command(label="Media", image=self.icono_media, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
+        menu_filtros.add_command(label="Mediana", image=self.icono_mediana, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMediana))
+        menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
+        menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
+        menu_filtros.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -345,7 +361,7 @@ class EditorDeImagenes:
         """
         # Transformar la imágen en un formato adecuado
         imagen_np = np.array(imagen).astype(float)
-        m, n = imagen_np.shape[:2] # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
+        m, n, _ = imagen_np.shape # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
 
         # Elección aleatoria de num_contaminados pixels en la imágen
         num_contaminados = int((d * (m * n)) / 100)
@@ -359,7 +375,7 @@ class EditorDeImagenes:
             imagen_np[D] *= vector_ruido
         
         #resultado_np = np.clip(imagen_np, 0, 255).astype(np.uint8)
-        resultado_np = self._escalar_255(imagen_np) # Dudoso
+        resultado_np = self._escalar_255(imagen_np)
         self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
@@ -370,6 +386,29 @@ class EditorDeImagenes:
         return vector_aleatorio
 
     # --- Sal y Pimienta
+
+    @refrescar_imagen
+    def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
+        imagen_np = np.array(imagen.convert('RGB')).astype(float)
+
+        m, n, _ = imagen_np.shape
+
+        imagen_ruidosa = imagen_np.copy()
+
+        # Bucle
+        for i in range(m):
+            for j in range(n):
+                x = np.random.rand()
+
+                if x <= p:
+                    imagen_ruidosa[i, j, :] = 0 # pimienta (negro)
+                elif x > (1-p):
+                    imagen_ruidosa[i, j, :] = 255 # sal (blanco)
+
+        resultado_np = np.clip(imagen_ruidosa, 0, 255).astype(np.uint8)
+        #resultado_np = self._escalar_255(imagen_ruidosa)
+
+        self.imagen_procesada = Image.fromarray(resultado_np)
 
     # ===================================((FILTROS))=========================================
 
