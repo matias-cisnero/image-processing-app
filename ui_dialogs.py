@@ -446,5 +446,5 @@ class DialogoFiltroMedia(DialogoFiltro):
     def _obtener_filtro_y_factor(self):
         n = int(self.tam_filtro.get())
         filtro = np.ones((n, n))
-        factor = 1 / (n*n)
+        factor = 1 / np.sum(filtro)
         return (filtro, factor)

@@ -34,6 +34,19 @@ class EditorDeImagenes:
         self.zoom_var = tk.StringVar(value="100.0%")
         self.analisis_vars = {"total": tk.StringVar(value="-"), "r": tk.StringVar(value="-"), "g": tk.StringVar(value="-"), "b": tk.StringVar(value="-"), "gris": tk.StringVar(value="-")}
         
+        # Carga de iconos
+        self.icono_cargar = tk.PhotoImage(file="icons/cargar.png").subsample(5,5)
+        self.icono_guardar = tk.PhotoImage(file="icons/guardar.png").subsample(5,5)
+        self.icono_salir = tk.PhotoImage(file="icons/salir.png").subsample(5,5)
+
+        self.icono_imagen_original = tk.PhotoImage(file="icons/imagen_original.png").subsample(5,5)
+        self.icono_escala_grises = tk.PhotoImage(file="icons/escala_grises.png").subsample(5,5)
+        self.icono_pixel = tk.PhotoImage(file="icons/pixel.png").subsample(5,5)
+        self.icono_recorte = tk.PhotoImage(file="icons/recorte.png").subsample(5,5)
+        self.icono_analisis = tk.PhotoImage(file="icons/analisis.png").subsample(5,5)
+        self.icono_resta_imagenes = tk.PhotoImage(file="icons/resta_imagenes.png").subsample(5,5)
+        self.icono_github = tk.PhotoImage(file="icons/github.png").subsample(5,5)
+
         self._setup_ui()
         self._vincular_eventos()
 
@@ -57,10 +70,10 @@ class EditorDeImagenes:
         
         menu_archivo = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Archivo", menu=menu_archivo)
-        menu_archivo.add_command(label="Cargar Imagen...", command=self._cargar_imagen)
-        menu_archivo.add_command(label="Guardar Imagen Como...", command=self._guardar_imagen_como)
+        menu_archivo.add_command(label="Cargar Imagen...", image=self.icono_cargar, compound="left", command=self._cargar_imagen)
+        menu_archivo.add_command(label="Guardar Imagen Como...", image=self.icono_guardar, compound="left", command=self._guardar_imagen_como)
         menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir", command=self.root.quit)
+        menu_archivo.add_command(label="Salir", image=self.icono_salir, compound="left", command=self.root.quit)
         
         menu_operadores_puntuales = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
@@ -128,11 +141,11 @@ class EditorDeImagenes:
 
         frame_imagen_original = ttk.Labelframe(panel_control, text="Volver a imagen original", padding=10)
         frame_imagen_original.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_imagen_original, text="Volver", command=self._volver_imagen_original).pack(fill=tk.X)
+        ttk.Button(frame_imagen_original, text="Volver", image=self.icono_imagen_original, compound="left", command=self._volver_imagen_original).pack(fill=tk.X)
 
         frame_escala_grises = ttk.Labelframe(panel_control, text="Convertir a escala de grises", padding=10)
         frame_escala_grises.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_escala_grises, text="Convertir", command=self._escala_grises).pack(fill=tk.X)
+        ttk.Button(frame_escala_grises, text="Convertir", image=self.icono_escala_grises, compound="left", command=self._escala_grises).pack(fill=tk.X)
         
         frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
         frame_pixel.pack(fill=tk.X, pady=5)
@@ -145,11 +158,11 @@ class EditorDeImagenes:
             ttk.Label(pixel_grid, text=f"{canal}:").grid(row=i, column=0, sticky="w")
             ttk.Entry(pixel_grid, textvariable=self.rgb_vars[canal], width=5).grid(row=i, column=1, padx=5)
         
-        ttk.Button(frame_pixel, text="Activar Selección de Píxel", command=self._activar_modo_seleccion).pack(fill=tk.X, pady=(10,0))
-
+        ttk.Button(frame_pixel, text="Activar Selección de Píxel", image=self.icono_pixel, compound="left", command=self._activar_modo_seleccion).pack(fill=tk.X, pady=(10,0))
+        
         frame_recorte = ttk.Labelframe(panel_control, text="Recortar Región", padding=10)
         frame_recorte.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_recorte, text="Activar Selección para Recorte", command=self._activar_modo_recorte).pack(fill=tk.X)
+        ttk.Button(frame_recorte, text="Activar Selección para Recorte", image=self.icono_recorte, compound="left", command=self._activar_modo_recorte).pack(fill=tk.X)
 
         frame_analisis = ttk.Labelframe(panel_control, text="Análisis de Región", padding=10)
         frame_analisis.pack(fill=tk.X, pady=5)
@@ -165,13 +178,15 @@ class EditorDeImagenes:
         add_analisis_row(frame_analisis, "Promedio B:", self.analisis_vars["b"], 4)
         add_analisis_row(frame_analisis, "Promedio Gris:", self.analisis_vars["gris"], 5)
         
-        ttk.Button(frame_analisis, text="Activar Análisis de Región", command=self._activar_modo_analisis).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10,0))
+        ttk.Button(frame_analisis, text="Activar Análisis de Región", image=self.icono_analisis, compound="left", command=self._activar_modo_analisis).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10,0))
 
         frame_resta_imagenes = ttk.Labelframe(panel_control, text="Resta de Imagenes", padding=10)
         frame_resta_imagenes.pack(fill=tk.X, pady=5)
 
         ttk.Label(frame_resta_imagenes, text="(De igual tamaño)").grid(row=0, column=0, columnspan=2, sticky="ew", pady=(10,0))
-        ttk.Button(frame_resta_imagenes, text="Restar Imagenes", command=self._iniciar_resta).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(10,0))
+        ttk.Button(frame_resta_imagenes, text="Restar Imagenes", image=self.icono_resta_imagenes, compound="left", command=self._iniciar_resta).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(10,0))
+
+        #ttk.Label(panel_control, text="github.com/matias-cisnero/procesamiento_imagenes", foreground="blue", image=self.icono_github, compound="left").pack()
 
     def _crear_controles_zoom(self):
         zoom_frame = ttk.Labelframe(self.root, text="Zoom", padding=5)
