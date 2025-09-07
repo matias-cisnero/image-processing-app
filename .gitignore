@@ -3,6 +3,16 @@ motivacion2.py
 procesador_imagenes_prueba1.py
 procesador_imagenes_prueba2.py
 procesador_imagenes_estable.py
-imágenes_personal/
+data_privada/
 __pycache__/
 *.pyc
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.vrb
+*.nav
+*.snm
