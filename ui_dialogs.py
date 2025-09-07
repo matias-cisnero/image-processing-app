@@ -232,12 +232,13 @@ class DialogoHistogramaDist(DialogoBase):
     """
     Clase base para diálogos que grafican histogramas de distribuciones de forma interactiva.
     """
-    def __init__(self, parent, app_principal, titulo, param_label, distribucion):
+    def __init__(self, parent, app_principal, config):
         super().__init__(parent)
-        self.app = app_principal
-        self.title(titulo)
+        self.config = config
 
-        self.distribucion = distribucion
+        self.app = app_principal
+        self.title(self.config['titulo'])
+
         self.intensidad = tk.StringVar(value="25")
         self.num_muestras = 10000
 
@@ -250,7 +251,7 @@ class DialogoHistogramaDist(DialogoBase):
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         frame_slider = ttk.Frame(self)
-        ttk.Label(frame_slider, text=param_label).pack(side=tk.LEFT, padx=5)
+        ttk.Label(frame_slider, text=self.config['param_label']).pack(side=tk.LEFT, padx=5)
         tk.Scale(
             frame_slider,
             from_=1, to=100,
@@ -271,7 +272,10 @@ class DialogoHistogramaDist(DialogoBase):
     def _actualizar_grafico(self, *args):
         intensidad = int(self.intensidad.get())
         
-        vector_resultante = self.app._generar_vector_ruido(self.distribucion, intensidad, self.num_muestras
+        vector_resultante = self.app._generar_vector_ruido(
+            distribucion = self.config['distribucion'],
+            intensidad = intensidad,
+            cantidad = self.num_muestras
         )
         
         # Borra y redibuja el histograma
@@ -287,39 +291,18 @@ class DialogoHistogramaDist(DialogoBase):
         
         self.canvas.draw()
 
-class DialogoHistogramaGaussiano(DialogoHistogramaDist):
-    """
-    Diálogo específico para histograma Gaussiano.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Histograma Gaussiano", "Desviación Estándar (σ):", np.random.normal)
-
-class DialogoHistogramaRayleigh(DialogoHistogramaDist):
-    """
-    Diálogo específico para histograma Rayleigh.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Histograma Rayleigh", "Parámetro Xi (ξ):", np.random.rayleigh)
-    
-class DialogoHistogramaExponencial(DialogoHistogramaDist):
-    """
-    Diálogo específico para histograma Exponencial.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Histograma Exponencial", "Parámetro de Escala (1/λ):", np.random.exponential)
-
 class DialogoRuido(DialogoHerramienta):
     """
     Clase base para diálogos de ruido. Provee UI y lógica común.
     """
-    def __init__(self, parent, app_principal, titulo, param_label, distribucion):
-        super().__init__(parent, app_principal, titulo)
+    def __init__(self, parent, app_principal, config):
+        super().__init__(parent, app_principal, config['titulo'])
+        self.config = config
         
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.tipo = tk.StringVar(value="Aditivo")
         self.valor_d = tk.StringVar(value="50")
         self.intensidad = tk.IntVar(value="20")
-        self.distribucion = distribucion
 
         ttk.Label(self.frame_herramienta, text="Porcentaje de Píxeles a Afectar (%):").pack(padx=5, pady=(10, 0))
         tk.Scale(
@@ -338,7 +321,7 @@ class DialogoRuido(DialogoHerramienta):
         ttk.Radiobutton(self.frame_herramienta, text="Aditivo", variable=self.tipo, value="Aditivo").pack(padx=5, pady=5)
         ttk.Radiobutton(self.frame_herramienta, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(padx=5, pady=5)
 
-        ttk.Label(self.frame_herramienta, text=param_label).pack(padx=5, pady=(10,0))
+        ttk.Label(self.frame_herramienta, text=self.config['param_label']).pack(padx=5, pady=(10,0))
 
         tk.Scale(
             self.frame_herramienta,
@@ -353,49 +336,28 @@ class DialogoRuido(DialogoHerramienta):
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
-    def _generar_vector_ruido(self):
-        intensidad = int(self.intensidad.get())
+    def _on_apply(self):
         d = int(self.valor_d.get())
+        intensidad = int(self.intensidad.get())
+        tipo = str(self.tipo.get())
 
         imagen_np = np.array(self.app.imagen_procesada)
-
         m, n = imagen_np.shape[:2]
         num_contaminados = int((d * (m * n)) / 100)
 
-        return self.app._generar_vector_ruido(self.distribucion, intensidad, num_contaminados)
+        vector_ruido = self.app._generar_vector_ruido(
+            distribucion=self.config['distribucion'],
+            intensidad=intensidad,
+            cantidad=num_contaminados
+        )
 
-    def _on_apply(self):
-        tipo = str(self.tipo.get())
-        vector_ruido = self._generar_vector_ruido()
-        d = int(self.valor_d.get())
-        
-        self.app._aplicar_ruido(self.copia_imagen, tipo, vector_ruido, d)
+        if vector_ruido.size > 0:
+            self.app._aplicar_ruido(self.copia_imagen, tipo, vector_ruido, d)
         self.destroy()
     
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
-
-class DialogoRuidoGaussiano(DialogoRuido):
-    """
-    Diálogo específico para ruido Gaussiano.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Ruido Gaussiano", "Desviación Estándar (σ):", np.random.normal)
-
-class DialogoRuidoRayleigh(DialogoRuido):
-    """
-    Diálogo específico para ruido Rayleigh.
-    """   
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Ruido Rayleigh", "Xi (ξ):", np.random.rayleigh)
-    
-class DialogoRuidoExponencial(DialogoRuido):
-    """
-    Diálogo específico para ruido Exponencial.
-    """   
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Ruido Exponencial", "Lambda (λ):", np.random.exponential)
 
 class DialogoRuidoSalYPimienta(DialogoHerramienta):
     """

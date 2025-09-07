@@ -10,8 +10,8 @@ import webbrowser
 # Importaciones de código en archivos
 from utils import  requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
-                        DialogoHistogramas, DialogoHistogramaDist, DialogoHistogramaGaussiano, DialogoHistogramaRayleigh,DialogoHistogramaExponencial,
-                        DialogoRuido, DialogoRuidoGaussiano, DialogoRuidoRayleigh, DialogoRuidoExponencial, DialogoRuidoSalYPimienta,
+                        DialogoHistogramas, DialogoHistogramaDist,
+                        DialogoRuido, DialogoRuidoSalYPimienta,
                         DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
                         )
 
@@ -106,18 +106,24 @@ class EditorDeImagenes:
         menu_operadores_puntuales.add_command(label="Negativo", image=self.icono_negativo, compound="left", command=self._aplicar_negativo)
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
+        config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
+        config_dist_rayleigh = {'titulo': "Histograma Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh}
+        config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.icono_histograma, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
         menu_histogramas.add_command(label="Ecualización", image=self.icono_ecualizacion, compound="left", command=self._aplicar_ecualizacion_histograma)
-        menu_histogramas.add_command(label="Generador Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaGaussiano))
-        menu_histogramas.add_command(label="Generador Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaRayleigh))
-        menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaExponencial))
+        menu_histogramas.add_command(label="Generador Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
+        menu_histogramas.add_command(label="Generador Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
+        menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
+        config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
+        config_rayleigh = {'titulo': "Ruido Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh}
+        config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
-        menu_ruido.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoGaussiano))
-        menu_ruido.add_command(label="Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoRayleigh))
-        menu_ruido.add_command(label="Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoExponencial))
+        menu_ruido.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_gaussiano))
+        menu_ruido.add_command(label="Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
+        menu_ruido.add_command(label="Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_exponencial))
         menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
@@ -240,13 +246,13 @@ class EditorDeImagenes:
     # --- Iniciar Dialogo
 
     @requiere_imagen
-    def _iniciar_dialogo(self, dialogo_clase):
+    def _iniciar_dialogo(self, dialogo_clase, **kwargs):
         """
         Método genérico para abrir cualquier diálogo de herramienta que necesite
         una referencia a la app principal.
         """
         #print("Sí, jeje, funciona")
-        dialogo = dialogo_clase(self.root, self)
+        dialogo = dialogo_clase(self.root, self, **kwargs)
 
     # --- Cancelar Cambio
 
@@ -385,8 +391,8 @@ class EditorDeImagenes:
 
     # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
 
-    def _generar_vector_ruido(self, distribucion, intensidad, longitud):
-        vector_aleatorio = distribucion(scale=intensidad, size=(longitud, 1))
+    def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
+        vector_aleatorio = distribucion(scale=intensidad, size=(cantidad, 1))
 
         return vector_aleatorio
 
