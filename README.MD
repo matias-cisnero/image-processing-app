@@ -2,6 +2,8 @@
 
 ¡Bienvenido! 🎉 Este proyecto es una aplicación en **Tkinter** (Python) para **procesamiento de imágenes y visión por computadora**. Permite aplicar filtros, operadores puntuales, histogramas, ruidos y más, visualizar los resultados y guardarlos fácilmente.
 
+![Demo](demo.gif)
+
 ## 📂 Contenido del repositorio
 
 * `procesador_imagenes.py` – Script principal con la interfaz gráfica y todos los filtros disponibles.
