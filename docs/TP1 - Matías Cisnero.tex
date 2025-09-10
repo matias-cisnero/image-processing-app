@@ -29,7 +29,7 @@
 \usepackage[table]{xcolor}
 \usepackage{listings}
 \usepackage{caption}
-\usepackage{enumitem}
+%\usepackage{enumitem}
 \usepackage[absolute,overlay]{textpos} % Necesario para el logo
 
 \usefonttheme[onlymath]{serif}
@@ -78,7 +78,7 @@
 
 \lstset{
 	language=Python,
-	emph={self, _aplicar_gamma, _escalar_255, _generar_vector_ruido}, emphstyle=\color{purple}\bfseries,
+	emph={self, _aplicar_gamma, _escalar_255, _generar_vector_ruido, _aplicar_ruido_sal_y_pimienta, _aplicar_ruido, _aplicar_ecualizacion_histograma, _aplicar_umbralizacion, _aplicar_negativo}, emphstyle=\color{purple}\bfseries,
 }
 
 \title{Trabajo Práctico 1 Procesamiento de Imágenes y Visión por Computadora}
@@ -444,7 +444,7 @@ def _aplicar_ecualizacion_histograma(self):
 	
 	Implementar generadores de números aleatorios con las siguientes distribuciones:
 	
-	\begin{enumerate}[label=\alph*)]
+	\begin{enumerate}%[label=\alph*)]
 		\item Gaussiana con desviación estándar $\sigma$ y valor medio $\mu$.
 		\item Rayleigh con parámetro $\xi$.
 		\item Exponencial con parámetro $\lambda$.
@@ -512,7 +512,7 @@ def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
 	
 	Utilizando los generadores del punto anterior, implementar los siguientes puntos para agregar ruido a una imagen.
 	
-	\begin{enumerate}[label=\alph*)]
+	\begin{enumerate}%[label=\alph*)]
 		\item Contaminar un porcentaje de una imagen con ruido Gaussiano aditivo.
 		\item Contaminar un porcentaje de una imagen con ruido Rayleigh multiplicativo.
 		\item Contaminar un porcentaje de una imagen con ruido exponencial multiplicativo.
@@ -521,6 +521,42 @@ def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
 	\vspace{0.3cm}
 	
 	El porcentaje de contaminación y los parámetros del generador deben ser parámetros de entrada.
+\end{frame}
+
+\begin{frame}[fragile]{Agregar ruido}
+	\justifying
+	
+	Dada una imagen $I$ de dimensión $m \times n$. La estrategia para contaminar $I$ y obtener $I_C$ la imagen contaminada es:
+	
+	\begin{block}{Estrategia}
+		\begin{enumerate}
+			\item Definir el porcentaje de contaminación d (se toma como parámetro).
+			\item Elegir aleatoriamente d píxeles de la imagen y construir el conjunto $D = (i,j)$ el conjunto de píxeles seleccionados.
+			\item Definir el parámetro de escala $\lambda$, $\mu$ o $\xi$ (se toma como parámetro).
+			\item Generar d valores aleatorios con la distribución correspondiente (se toma como vector\_ruido).
+			\item Luego en los indices $D$ de la imagen $I$ multiplicar o sumar el escalar  $k$ del vector ruido al valor del pixel según corresponda.
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	La ecualización de la imagen se puede apreciar al ver como al ecualizar la Figura~\ref{fig:lenaoriginal8} se obtiene la Figura~\ref{fig:lenaej8}:
+	\vspace{0.5cm}
+	
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal8}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej5}
+		\captionof{figure}{Imagen ecualizada}
+		\label{fig:lenaej8}
+	\end{minipage}
 \end{frame}
 
 \begin{frame}[fragile]{Código}
@@ -552,32 +588,120 @@ def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
 
 \begin{frame}
 	\begin{center}
-		9) Implementar una función que devuelva el histograma de niveles de gris de una imagen.
+		\textcolor{unahurverde}{\textbf{Consigna 9:}}
 	\end{center}
+	\justifying
+	
+	Implementar un generador de ruido Sal y Pimienta de densidad variable, aplicarlo una
+	imagen.
+\end{frame}
+
+\begin{frame}[fragile]{Ruido Sal y Pimienta}
+	\justifying
+	
+	\begin{block}{Definición}
+		Dada una imagen $I$.
+		\begin{itemize}
+			\item Elegir $p \in (0, 0,5)$
+			\item Recorrer cada pixel $(i, j)$ de $I$.
+			\begin{itemize}
+				\item Tomar $x \sim U(0,1)$
+				\item Si $x \leq p$ entonces $I(i,j) = 0$
+				\item Si $x > 1 - p$ entonces $I(i,j) = 255$
+			\end{itemize}
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Código}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
+	imagen_np = np.array(imagen.convert('RGB'))
+	
+	m, n, _ = imagen_np.shape
+	
+	for i in range(m):
+		for j in range(n):
+			x = np.random.rand()
+			if x <= p:
+				imagen_np[i, j, :] = 0 # pimienta (negro)
+			elif x > (1-p):
+				imagen_np[i, j, :] = 255 # sal (blanco)
+	
+	self.imagen_procesada = Image.fromarray(imagen_np)
+	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) Aunque en el slider uno pone la probabilidad, a la función le llega p = (porcentaje / 2) / 100.}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Al aplicar el ruido Sal y Pimienta a una imagen con probabilidad $=10$ en la Figura~\ref{fig:lenaoriginal9} obtenemos la imagen de la Figura~\ref{fig:lenaej9}:
+	\vspace{0.5cm}
+	
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal9}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej9}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej9}
+	\end{minipage}
 \end{frame}
 
 \section{Ejercicio 10}
 
 \begin{frame}
 	\begin{center}
-		10) Implementar una función que devuelva el histograma de niveles de gris de una imagen.
+		\textcolor{unahurverde}{\textbf{Consigna 10:}}
 	\end{center}
+	\justifying
+	
+	Implementar una ventana deslizante que pueda aplicarse a una imagen con máscaras de
+	tamaño variable, cuadrada y aplicar a una imagen las siguientes máscaras:
+
+	\begin{enumerate}
+		\item Filtro de la media.
+		\item Filtro de la mediana.
+		\item Filtro de la mediana ponderada.
+		\item Filtro de Gauss para diferentes valores de $\sigma$ y $\mu = 0$.
+		\item Realce de Bordes.
+	\end{enumerate}
 \end{frame}
 
 \section{Ejercicio 11}
 
 \begin{frame}
 	\begin{center}
-		11) Implementar una función que devuelva el histograma de niveles de gris de una imagen.
+		\textcolor{unahurverde}{\textbf{Consigna 11:}}
 	\end{center}
+	\justifying
+	
+	Repetir el punto anterior aplicándolo a las mismas imágenes contaminadas con:
+	
+	\begin{enumerate}
+		\item Ruido Gaussiano aditivo para varios de $\sigma$ y $\mu = 0$.
+		\item Ruido Rayleigh multiplicativo para varios valores de $\xi$. 
+	\end{enumerate}
 \end{frame}
 
 \section{Ejercicio 12}
 
 \begin{frame}
 	\begin{center}
-		12) Implementar una función que devuelva el histograma de niveles de gris de una imagen.
+		\textcolor{unahurverde}{\textbf{Consigna 12:}}
 	\end{center}
+	\justifying
+	
+	 Contaminar con ruido Sal y Pimienta con diferentes densidades y aplicarle el filtro de la media y de la mediana. Observar los resultados.
 \end{frame}
 
 \section{Bibliografía}
@@ -613,6 +737,10 @@ def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
 			\bibitem{numpy-random.choice}
 			NumPy Documentation: numpy.random.choice. 
 			\newblock \url{https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html}
+			
+			\bibitem{numpy-random.pad}
+			NumPy Documentation: numpy.pad. 
+			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.pad.html}
 		\end{thebibliography}
 	\end{frame}
 	

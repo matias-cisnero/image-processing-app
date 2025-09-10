@@ -11,7 +11,7 @@ import webbrowser
 from utils import  requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist,
-                        DialogoRuido, DialogoRuidoSalYPimienta,
+                        DialogoRuido,
                         DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
                         )
 
@@ -117,14 +117,16 @@ class EditorDeImagenes:
         menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
-        config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
-        config_rayleigh = {'titulo': "Ruido Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh}
-        config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
+        config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal, 'sal_y_pimienta': False}
+        config_rayleigh = {'titulo': "Ruido Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh, 'sal_y_pimienta': False}
+        config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential, 'sal_y_pimienta': False}
+        config_sal_y_pimienta = {'titulo': "Sal y Pimienta", 'param_label': "-", 'distribucion': np.random.normal, 'sal_y_pimienta': True}
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
         menu_ruido.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_gaussiano))
         menu_ruido.add_command(label="Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
         menu_ruido.add_command(label="Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_exponencial))
-        menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
+        menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_sal_y_pimienta))
+        #menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
@@ -399,26 +401,19 @@ class EditorDeImagenes:
 
     @refrescar_imagen
     def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
-        imagen_np = np.array(imagen.convert('RGB')).astype(float)
+        imagen_np = np.array(imagen.convert('RGB'))
 
         m, n, _ = imagen_np.shape
 
-        imagen_ruidosa = imagen_np.copy()
-
-        # Bucle
         for i in range(m):
             for j in range(n):
                 x = np.random.rand()
-
                 if x <= p:
-                    imagen_ruidosa[i, j, :] = 0 # pimienta (negro)
+                    imagen_np[i, j, :] = 0 # pimienta (negro)
                 elif x > (1-p):
-                    imagen_ruidosa[i, j, :] = 255 # sal (blanco)
+                    imagen_np[i, j, :] = 255 # sal (blanco)
 
-        resultado_np = np.clip(imagen_ruidosa, 0, 255).astype(np.uint8)
-        #resultado_np = self._escalar_255(imagen_ruidosa)
-
-        self.imagen_procesada = Image.fromarray(resultado_np)
+        self.imagen_procesada = Image.fromarray(imagen_np)
 
     # ===================================((FILTROS))=========================================
 
