@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 from typing import Callable
 import numpy as np
@@ -189,44 +189,91 @@ class DialogoUmbralizacion(DialogoHerramienta):
 
 class DialogoHistogramas(DialogoBase):
     """
-    Dialogo para mostrar los histogramas RGB y escala de grises.
+    Diálogo para mostrar y descargar los histogramas RGB y de escala de grises.
+    Permite guardar el gráfico completo o solo el de escala de grises.
     """
     def __init__(self, parent, app_principal):
         super().__init__(parent)
         self.app = app_principal
         self.title("Histogramas de la Imagen")
 
+        # Pide los datos a la aplicación principal
         datos = self.app._tomar_niveles_grisrgb_aplanados()
 
-        fig = Figure(figsize=(9, 7), dpi=100)
-        ((ax1, ax2), (ax3, ax4)) = fig.subplots(2, 2)
+        # Guarda la figura y los ejes como atributos de la instancia
+        self.fig = Figure(figsize=(9, 7), dpi=100)
+        ((self.ax_gris, self.ax_rojo), (self.ax_verde, self.ax_azul)) = self.fig.subplots(2, 2)
         
-        fig.suptitle('Histogramas de Canales de Color y Niveles de Gris', fontsize=14)
+        self.fig.suptitle('Histogramas de Canales de Color y Niveles de Gris', fontsize=14)
 
-        # gris
-        ax1.hist(datos['gris'], bins=256, range=[0, 256], color='gray', density=True)
-        ax1.set_title("Niveles de Gris")
+        # Dibuja los 4 histogramas
+        self.ax_gris.hist(datos['gris'], bins=256, range=[0, 256], color='gray', density=True)
+        self.ax_gris.set_title("Niveles de Gris")
+        self.ax_gris.grid(True, linestyle='--')
 
-        # r
-        ax2.hist(datos['rojo'], bins=256, range=[0, 256], color='red', density=True)
-        ax2.set_title("Canal Rojo")
+        self.ax_rojo.hist(datos['rojo'], bins=256, range=[0, 256], color='red', density=True)
+        self.ax_rojo.set_title("Canal Rojo")
+        self.ax_rojo.grid(True, linestyle='--')
 
-        # g
-        ax3.hist(datos['verde'], bins=256, range=[0, 256], color='green', density=True)
-        ax3.set_title("Canal Verde")
+        self.ax_verde.hist(datos['verde'], bins=256, range=[0, 256], color='green', density=True)
+        self.ax_verde.set_title("Canal Verde")
+        self.ax_verde.grid(True, linestyle='--')
 
-        # b
-        ax4.hist(datos['azul'], bins=256, range=[0, 256], color='blue', density=True)
-        ax4.set_title("Canal Azul")
+        self.ax_azul.hist(datos['azul'], bins=256, range=[0, 256], color='blue', density=True)
+        self.ax_azul.set_title("Canal Azul")
+        self.ax_azul.grid(True, linestyle='--')
         
-        fig.tight_layout(rect=[0, 0.03, 1, 0.95]) # rect ajusta para el suptitle
+        self.fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-        canvas = FigureCanvasTkAgg(fig, master=self)
+        # Inserta el gráfico en la ventana de Tkinter
+        canvas = FigureCanvasTkAgg(self.fig, master=self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        ttk.Button(self, text="Cerrar", command=self.destroy).pack(pady=5)
+        # --- Interfaz de Botones ---
+        frame_botones = ttk.Frame(self)
+        frame_botones.pack(pady=5)
+        
+        ttk.Button(frame_botones, text="Guardar Todo...", command=self._guardar_grafico_completo).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Guardar solo Gris...", command=self._guardar_grafico_gris).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botones, text="Cerrar", command=self.destroy).pack(side=tk.LEFT, padx=5)
+        
         self._finalizar_y_posicionar()
+
+    # --- Lógica de Guardado ---
+
+    def _obtener_ruta_guardado(self):
+        """Función de ayuda que abre el diálogo 'Guardar como...' y devuelve una ruta."""
+        return filedialog.asksaveasfilename(
+            parent=self,
+            title="Guardar gráfico como...",
+            defaultextension=".png",
+            filetypes=[("Archivo PNG", "*.png"), ("Archivo JPG", "*.jpg")]
+        )
+
+    def _guardar_grafico_completo(self):
+        """Guarda la figura completa con los 4 histogramas."""
+        ruta_archivo = self._obtener_ruta_guardado()
+        if ruta_archivo:
+            try:
+                self.fig.savefig(ruta_archivo, dpi=150)
+                messagebox.showinfo("Guardado Exitoso", f"Gráfico guardado en:\n{ruta_archivo}", parent=self)
+            except Exception as e:
+                messagebox.showerror("Error al Guardar", f"No se pudo guardar el gráfico.\nError: {e}", parent=self)
+
+    def _guardar_grafico_gris(self):
+        """Guarda únicamente el área del subplot de niveles de gris."""
+        ruta_archivo = self._obtener_ruta_guardado()
+        if ruta_archivo:
+            try:
+                # Obtenemos el "cuadro delimitador" del subplot de grises
+                bbox = self.ax_gris.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+                
+                # Le decimos a savefig que guarde solo lo que está dentro de ese cuadro
+                self.fig.savefig(ruta_archivo, dpi=150, bbox_inches=bbox)
+                messagebox.showinfo("Guardado Exitoso", f"Gráfico guardado en:\n{ruta_archivo}", parent=self)
+            except Exception as e:
+                messagebox.showerror("Error al Guardar", f"No se pudo guardar el gráfico.\nError: {e}", parent=self)
 
 class DialogoHistogramaDist(DialogoBase):
     """

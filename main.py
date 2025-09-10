@@ -279,6 +279,7 @@ class EditorDeImagenes:
 
     @refrescar_imagen
     def _aplicar_gamma(self, imagen, gamma):
+        # Convierto en un array de (m, n, 3)
         imagen_np = np.array(imagen)
 
         c = (255)**(1-gamma)
@@ -290,6 +291,7 @@ class EditorDeImagenes:
 
     @refrescar_imagen
     def _aplicar_umbralizacion(self, imagen, umbral):
+        # Convierto en un array de (m, n, 3)
         imagen_np = np.array(imagen)
 
         resultado_np = np.where(imagen_np >= umbral, 255, 0)
@@ -301,9 +303,9 @@ class EditorDeImagenes:
     @requiere_imagen
     @refrescar_imagen
     def _aplicar_negativo(self):
+        # Convierto en un array de (m, n, 3)
         imagen_np = np.array(self.imagen_procesada)
-        #print(f"Cantidad de pixeles en la imágen {imagen_np.size}")
-        #print(f"Tamaño de la imágen {imagen_np.shape}")
+
         resultado_np = 255 - imagen_np
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
 
@@ -342,22 +344,21 @@ class EditorDeImagenes:
         """
         Realiza la ecualización del histograma.
         """
+        # Array de la forma (m. n).
         imagen_np_gris = np.array(self.imagen_procesada.convert('L'))
         datos_gris = imagen_np_gris.flatten()
-        print(f"Shape de imagen gris: {imagen_np_gris.shape}")
 
-        n_r = np.bincount(datos_gris, minlength=256) # Frequencia absoluta (ni)
-        NM = datos_gris.size # Pixels totales (n)
-        h_r = n_r / NM # Frecuencia relativa (ni/n)
+        n_r = np.bincount(datos_gris, minlength=256) # Freq abs(ni)
+        NM = datos_gris.size # Pixels totales(n)
+        h_r = n_r / NM # Freq relativa(ni/n)
 
+        # Hacemos la suma acumulada
         sk = np.zeros(256)
-
         for k in range(len(sk)):
             sk[k] = np.sum(h_r[0:k+1])
         
         sk_sombrero = self._escalar_255(sk) # Discretizamos
-
-        resultado_np = sk_sombrero[imagen_np_gris]
+        resultado_np = sk_sombrero[imagen_np_gris] # Lookup table
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
 
@@ -374,24 +375,22 @@ class EditorDeImagenes:
         imagen_np = np.array(imagen).astype(float)
         m, n, _ = imagen_np.shape # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
 
-        # Elección aleatoria de num_contaminados pixels en la imágen
+        # Cantidad de píxeles contaminados
         num_contaminados = int((d * (m * n)) / 100)
         # num_contaminados = len(vector_ruido)
         D = np.unravel_index(np.random.choice(m * n, num_contaminados, replace=False),(m, n))
 
         # Generar la imagen contaminada I_c
-        if tipo == "Aditivo":
-            imagen_np[D] += vector_ruido
-        elif tipo == "Multiplicativo":
-            imagen_np[D] *= vector_ruido
+        if tipo == "Aditivo": imagen_np[D] += vector_ruido
+        elif tipo == "Multiplicativo": imagen_np[D] *= vector_ruido
         
-        #resultado_np = np.clip(imagen_np, 0, 255).astype(np.uint8)
         resultado_np = self._escalar_255(imagen_np)
         self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
 
     def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
+        # distribucion = np.random.normal, np.random.rayleigh, np.random.exponential
         vector_aleatorio = distribucion(scale=intensidad, size=(cantidad, 1))
 
         return vector_aleatorio
