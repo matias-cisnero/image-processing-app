@@ -317,7 +317,7 @@ def _aplicar_umbralizacion(self, imagen, umbral):
 	\end{lstlisting}
 	
 	\vfill
-	\footnotesize \textcolor{lightgray}{(*) np.where es una forma vectorizada de hacer un if-else para los píxeles de la imagen (ver \cite{numpy-where}).}\\
+	\footnotesize \textcolor{lightgray}{(*) np.where es una forma vectorizada de hacer un if-else para los píxeles de la imagen (ver \cite{numpy.where}).}\\
 	\footnotesize \textcolor{lightgray}{(*) El umbral se asigna mediante un Scale (slider) de tkinter.}
 \end{frame}
 
@@ -421,7 +421,7 @@ def _aplicar_ecualizacion_histograma(self):
 	\end{lstlisting}
 	
 	\vfill
-	\footnotesize \textcolor{lightgray}{(*) np.cumsum hace la suma acumulada desde el principio hasta la posición del valor (ver \cite{numpy-cumsum}). np.bincount cuenta la cantidad de veces que aparece cada valor con indice igual a nivel de pixel y valor igual a frecuencia (ver \cite{numpy-bincount}).}
+	\footnotesize \textcolor{lightgray}{(*) np.cumsum hace la suma acumulada desde el principio hasta la posición del valor (ver \cite{numpy.cumsum}). np.bincount cuenta la cantidad de veces que aparece cada valor con indice igual a nivel de pixel y valor igual a frecuencia (ver \cite{numpy.bincount}).}
 \end{frame}
 
 \begin{frame}[fragile]{Resultados histogramas}
@@ -538,6 +538,28 @@ def _aplicar_ecualizacion_histograma(self):
 		\captionof{figure}{2ª ecualización}
 		\label{fig:lenaej6b}
 	\end{minipage}
+\end{frame}
+
+\begin{frame}{Explicación}
+	\justifying
+	\footnotesize
+	
+	Al ecualizar el histograma de una imagen por segunda vez se pueden notar varios puntos importantes:
+	
+	\begin{block}{Observaciones}
+		\begin{itemize}
+			\item Los cambios en la distribución de niveles de gris son mínimos 
+			(\textcolor{unahurverde}{imperceptibles en la imagen}).
+			
+			\item La primera ecualización ya redistribuyó los niveles de gris 
+			de manera casi uniforme, por lo que aplicar el proceso nuevamente 
+			no genera mejoras significativas en los niveles de gris.
+			
+			\item En otras palabras, después de la primera ecualización, 
+			el histograma está bastante \textcolor{unahurverde}{“uniforme”}, y la segunda pasada simplemente mantiene esa distribución, 
+			sin alterar demasiado la apariencia de la imagen.
+		\end{itemize}
+	\end{block}
 \end{frame}
 
 
@@ -670,7 +692,7 @@ def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
 	\end{lstlisting}
 	
 	\vfill
-	\footnotesize \textcolor{lightgray}{(*) np.random.choice (ver \cite{numpy-random.choice}). np.unravel\_index (ver \cite{numpy-unravel-index}).}
+	\footnotesize \textcolor{lightgray}{(*) np.random.choice (ver \cite{numpy.random.choice}). np.unravel\_index (ver \cite{numpy.unravel_index}).}
 \end{frame}
 
 \begin{frame}[fragile]{Resultados}
@@ -1282,6 +1304,192 @@ def _filtro_realce(self, k):
 
 \subsection{Punto b}
 
+\begin{frame}[fragile]{Filtro Media sobre Ruido Rayleigh}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Media}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}}  
+	con distintos valores de $\xi$ (1, 2 y 10).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro con $k=3$.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1_media}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2_media}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10_media}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Mediana sobre Ruido Rayleigh}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Mediana}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}}  
+	con distintos valores de $\xi$ (1, 2 y 10).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1_mediana}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2_mediana}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10_mediana}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Mediana Ponderada sobre Ruido Rayleigh}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Mediana Ponderada}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}}  
+	con distintos valores de $\xi$ (1, 2 y 10).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1_mediana_ponderada}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2_mediana_ponderada}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10_mediana_ponderada}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Gaussiano sobre Ruido Rayleigh}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Gaussiano}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}}  
+	con distintos valores de $\xi$ (1, 2 y 10).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1_gaussiano}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2_gaussiano}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10_gaussiano}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Realce de Bordes sobre Ruido Rayleigh}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro de Realce de Bordes}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}}  
+	con distintos valores de $\xi$ (1, 2 y 10).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi1_bordes}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi2_bordes}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_rayleigh_xi10_bordes}
+	\end{minipage}
+\end{frame}
+
+
 \section{Ejercicio 12}
 
 \begin{frame}
@@ -1351,6 +1559,22 @@ def _filtro_realce(self, k):
 		\captionof{figure}{Filtro Mediana}
 		\label{fig:lenaej12b2}
 	\end{minipage}
+\end{frame}
+
+\begin{frame}{Observaciones}
+	\justifying
+	Se puede observar como el filtro de la \textcolor{unahurverde}{\textbf{Mediana}} tiene muchísima utilidad para la eliminación de ruido Sal y Pimienta y otros tipos de ruido.
+\end{frame}
+
+\section{Repositorio}
+
+\begin{frame}{Repositorio de GitHub}
+	\justifying
+	Todo el código y los resultados de este trabajo están disponibles en mi repositorio de GitHub: 
+	
+	\vspace{0.5cm}
+	\centering
+	\href{https://github.com/matias-cisnero/procesamiento_imagenes}{\textcolor{unahurverde}{\textbf{https://github.com/matias-cisnero/procesamiento\_imagenes}}}
 \end{frame}
 
 \section{Bibliografía}
