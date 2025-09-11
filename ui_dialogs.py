@@ -453,8 +453,8 @@ class DialogoFiltro(DialogoHerramienta):
 
     def _on_apply(self):
         filtro, factor = self._obtener_filtro_y_factor()
-        #print("Filtro usado:")
-        #print(filtro)
+        print("Filtro usado:")
+        print(filtro)
         self.app._aplicar_filtro(self.copia_imagen, filtro, factor)
         self.destroy()
     

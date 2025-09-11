@@ -480,16 +480,10 @@ class EditorDeImagenes:
             for j in range(n):
                 for c in range(3):
                     region = imagen_padded[i:i+k, j:j+l, c]
-                    
                     valores = np.repeat(region.flatten(), indices_repeticion) # Indica cuantas veces se repite cada indice
-
                     mediana = np.median(valores)
-                    
                     imagen_filtrada[i, j, c] = mediana
-
-        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-
-        self.imagen_procesada = Image.fromarray(resultado_np)
+        self.imagen_procesada = Image.fromarray(imagen_filtrada.astype(np.uint8))
 
     # --- Mediana Ponderada
 
@@ -509,7 +503,7 @@ class EditorDeImagenes:
 
         for x in range(k):
             for y in range(k):
-                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2))
+                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(sigma**2))
 
         factor = 1 / np.sum(filtro)
         #print(f"Factor usado: {1} / {np.sum(filtro)}")

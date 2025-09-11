@@ -115,7 +115,7 @@
 
 	\begin{block}{Definición}
 		\[
-		T(r) = c \, r^\gamma, \quad 0 < \gamma < 2, \ \gamma \neq 1
+		T(r) = c . r^\gamma, \quad 0 < \gamma < 2, \ \gamma \neq 1
 		\]
 	\end{block}
 	
@@ -150,7 +150,8 @@ def _aplicar_gamma(self, imagen, gamma):
 
 \begin{frame}[fragile]{Resultados}
 	\justifying
-	Al aplicar la transformación con $\gamma = 1.5$ en la Figura~\ref{fig:lenaoriginal1} obtenemos la imagen de la Figura~\ref{fig:lenaej1}:
+	Al aplicar \textcolor{unahurverde}{\textbf{la transformación gamma}} con $\gamma = 1.5$ sobre la imagen de la Figura~\ref{fig:lenaoriginal1}, 
+	se obtuvo la versión modificada que aparece en la Figura~\ref{fig:lenaej1}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -207,7 +208,8 @@ def _aplicar_negativo(self):
 
 \begin{frame}[fragile]{Resultados}
 	\justifying
-	Al aplicar el negativo en la Figura~\ref{fig:lenaoriginal2} obtenemos la imagen de la Figura~\ref{fig:lenaej2}:
+    Al aplicar \textcolor{unahurverde}{\textbf{la transformación de negativo}} sobre la imagen de la Figura~\ref{fig:lenaoriginal2}, 
+    se obtuvo el resultado que se observa en la Figura~\ref{fig:lenaej2}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -245,12 +247,34 @@ def _aplicar_negativo(self):
 		\]
 	\end{block}
 	
+	Donde
+	
 	\begin{itemize}
-		Donde
 		\item $n_i:$ cantidad de ocurrencias del nivel de gris i dentro de la imagen.
-		\item $NM:$ cantidad total de píxeles de la imagen, M filas y N columnas.
+		\item $NM$ cantidad total de píxeles de la imagen, M filas y N columnas.
 	\end{itemize}
 	
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+    Al graficar \textcolor{unahurverde}{\textbf{el histograma de niveles de gris}} de la imagen de la Figura~\ref{fig:lenaoriginal3}, 
+    se obtuvo la representación que se muestra en la Figura~\ref{fig:lenaej3}.
+	\vspace{0.5cm}
+	
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal3}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_hist_gris}
+		\captionof{figure}{Histograma de la imagen}
+		\label{fig:lenaej3}
+	\end{minipage}
 \end{frame}
 
 \section{Ejercicio 4}
@@ -299,7 +323,8 @@ def _aplicar_umbralizacion(self, imagen, umbral):
 
 \begin{frame}[fragile]{Resultados}
 	\justifying
-	Al aplicar la umbralización con $u=128$ en la Figura~\ref{fig:lenaoriginal4} obtenemos la imagen de la Figura~\ref{fig:lenaej4}:
+    Al aplicar la técnica de \textcolor{unahurverde}{\textbf{umbralización}} sobre la imagen de la Figura~\ref{fig:lenaoriginal4}, 
+    con un valor de umbral de $u=128$, se obtuvo la imagen binaria que se muestra en la Figura~\ref{fig:lenaej4}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -312,7 +337,7 @@ def _aplicar_umbralizacion(self, imagen, umbral):
 	\begin{minipage}{0.45\linewidth}
 		\centering
 		\includegraphics[width=\linewidth]{../results/lena_ej4}
-		\captionof{figure}{Imagen en negativo}
+		\captionof{figure}{Imagen binaria}
 		\label{fig:lenaej4}
 	\end{minipage}
 \end{frame}
@@ -401,7 +426,8 @@ def _aplicar_ecualizacion_histograma(self):
 
 \begin{frame}[fragile]{Resultados histogramas}
 	\justifying
-	Al realizar la ecualización del histograma de la Figura~\ref{fig:hist_original} obtenemos el de la Figura~\ref{fig:hist_ecualizado}:
+	Al aplicar \textcolor{unahurverde}{\textbf{la ecualización del histograma}} sobre el de la Figura~\ref{fig:hist_original}, 
+	se obtuvo la versión ecualizada que se muestra en la Figura~\ref{fig:hist_ecualizado}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -421,7 +447,8 @@ def _aplicar_ecualizacion_histograma(self):
 
 \begin{frame}[fragile]{Resultados imagen}
 	\justifying
-	La ecualización de la imagen se puede apreciar al ver como al ecualizar la Figura~\ref{fig:lenaoriginal5} se obtiene la Figura~\ref{fig:lenaej5}:
+	Al aplicar \textcolor{unahurverde}{\textbf{la ecualización}} sobre la imagen de la Figura~\ref{fig:lenaoriginal5}, 
+	se obtuvo la versión mejorada que aparece en la Figura~\ref{fig:lenaej5}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -450,6 +477,69 @@ def _aplicar_ecualizacion_histograma(self):
 	Aplicar la ecualización del histograma por segunda vez a la misma imagen.  
 	Observar el resultado y dar una explicación de lo sucedido.
 \end{frame}
+
+\begin{frame}[fragile]{Resultados - Histogramas}
+	\justifying
+	En la Figura~\ref{fig:hist_original6} se muestra el histograma original.  
+	Al aplicar la primera \textcolor{unahurverde}{\textbf{ecualización}} se obtuvo el histograma de la Figura~\ref{fig:hist_ecualizado6a},  
+	y al aplicar una segunda \textcolor{unahurverde}{\textbf{ecualización}} se llegó al de la Figura~\ref{fig:hist_ecualizado6b}.
+	
+	\vspace{0.5cm}
+	\centering
+	% Histograma original
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_hist_gris}
+		\captionof{figure}{Histograma original}
+		\label{fig:hist_original6}
+	\end{minipage}\hfill
+	% Primera ecualización
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_hist_gris_ecualizado}
+		\captionof{figure}{1ª ecualización}
+		\label{fig:hist_ecualizado6a}
+	\end{minipage}\hfill
+	% Segunda ecualización
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_hist_gris_ecualizado2}
+		\captionof{figure}{2ª ecualización}
+		\label{fig:hist_ecualizado6b}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Imágenes}
+	\justifying
+	En la Figura~\ref{fig:lenaoriginal6} se observa la imagen original.  
+	Tras la primera \textcolor{unahurverde}{\textbf{ecualización}} se obtuvo la versión de la Figura~\ref{fig:lenaej6a},  
+	y al aplicar la \textcolor{unahurverde}{\textbf{ecualización}} una segunda vez se llegó a la Figura~\ref{fig:lenaej6b}.
+	
+	\vspace{0.5cm}
+	\centering
+	% Imagen original
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal6}
+	\end{minipage}\hfill
+	% Imagen 1ª ecualización
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej5}
+		\captionof{figure}{1ª ecualización}
+		\label{fig:lenaej6a}
+	\end{minipage}\hfill
+	% Imagen 2ª ecualización
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej6}
+		\captionof{figure}{2ª ecualización}
+		\label{fig:lenaej6b}
+	\end{minipage}
+\end{frame}
+
 
 \section{Ejercicio 7}
 
@@ -492,7 +582,8 @@ def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
 
 \begin{frame}[fragile]{Resultados}
 	\justifying
-	Los histogramas obtenidos fueron:
+	A continuación se muestran los histogramas generados para distintas distribuciones: 
+	Gaussiana, Rayleigh y Exponencial.
 	\vspace{0.3cm}
 	
 	\centering
@@ -556,25 +647,6 @@ def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
 	\end{block}
 \end{frame}
 
-\begin{frame}[fragile]{Resultados}
-	\justifying
-	La ecualización de la imagen se puede apreciar al ver como al ecualizar la Figura~\ref{fig:lenaoriginal8} se obtiene la Figura~\ref{fig:lenaej8}:
-	\vspace{0.5cm}
-	
-	\centering
-	\begin{minipage}{0.45\linewidth}
-		\centering
-		\includegraphics[width=\linewidth]{../results/lena_original}
-		\captionof{figure}{Imagen original}
-		\label{fig:lenaoriginal8}
-	\end{minipage}\hfill
-	\begin{minipage}{0.45\linewidth}
-		\centering
-		\includegraphics[width=\linewidth]{../results/lena_ej5}
-		\captionof{figure}{Imagen ecualizada}
-		\label{fig:lenaej8}
-	\end{minipage}
-\end{frame}
 
 \begin{frame}[fragile]{Código}
 	\justifying
@@ -599,6 +671,69 @@ def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
 	
 	\vfill
 	\footnotesize \textcolor{lightgray}{(*) np.random.choice (ver \cite{numpy-random.choice}). np.unravel\_index (ver \cite{numpy-unravel-index}).}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Al contaminar la imagen con \textcolor{unahurverde}{\textbf{ruido gaussiano aditivo}} y $\sigma=20$, 
+	se obtuvo el resultado que se muestra en la Figura~\ref{fig:lenaej8a}.
+	\vspace{0.5cm}
+	
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal8a}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej8a}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej8a}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Al contaminar la imagen con \textcolor{unahurverde}{\textbf{ruido Rayleigh multiplicativo}} y $\xi=2$, 
+	se obtuvo el resultado que se observa en la Figura~\ref{fig:lenaej8b}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal8b}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej8b}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej8b}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Al contaminar la imagen con \textcolor{unahurverde}{\textbf{ruido exponencial multiplicativo}} y $\frac{1}{\lambda}=1$, 
+	se obtuvo la versión que aparece en la Figura~\ref{fig:lenaej8c}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal8c}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej8c}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej8c}
+	\end{minipage}
 \end{frame}
 
 \section{Ejercicio 9}
@@ -656,7 +791,8 @@ def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
 
 \begin{frame}[fragile]{Resultados}
 	\justifying
-	Al aplicar el ruido Sal y Pimienta a una imagen con probabilidad $=10$ en la Figura~\ref{fig:lenaoriginal9} obtenemos la imagen de la Figura~\ref{fig:lenaej9}:
+	Al aplicar \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} a una imagen con probabilidad = 10 sobre la Figura~\ref{fig:lenaoriginal9},  
+	se obtuvo la versión ruidosa que aparece en la Figura~\ref{fig:lenaej9}.
 	\vspace{0.5cm}
 	
 	\centering
@@ -694,6 +830,253 @@ def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
 	\end{enumerate}
 \end{frame}
 
+\begin{frame}[fragile]{Aplicación de filtros}
+	\justifying
+	
+	\begin{block}{Estrategia}
+		\begin{enumerate}
+			\item Transformar la imagen a un \texttt{np.array} en formato \texttt{RGB}.
+			\item Obtener sus dimensiones $(m, n, c)$.
+			\item Calcular las dimensiones del filtro $(k, l)$ y el \textit{padding} necesario.
+			\item Generar una versión \textit{padded} de la imagen.
+			\item Inicializar una matriz vacía para la imagen filtrada.
+			\item Recorrer cada píxel y canal de color:
+			\begin{itemize}
+				\item Extraer la región correspondiente al filtro.
+				\item Multiplicar y sumar con la máscara del filtro.
+				\item Escalar el valor por el factor definido.
+			\end{itemize}
+			\item Escalar el resultado al rango $[0, 255]$.
+			\item Convertir el resultado nuevamente a imagen.
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Código - Aplicar filtro}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _aplicar_filtro(self, imagen, filtro, factor):
+	imagen_np = np.array(imagen.convert('RGB')).astype(float)
+	m, n, _ = imagen_np.shape
+	k, l = filtro.shape
+	pad_h, pad_w = k//2, l//2
+	
+	imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+	imagen_filtrada = np.zeros_like(imagen_np)
+	
+	for i in range(m):
+		for j in range(n):
+			for c in range(3):
+				region = imagen_padded[i:i+k, j:j+l, c]
+				valor = np.sum(region * filtro) * factor
+				imagen_filtrada[i, j, c] = valor
+	
+	resultado_np = self._escalar_255(imagen_filtrada)
+	self.imagen_procesada = Image.fromarray(resultado_np)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro de la media}
+	\justifying
+	El filtro de la media se obtiene de la siguiente manera:
+	
+	\begin{lstlisting}[language=Python]
+def _filtro_media(self, k):
+	filtro = np.ones((k, k))
+	
+	factor = 1 / np.sum(filtro)
+	return (filtro, factor)
+	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) np.pad (ver \cite{numpy.pad}).}\\
+	\footnotesize \textcolor{lightgray}{(*) np.repeat (ver \cite{numpy.repeat}).}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtro Media}
+	\justifying
+	Al aplicar \textcolor{unahurverde}{\textbf{el filtro Media}} sobre la imagen de la Figura~\ref{fig:lenaoriginal10a} con $k=3$,  
+	se obtuvo la versión suavizada que aparece en la Figura~\ref{fig:lenaej10a}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal10a}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10a}
+		\captionof{figure}{Imagen con filtro Media}
+		\label{fig:lenaej10a}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Código - Aplicar filtro Mediana}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _aplicar_filtro_mediana(self, imagen, filtro):
+	imagen_np = np.array(imagen.convert('RGB')).astype(float)
+	m, n, _ = imagen_np.shape
+	k, l = filtro.shape
+	pad_h, pad_w = k//2, l//2
+	imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+	imagen_filtrada = np.zeros_like(imagen_np)
+	indices_repeticion = filtro.flatten().astype(int)
+	
+	for i in range(m):
+		for j in range(n):
+			for c in range(3):
+				region = imagen_padded[i:i+k, j:j+l, c]
+				valores = np.repeat(region.flatten(), indices_repeticion) # Indica rep de cada indice
+				mediana = np.median(valores)
+				imagen_filtrada[i, j, c] = mediana
+	self.imagen_procesada = Image.fromarray(imagen_filtrada.astype(np.uint8))
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtro Mediana}
+	\justifying
+	Al aplicar \textcolor{unahurverde}{\textbf{el filtro Mediana}} sobre la imagen de la Figura~\ref{fig:lenaoriginal10b} con $k=3$,  
+	se obtuvo la versión suavizada que aparece en la Figura~\ref{fig:lenaej10b}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal10b}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10b}
+		\captionof{figure}{Imagen con filtro Mediana}
+		\label{fig:lenaej10b}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Mediana Ponderada}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _filtro_mediana_ponderada(self, k):
+	filtro_gauss, _ = self._filtro_gaussiano(k)
+	filtro = (filtro_gauss * 50).astype(int)
+	
+	factor = 1
+	return (filtro, factor)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtro Mediana Ponderada}
+	\justifying
+	Al aplicar \textcolor{unahurverde}{\textbf{el filtro Mediana Ponderada}} sobre la imagen de la Figura~\ref{fig:lenaoriginal10c} con $k=3$,  
+	se obtuvo la versión suavizada que aparece en la Figura~\ref{fig:lenaej10c}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal10c}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10c}
+		\captionof{figure}{Imagen con filtro Mediana Ponderada}
+		\label{fig:lenaej10c}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Gaussiano}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+		def _filtro_gaussiano(self, k):
+		filtro = np.ones((k, k)).astype(float)
+		u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
+		sigma = (k-1) / 2
+		
+		for x in range(k):
+		for y in range(k):
+		filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2))
+		
+		factor = 1 / np.sum(filtro)
+		return (filtro, factor)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtro Gaussiano}
+	\justifying
+	Al aplicar \textcolor{unahurverde}{\textbf{el filtro Gaussiano}} sobre la imagen de la Figura~\ref{fig:lenaoriginal10d},  
+	se obtuvieron las versiones suavizadas con distintos valores de sigma, que se muestran en las Figuras~\ref{fig:lenaej10d1} y~\ref{fig:lenaej10d2}.
+	
+	\vspace{0.5cm}
+	\centering
+	% Imagen original
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal10d}
+	\end{minipage}\hfill
+	% Sigma = 1
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10d1}
+		\captionof{figure}{Filtro Gaussiano, $\sigma = 1$}
+		\label{fig:lenaej10d1}
+	\end{minipage}\hfill
+	% Sigma = 2
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10d2}
+		\captionof{figure}{Filtro Gaussiano, $\sigma = 2$}
+		\label{fig:lenaej10d2}
+	\end{minipage}
+\end{frame}
+
+
+\begin{frame}[fragile]{Filtro Realce de Bordes}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _filtro_realce(self, k):
+	filtro = -1 * np.ones((k, k))
+	filtro[k//2, k//2] = k**2 - 1
+	
+	factor = 1
+	return (filtro, factor)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtro Realce de Bordes}
+	\justifying
+	Al aplicar \textcolor{unahurverde}{\textbf{el filtro Realce de Bordes}} sobre la imagen de la Figura~\ref{fig:lenaoriginal10e},  
+	se obtuvo la versión resaltada que aparece en la Figura~\ref{fig:lenaej10e}.
+	
+	\vspace{0.5cm}
+	\centering
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_original}
+		\captionof{figure}{Imagen original}
+		\label{fig:lenaoriginal10e}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej10e}
+		\captionof{figure}{Imagen con filtro Realce de Bordes}
+		\label{fig:lenaej10e}
+	\end{minipage}
+\end{frame}
+
 \section{Ejercicio 11}
 
 \begin{frame}
@@ -721,6 +1104,66 @@ def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
 	 Contaminar con ruido Sal y Pimienta con diferentes densidades y aplicarle el filtro de la media y de la mediana. Observar los resultados.
 \end{frame}
 
+\begin{frame}[fragile]{Resultados - Filtros sobre ruido Sal y Pimienta (a)}
+	\justifying
+	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} (Figura~\ref{fig:lenaej12a})  
+	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} y \textcolor{unahurverde}{\textbf{Mediana}}, obteniendo las Figuras~\ref{fig:lenaej12a1} y~\ref{fig:lenaej12a2}.
+	
+	\vspace{0.5cm}
+	\centering
+	% Imagen con ruido
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12a}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej12a}
+	\end{minipage}\hfill
+	% Filtro Media
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12a1}
+		\captionof{figure}{Filtro Media}
+		\label{fig:lenaej12a1}
+	\end{minipage}\hfill
+	% Filtro Mediana
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12a2}
+		\captionof{figure}{Filtro Mediana}
+		\label{fig:lenaej12a2}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados - Filtros sobre ruido Sal y Pimienta (b)}
+	\justifying
+	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} (Figura~\ref{fig:lenaej12b})  
+	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} y \textcolor{unahurverde}{\textbf{Mediana}}, obteniendo las Figuras~\ref{fig:lenaej12b1} y~\ref{fig:lenaej12b2}.
+	
+	\vspace{0.5cm}
+	\centering
+	% Imagen con ruido
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12b}
+		\captionof{figure}{Imagen con ruido}
+		\label{fig:lenaej12b}
+	\end{minipage}\hfill
+	% Filtro Media
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12b1}
+		\captionof{figure}{Filtro Media}
+		\label{fig:lenaej12b1}
+	\end{minipage}\hfill
+	% Filtro Mediana
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_ej12b2}
+		\captionof{figure}{Filtro Mediana}
+		\label{fig:lenaej12b2}
+	\end{minipage}
+\end{frame}
+
 \section{Bibliografía}
 	
 	\begin{frame}{Referencias}
@@ -731,33 +1174,37 @@ def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
 			NumPy Documentation: Broadcasting. 
 			\newblock \url{https://numpy.org/doc/stable/user/basics.broadcasting.html}
 			
-			\bibitem{numpy-where}
+			\bibitem{numpy.where}
 			NumPy Documentation: numpy.where. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.where.html}
 			
-			\bibitem{numpy-bincount}
+			\bibitem{numpy.bincount}
 			NumPy Documentation: numpy.bincount. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.bincount.html}
 			
-			\bibitem{numpy-sum}
+			\bibitem{numpy.sum}
 			NumPy Documentation: numpy.sum. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.sum.html}
 			
-			\bibitem{numpy-cumsum}
+			\bibitem{numpy.cumsum}
 			NumPy Documentation: numpy.cumsum. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html}
 			
-			\bibitem{numpy-unravel-index}
+			\bibitem{numpy.unravel_index}
 			NumPy Documentation: numpy.unravel\_index. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.unravel_index.html}
 			
-			\bibitem{numpy-random.choice}
+			\bibitem{numpy.random.choice}
 			NumPy Documentation: numpy.random.choice. 
 			\newblock \url{https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html}
 			
-			\bibitem{numpy-random.pad}
+			\bibitem{numpy.pad}
 			NumPy Documentation: numpy.pad. 
 			\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.pad.html}
+			
+			\bibitem{numpy.repeat}
+			NumPy Documentation: numpy.repeat. 
+			\newblock \url{https://numpy.org/doc/2.3/reference/generated/numpy.repeat.html}
 		\end{thebibliography}
 	\end{frame}
 	
