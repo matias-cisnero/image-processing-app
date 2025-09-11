@@ -1093,6 +1093,195 @@ def _filtro_realce(self, k):
 	\end{enumerate}
 \end{frame}
 
+\subsection{Punto a}
+
+\begin{frame}[fragile]{Filtro Media sobre Ruido Gaussiano}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Media}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Gaussiano aditivo}}  
+	con $\mu = 0$ y distintos valores de $\sigma$ (10, 20 y 50).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro con $k=3$.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10_media}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20_media}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50_media}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Mediana sobre Ruido Gaussiano}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Mediana}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Gaussiano aditivo}}  
+	con $\mu = 0$ y distintos valores de $\sigma$ (10, 20 y 50).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10_mediana}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20_mediana}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50_mediana}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Mediana Ponderada sobre Ruido Gaussiano}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Mediana Ponderada}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Gaussiano aditivo}}  
+	con $\mu = 0$ y distintos valores de $\sigma$ (10, 20 y 50).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10_mediana_ponderada}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20_mediana_ponderada}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50_mediana_ponderada}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Gaussiano sobre Ruido Gaussiano}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro Gaussiano}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Gaussiano aditivo}}  
+	con $\mu = 0$ y distintos valores de $\sigma$ (10, 20 y 50).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10_gaussiano}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20_gaussiano}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50_gaussiano}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Realce de Bordes sobre Ruido Gaussiano}
+	\justifying
+	\footnotesize
+	Se aplicó \textcolor{unahurverde}{\textbf{el filtro de Realce de Bordes}} sobre imágenes contaminadas con \textcolor{unahurverde}{\textbf{ruido Gaussiano aditivo}}  
+	con $\mu = 0$ y distintos valores de $\sigma$ (10, 20 y 50).  
+	La fila superior muestra las imágenes con ruido y la fila inferior los resultados tras aplicar el filtro.
+	
+	\centering
+	% Primera fila: imágenes con ruido
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50}
+	\end{minipage}
+	
+	% Segunda fila: imágenes filtradas
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma10_bordes}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma20_bordes}
+	\end{minipage}\hfill
+	\begin{minipage}{0.25\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{../results/lena_gauss_sigma50_bordes}
+	\end{minipage}
+\end{frame}
+
+\subsection{Punto b}
+
 \section{Ejercicio 12}
 
 \begin{frame}
@@ -1106,8 +1295,8 @@ def _filtro_realce(self, k):
 
 \begin{frame}[fragile]{Resultados - Filtros sobre ruido Sal y Pimienta (a)}
 	\justifying
-	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} (Figura~\ref{fig:lenaej12a})  
-	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} y \textcolor{unahurverde}{\textbf{Mediana}}, obteniendo las Figuras~\ref{fig:lenaej12a1} y~\ref{fig:lenaej12a2}.
+	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} con $p=0.01$ (Figura~\ref{fig:lenaej12a})  
+	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} con $k=5$ y \textcolor{unahurverde}{\textbf{Mediana}} con $k=3$, obteniendo las Figuras~\ref{fig:lenaej12a1} y~\ref{fig:lenaej12a2}.
 	
 	\vspace{0.5cm}
 	\centering
@@ -1136,8 +1325,8 @@ def _filtro_realce(self, k):
 
 \begin{frame}[fragile]{Resultados - Filtros sobre ruido Sal y Pimienta (b)}
 	\justifying
-	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} (Figura~\ref{fig:lenaej12b})  
-	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} y \textcolor{unahurverde}{\textbf{Mediana}}, obteniendo las Figuras~\ref{fig:lenaej12b1} y~\ref{fig:lenaej12b2}.
+	Sobre la imagen contaminada con \textcolor{unahurverde}{\textbf{ruido Sal y Pimienta}} con $p=0.10$ (Figura~\ref{fig:lenaej12b})  
+	se aplicaron los filtros de \textcolor{unahurverde}{\textbf{Media}} con $k=5$ y \textcolor{unahurverde}{\textbf{Mediana}} con $k=3$, obteniendo las Figuras~\ref{fig:lenaej12b1} y~\ref{fig:lenaej12b2}.
 	
 	\vspace{0.5cm}
 	\centering
