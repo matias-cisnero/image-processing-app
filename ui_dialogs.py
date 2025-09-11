@@ -359,7 +359,7 @@ class DialogoRuido(DialogoHerramienta):
             to=100,
             orient="horizontal",
             variable=self.valor_d,
-            resolution=1,
+            resolution=config['res'],
             showvalue=True,
             length=350
             ).pack(padx=5, pady=5)

@@ -71,6 +71,10 @@ class EditorDeImagenes:
         self.icono_mediana_ponderada = tk.PhotoImage(file="icons/mediana_ponderada.png").subsample(5,5)
         self.icono_borde = tk.PhotoImage(file="icons/borde.png").subsample(5,5)
 
+        # Atajos de teclado
+        self.root.bind("<Control-s>", self._guardar_imagen_como)
+        self.root.bind("<Control-z>", self._volver_imagen_original)
+
         self._setup_ui()
         self._vincular_eventos()
 
@@ -95,7 +99,7 @@ class EditorDeImagenes:
         menu_archivo = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Archivo", menu=menu_archivo)
         menu_archivo.add_command(label="Cargar Imagen...", image=self.icono_cargar, compound="left", command=self._cargar_imagen)
-        menu_archivo.add_command(label="Guardar Imagen Como...", image=self.icono_guardar, compound="left", command=self._guardar_imagen_como)
+        menu_archivo.add_command(label="Guardar Imagen Como...", image=self.icono_guardar, compound="left", command=self._guardar_imagen_como, accelerator="Ctrl+S")
         menu_archivo.add_separator()
         menu_archivo.add_command(label="Salir", image=self.icono_salir, compound="left", command=self.root.quit)
         
@@ -117,10 +121,10 @@ class EditorDeImagenes:
         menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
-        config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal, 'sal_y_pimienta': False}
-        config_rayleigh = {'titulo': "Ruido Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh, 'sal_y_pimienta': False}
-        config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential, 'sal_y_pimienta': False}
-        config_sal_y_pimienta = {'titulo': "Sal y Pimienta", 'param_label': "-", 'distribucion': np.random.normal, 'sal_y_pimienta': True}
+        config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal, 'sal_y_pimienta': False, 'res': 1}
+        config_rayleigh = {'titulo': "Ruido Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh, 'sal_y_pimienta': False, 'res': 1}
+        config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential, 'sal_y_pimienta': False, 'res': 1}
+        config_sal_y_pimienta = {'titulo': "Sal y Pimienta", 'param_label': "-", 'distribucion': np.random.normal, 'sal_y_pimienta': True, 'res': 2}
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
         menu_ruido.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_gaussiano))
         menu_ruido.add_command(label="Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
@@ -522,7 +526,7 @@ class EditorDeImagenes:
 
     @requiere_imagen
     @refrescar_imagen
-    def _volver_imagen_original(self):
+    def _volver_imagen_original(self, event=None):
         self.imagen_procesada = self.imagen_original
 
     @requiere_imagen
@@ -600,7 +604,7 @@ class EditorDeImagenes:
         self._ajustar_zoom_inicial()
 
     @requiere_imagen
-    def _guardar_imagen_como(self):
+    def _guardar_imagen_como(self, event=None):
         self._guardar_imagen_pil(self.imagen_procesada, "Guardar imagen como...")
 
     # --- Métodos de Soporte y Eventos ---
