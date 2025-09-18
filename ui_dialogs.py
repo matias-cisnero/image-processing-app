@@ -455,6 +455,8 @@ class DialogoFiltro(DialogoHerramienta):
         filtro, factor = self._obtener_filtro_y_factor()
         print("Filtro usado:")
         print(filtro)
+        print("Factor usado:")
+        print(factor)
         self.app._aplicar_filtro(self.copia_imagen, filtro, factor)
         self.destroy()
     
@@ -529,8 +531,52 @@ class DialogoFiltroRealce(DialogoFiltro):
     Diálogo específico para filtro de realce de bordes.
     """
     def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de la realce de bordes")
+        super().__init__(parent, app_principal, "Filtro de realce de bordes")
 
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
         return self.app._filtro_realce(k)
+
+class DialogoFiltroPrewittH(DialogoFiltro):
+    """
+    Diálogo específico para filtro de detección de bordes Prewitt.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Horizontal")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        return self.app._filtro_prewitt_h(k)
+    
+class DialogoFiltroPrewittV(DialogoFiltro):
+    """
+    Diálogo específico para filtro de detección de bordes Prewitt.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        return self.app._filtro_prewitt_v(k)
+
+class DialogoFiltroSobelH(DialogoFiltro):
+    """
+    Diálogo específico para filtro de detección de bordes Prewitt.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        return self.app._filtro_sobel_h(k)
+    
+class DialogoFiltroSobelV(DialogoFiltro):
+    """
+    Diálogo específico para filtro de detección de bordes Prewitt.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
+
+    def _obtener_filtro_y_factor(self):
+        k = int(self.tam_filtro.get())
+        return self.app._filtro_sobel_v(k)
