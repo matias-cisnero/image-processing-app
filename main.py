@@ -12,7 +12,7 @@ from utils import  requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist,
                         DialogoRuido,
-                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
+                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce, DialogoFiltroPrewittH, DialogoFiltroPrewittV, DialogoFiltroSobelH, DialogoFiltroSobelV
                         )
 
 def abrir_github(event):
@@ -139,6 +139,12 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
         menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
         menu_filtros.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
+        menu_filtros.add_command(label="Prewitt Horizontal", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroPrewittH))
+        menu_filtros.add_command(label="Prewitt Vertical", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroPrewittV))
+        menu_filtros.add_command(label="Sobel Horizontal", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroSobelH))
+        menu_filtros.add_command(label="Sobel Vertical", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroSobelV))
+        menu_filtros.add_command(label="Filtro Prueba", image=self.icono_borde, compound="left", command=self._aplicar_filtro_prueba)
+
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -449,8 +455,8 @@ class EditorDeImagenes:
                     
                     imagen_filtrada[i, j, c] = valor
 
-        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        resultado_np = self._escalar_255(imagen_filtrada)
+        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+        #resultado_np = self._escalar_255(imagen_filtrada)
 
         self.imagen_procesada = Image.fromarray(resultado_np)
 
@@ -521,6 +527,79 @@ class EditorDeImagenes:
 
         factor = 1
         return (filtro, factor)
+    
+    def _filtro_prewitt_h(self, k):
+        filtro = np.array([[-1, -1, -1],
+                           [0, 0, 0],
+                           [1, 1, 1]])
+        factor = 1 # usar 1 / 9
+        return (filtro, factor)
+    
+    def _filtro_prewitt_v(self, k):
+        filtro = np.array([[-1, 0, 1],
+                           [-1, 0, 1],
+                           [-1, 0, 1]])
+        factor = 1 # usar 1 / 9
+        return (filtro, factor)
+    
+    def _filtro_sobel_h(self, k):
+        filtro = np.array([[-1, -2, -1],
+                           [0, 0, 0],
+                           [1, 2, 1]])
+        factor = 1
+        return (filtro, factor)
+    
+    def _filtro_sobel_v(self, k):
+        filtro = np.array([[-1, 0, 1],
+                           [-2, 0, 2],
+                           [-1, 0, 1]])
+        factor = 1
+        return (filtro, factor)
+    
+    def _obtener_imagen_filtrada(self, imagen, filtro, factor):
+        imagen_np = np.array(imagen.convert('RGB')).astype(float)
+
+        m, n, _ = imagen_np.shape
+        k, l = filtro.shape
+        pad_h, pad_w = k//2, l//2
+
+        # Padding e imagen filtrada
+        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+        imagen_filtrada = np.zeros_like(imagen_np)
+
+        # Bucle para filtrado (c para los canales)
+        for i in range(m):
+            for j in range(n):
+                for c in range(3):
+                    region = imagen_padded[i:i+k, j:j+l, c]
+                    
+                    valor = np.sum(region * filtro) * factor
+                    
+                    imagen_filtrada[i, j, c] = valor
+
+        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+        #resultado_np = self._escalar_255(imagen_filtrada)
+
+        return imagen_filtrada
+
+    @requiere_imagen
+    @refrescar_imagen
+    def _aplicar_filtro_prueba(self):
+        k=3
+        filtro1, factor1 = self._filtro_prewitt_v(k)
+        filtro2, factor2 = self._filtro_prewitt_h(k)
+
+        img1 = self._obtener_imagen_filtrada(self.imagen_procesada, filtro1, factor1)
+        img2 = self._obtener_imagen_filtrada(self.imagen_procesada, filtro2, factor2)
+
+        imagen_filtrada = np.sqrt((img1**2)+(img2**2))
+
+        resultado_np = self._escalar_255(imagen_filtrada)
+
+        self.imagen_procesada = Image.fromarray(resultado_np)
+
+    
+
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 
