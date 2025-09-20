@@ -6,6 +6,8 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from processing import aplicar_gamma, aplicar_umbralizacion
+
 # --- DIÁLOGOS EMERGENTES ---
 
 class DialogoBase(tk.Toplevel):
@@ -140,14 +142,14 @@ class DialogoGamma(DialogoHerramienta):
             resolution=0.1,
             showvalue=True,
             length=200,
-            command=lambda value: self.app._aplicar_gamma(self.copia_imagen, float(value))
+            command=lambda value: self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=float(value))
             ).pack(padx=5, pady=5)
         
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _on_apply(self):
         gamma = float(self.valor_gamma.get())
-        self.app._aplicar_gamma(self.copia_imagen, gamma)
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=gamma)
         self.destroy()
     
     def _on_cancel(self):
@@ -173,14 +175,14 @@ class DialogoUmbralizacion(DialogoHerramienta):
             resolution=1,
             showvalue=True,
             length=350,
-            command=lambda value: self.app._aplicar_umbralizacion(self.copia_imagen, float(value))
+            command=lambda value: self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, float(value))
             ).pack(padx=5, pady=5)
         
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _on_apply(self):
-        gamma = float(self.valor_umbral.get())
-        self.app._aplicar_umbralizacion(self.copia_imagen, gamma)
+        umbral = float(self.valor_umbral.get())
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, umbral=umbral)
         self.destroy()
     
     def _on_cancel(self):
@@ -536,47 +538,3 @@ class DialogoFiltroRealce(DialogoFiltro):
     def _obtener_filtro_y_factor(self):
         k = int(self.tam_filtro.get())
         return self.app._filtro_realce(k)
-
-class DialogoFiltroPrewittH(DialogoFiltro):
-    """
-    Diálogo específico para filtro de detección de bordes Prewitt.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Horizontal")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_prewitt_h(k)
-    
-class DialogoFiltroPrewittV(DialogoFiltro):
-    """
-    Diálogo específico para filtro de detección de bordes Prewitt.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_prewitt_v(k)
-
-class DialogoFiltroSobelH(DialogoFiltro):
-    """
-    Diálogo específico para filtro de detección de bordes Prewitt.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_sobel_h(k)
-    
-class DialogoFiltroSobelV(DialogoFiltro):
-    """
-    Diálogo específico para filtro de detección de bordes Prewitt.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de detección de bordes Prewitt Vertical")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_sobel_v(k)

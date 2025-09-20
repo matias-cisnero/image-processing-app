@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 import webbrowser
 
 # Importaciones de código en archivos
-from utils import  requiere_imagen, refrescar_imagen
+from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist,
                         DialogoRuido,
-                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce, DialogoFiltroPrewittH, DialogoFiltroPrewittV, DialogoFiltroSobelH, DialogoFiltroSobelV
+                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
                         )
+from processing import escalar_255, aplicar_negativo
 
 def abrir_github(event):
     webbrowser.open_new("https://github.com/matias-cisnero/procesamiento_imagenes")
@@ -107,7 +108,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.icono_gamma, compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
         menu_operadores_puntuales.add_command(label="Umbralización", image=self.icono_umbralizacion, compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", image=self.icono_negativo, compound="left", command=self._aplicar_negativo)
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.icono_negativo, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
@@ -139,10 +140,10 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
         menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
         menu_filtros.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
-        menu_filtros.add_command(label="Prewitt Horizontal", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroPrewittH))
-        menu_filtros.add_command(label="Prewitt Vertical", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroPrewittV))
-        menu_filtros.add_command(label="Sobel Horizontal", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroSobelH))
-        menu_filtros.add_command(label="Sobel Vertical", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroSobelV))
+        menu_filtros.add_command(label="Prewitt Horizontal", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_prewitt_h))
+        menu_filtros.add_command(label="Prewitt Vertical", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_prewitt_v))
+        menu_filtros.add_command(label="Sobel Horizontal", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_sobel_h))
+        menu_filtros.add_command(label="Sobel Vertical", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_sobel_v))
         menu_filtros.add_command(label="Filtro Prueba", image=self.icono_borde, compound="left", command=self._aplicar_filtro_prueba)
 
 
@@ -272,53 +273,16 @@ class EditorDeImagenes:
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
 
-    # --- Escalar array a min = 0 y max = 255
-
-    def _escalar_255(self, imagen_np):
-        """
-        Escala linealmente un array de numpy al rango [0, 255].
-        """
-        min_val = np.min(imagen_np)
-        max_val = np.max(imagen_np)
-        if max_val == min_val:
-            return np.zeros_like(imagen_np, dtype=np.uint8)
-        array_normalizado = 255 * (imagen_np - min_val) / (max_val - min_val)
-        return array_normalizado.astype(np.uint8)
-
     # ===============================((OPERADORES_PUNTUALES))================================
-    
-    # --- Gamma
 
-    @refrescar_imagen
-    def _aplicar_gamma(self, imagen, gamma):
-        # Convierto en un array de (m, n, 3)
-        imagen_np = np.array(imagen)
-
-        c = (255)**(1-gamma)
-        resultado_np = c*(imagen_np**gamma)
-
-        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
-
-    # --- Umbralización
-
-    @refrescar_imagen
-    def _aplicar_umbralizacion(self, imagen, umbral):
-        # Convierto en un array de (m, n, 3)
-        imagen_np = np.array(imagen)
-
-        resultado_np = np.where(imagen_np >= umbral, 255, 0)
-
-        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
-    
-    # --- Negativo
-    
     @requiere_imagen
     @refrescar_imagen
-    def _aplicar_negativo(self):
-        # Convierto en un array de (m, n, 3)
-        imagen_np = np.array(self.imagen_procesada)
+    def _aplicar_transformacion(self, imagen, funcion, *args, **kwargs):
+        print("Funciona bien!!")
+        imagen_np = np.array(imagen.convert('RGB')) 
 
-        resultado_np = 255 - imagen_np
+        resultado_np = funcion(imagen_np, *args, **kwargs)
+
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
 
     # ================================((HISTOGRAMAS))========================================
@@ -369,7 +333,7 @@ class EditorDeImagenes:
         for k in range(len(sk)):
             sk[k] = np.sum(h_r[0:k+1])
         
-        sk_sombrero = self._escalar_255(sk) # Discretizamos
+        sk_sombrero = escalar_255(sk) # Discretizamos
         resultado_np = sk_sombrero[imagen_np_gris] # Lookup table
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
@@ -396,7 +360,7 @@ class EditorDeImagenes:
         if tipo == "Aditivo": imagen_np[D] += vector_ruido
         elif tipo == "Multiplicativo": imagen_np[D] *= vector_ruido
         
-        resultado_np = self._escalar_255(imagen_np)
+        resultado_np = escalar_255(imagen_np)
         self.imagen_procesada = Image.fromarray(resultado_np)
 
     # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
@@ -455,8 +419,8 @@ class EditorDeImagenes:
                     
                     imagen_filtrada[i, j, c] = valor
 
-        resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        #resultado_np = self._escalar_255(imagen_filtrada)
+        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
+        resultado_np = escalar_255(imagen_filtrada)
 
         self.imagen_procesada = Image.fromarray(resultado_np)
 
@@ -528,6 +492,10 @@ class EditorDeImagenes:
         factor = 1
         return (filtro, factor)
     
+    def _aplicar_filtro_directo(self, funcion):
+        filtro, factor = funcion(k=3)
+        self._aplicar_filtro(self.imagen_procesada, filtro, factor)
+
     def _filtro_prewitt_h(self, k):
         filtro = np.array([[-1, -1, -1],
                            [0, 0, 0],
@@ -578,7 +546,7 @@ class EditorDeImagenes:
                     imagen_filtrada[i, j, c] = valor
 
         #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        #resultado_np = self._escalar_255(imagen_filtrada)
+        #resultado_np = escalar_255(imagen_filtrada)
 
         return imagen_filtrada
 
@@ -594,7 +562,7 @@ class EditorDeImagenes:
 
         imagen_filtrada = np.sqrt((img1**2)+(img2**2))
 
-        resultado_np = self._escalar_255(imagen_filtrada)
+        resultado_np = escalar_255(imagen_filtrada)
 
         self.imagen_procesada = Image.fromarray(resultado_np)
 
