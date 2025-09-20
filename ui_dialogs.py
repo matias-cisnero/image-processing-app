@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from processing import aplicar_gamma, aplicar_umbralizacion
+from processing import aplicar_gamma, aplicar_umbralizacion, aplicar_filtro
 
 # --- DIÁLOGOS EMERGENTES ---
 
@@ -422,12 +422,16 @@ class DialogoFiltro(DialogoHerramienta):
     """
     Clase base para diálogos de filtro. Provee UI y lógica común.
     """
-    def __init__(self, parent, app_principal, titulo):
-        super().__init__(parent, app_principal, titulo)
+    def __init__(self, parent, app_principal, config):
+        super().__init__(parent, app_principal, config['titulo'])
         
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.tam_filtro = tk.StringVar(value="3")
         #self.factor = tk.StringVar(value="1")
+        self.gaussiano = config['gaussiano']
+        self.func_filtro = config['filtro']
+        self.modo = config['modo']
+        self.mediana = config['mediana']
 
         ttk.Label(self.frame_herramienta, text="Tamaño de mascara (k):").pack(padx=5, pady=(10, 0))
         tk.Scale(
@@ -442,24 +446,20 @@ class DialogoFiltro(DialogoHerramienta):
             command=self._actualizar_valor
             ).pack(padx=5, pady=5)
 
+        if self.gaussiano:
+            self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Sigma correspondiente (σ): {int((int(self.tam_filtro.get())-1)/2)}")
+            self.label_sigma.pack(padx=5, pady=(0, 10))
+
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
     def _actualizar_valor(self, valor):
-        pass
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        filtro = np.ones((k, k)).astype(int)
-        factor = 1
-        return (filtro, factor)
+        k = int(valor)
+        sigma = int((k-1) / 2)
+        self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
 
     def _on_apply(self):
-        filtro, factor = self._obtener_filtro_y_factor()
-        print("Filtro usado:")
-        print(filtro)
-        print("Factor usado:")
-        print(factor)
-        self.app._aplicar_filtro(self.copia_imagen, filtro, factor)
+        k = int(self.tam_filtro.get())
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro, func_filtro=self.func_filtro, k=k, modo=self.modo, mediana=self.mediana)
         self.destroy()
     
     def _on_cancel(self):

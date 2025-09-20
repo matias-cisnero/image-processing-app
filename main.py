@@ -12,9 +12,12 @@ from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist,
                         DialogoRuido,
-                        DialogoFiltro, DialogoFiltroMedia, DialogoFiltroMediana, DialogoFiltroMedianaPonderada, DialogoFiltroGaussiano, DialogoFiltroRealce
+                        DialogoFiltro
                         )
-from processing import escalar_255, aplicar_negativo
+from processing import (escalar_255, aplicar_negativo, aplicar_ecualizacion_histograma,
+                        aplicar_filtro, crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
+                        crear_filtro_prewitt_h, crear_filtro_prewitt_v, crear_filtro_sobel_h, crear_filtro_sobel_v, aplicar_filtro_combinado
+                        )
 
 def abrir_github(event):
     webbrowser.open_new("https://github.com/matias-cisnero/procesamiento_imagenes")
@@ -70,7 +73,11 @@ class EditorDeImagenes:
         self.icono_media = tk.PhotoImage(file="icons/media.png").subsample(5,5)
         self.icono_mediana = tk.PhotoImage(file="icons/mediana.png").subsample(5,5)
         self.icono_mediana_ponderada = tk.PhotoImage(file="icons/mediana_ponderada.png").subsample(5,5)
+        
         self.icono_borde = tk.PhotoImage(file="icons/borde.png").subsample(5,5)
+        self.icono_borde_h = tk.PhotoImage(file="icons/borde-superior.png").subsample(5,5)
+        self.icono_borde_v = tk.PhotoImage(file="icons/borde-izquierdo.png").subsample(5,5)
+        self.icono_borde_t = tk.PhotoImage(file="icons/borde-exterior.png").subsample(5,5)
 
         # Atajos de teclado
         self.root.bind("<Control-s>", self._guardar_imagen_como)
@@ -116,7 +123,7 @@ class EditorDeImagenes:
         config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.icono_histograma, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", image=self.icono_ecualizacion, compound="left", command=self._aplicar_ecualizacion_histograma)
+        menu_histogramas.add_command(label="Ecualización", image=self.icono_ecualizacion, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
         menu_histogramas.add_command(label="Generador Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
         menu_histogramas.add_command(label="Generador Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
         menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
@@ -134,18 +141,26 @@ class EditorDeImagenes:
         #menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
+        config_filtro_media = {'titulo': "Filtro de la Media", 'gaussiano': False, 'filtro': crear_filtro_media, 'modo': 0, 'mediana': False}
+        config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': crear_filtro_mediana, 'modo': 2, 'mediana': True}
+        config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': crear_filtro_mediana_ponderada, 'modo': 2, 'mediana': True}
+        config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': crear_filtro_gaussiano, 'modo': 0, 'mediana': False}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
-        menu_filtros.add_command(label="Media", image=self.icono_media, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedia))
-        menu_filtros.add_command(label="Mediana", image=self.icono_mediana, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMediana))
-        menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroMedianaPonderada))
-        menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroGaussiano))
-        menu_filtros.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltroRealce))
-        menu_filtros.add_command(label="Prewitt Horizontal", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_prewitt_h))
-        menu_filtros.add_command(label="Prewitt Vertical", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_prewitt_v))
-        menu_filtros.add_command(label="Sobel Horizontal", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_sobel_h))
-        menu_filtros.add_command(label="Sobel Vertical", image=self.icono_borde, compound="left", command=lambda: self._aplicar_filtro_directo(self._filtro_sobel_v))
-        menu_filtros.add_command(label="Filtro Prueba", image=self.icono_borde, compound="left", command=self._aplicar_filtro_prueba)
-
+        menu_filtros.add_command(label="Media", image=self.icono_media, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
+        menu_filtros.add_command(label="Mediana", image=self.icono_mediana, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
+        menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
+        menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
+        
+        menu_bordes = tk.Menu(barra_menu, tearoff=0)
+        config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
+        barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
+        menu_bordes.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
+        menu_bordes.add_command(label="Prewitt Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_h, modo=1))
+        menu_bordes.add_command(label="Prewitt Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_v, modo=1))
+        menu_bordes.add_command(label="Prewitt Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_h, func_filtro2=crear_filtro_prewitt_v))
+        menu_bordes.add_command(label="Sobel Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_h, modo=1))
+        menu_bordes.add_command(label="Sobel Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_v, modo=1))
+        menu_bordes.add_command(label="Sobel Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_h, func_filtro2=crear_filtro_sobel_v))
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -273,17 +288,21 @@ class EditorDeImagenes:
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
 
-    # ===============================((OPERADORES_PUNTUALES))================================
+    # =============================((APLICAR_TRANSFORMACIÓN))================================
 
     @requiere_imagen
     @refrescar_imagen
-    def _aplicar_transformacion(self, imagen, funcion, *args, **kwargs):
-        print("Funciona bien!!")
-        imagen_np = np.array(imagen.convert('RGB')) 
+    def _aplicar_transformacion(self, imagen, funcion, *args, byn=False, **kwargs,):
+        if byn:
+            imagen_np = np.array(imagen.convert('L')).astype(float)
+            print("Transformo en byn!!")
+        else:
+            imagen_np = np.array(imagen.convert('RGB')).astype(float)
+            print("Transformo en color!!")
 
         resultado_np = funcion(imagen_np, *args, **kwargs)
 
-        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8'))
+        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
 
     # ================================((HISTOGRAMAS))========================================
 
@@ -311,32 +330,6 @@ class EditorDeImagenes:
             'verde': datos_g,
             'azul': datos_b
         }
-
-    # --- Ecualización
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_ecualizacion_histograma(self):
-        """
-        Realiza la ecualización del histograma.
-        """
-        # Array de la forma (m. n).
-        imagen_np_gris = np.array(self.imagen_procesada.convert('L'))
-        datos_gris = imagen_np_gris.flatten()
-
-        n_r = np.bincount(datos_gris, minlength=256) # Freq abs(ni)
-        NM = datos_gris.size # Pixels totales(n)
-        h_r = n_r / NM # Freq relativa(ni/n)
-
-        # Hacemos la suma acumulada
-        sk = np.zeros(256)
-        for k in range(len(sk)):
-            sk[k] = np.sum(h_r[0:k+1])
-        
-        sk_sombrero = escalar_255(sk) # Discretizamos
-        resultado_np = sk_sombrero[imagen_np_gris] # Lookup table
-
-        self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
 
     # ===================================((RUIDO))===========================================
 
@@ -391,183 +384,7 @@ class EditorDeImagenes:
 
     # ===================================((FILTROS))=========================================
 
-    # --- Filtrado en el Dominio Espacial
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_filtro(self, imagen, filtro, factor):
-        """
-        Aplica un filtro a la imagen.
-        """
-        imagen_np = np.array(imagen.convert('RGB')).astype(float)
-
-        m, n, _ = imagen_np.shape
-        k, l = filtro.shape
-        pad_h, pad_w = k//2, l//2
-
-        # Padding e imagen filtrada
-        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
-        imagen_filtrada = np.zeros_like(imagen_np)
-
-        # Bucle para filtrado (c para los canales)
-        for i in range(m):
-            for j in range(n):
-                for c in range(3):
-                    region = imagen_padded[i:i+k, j:j+l, c]
-                    
-                    valor = np.sum(region * filtro) * factor
-                    
-                    imagen_filtrada[i, j, c] = valor
-
-        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        resultado_np = escalar_255(imagen_filtrada)
-
-        self.imagen_procesada = Image.fromarray(resultado_np)
-
-    # --- Media
-
-    def _filtro_media(self, k):
-        filtro = np.ones((k, k))
-
-        factor = 1 / np.sum(filtro)
-        return (filtro, factor)
-
-    # --- Mediana
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_filtro_mediana(self, imagen, filtro):
-        imagen_np = np.array(imagen.convert('RGB')).astype(float)
-
-        m, n, _ = imagen_np.shape
-        k, l = filtro.shape
-        pad_h, pad_w = k//2, l//2
-
-        # Padding e imagen filtrada
-        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
-        imagen_filtrada = np.zeros_like(imagen_np)
-
-        indices_repeticion = filtro.flatten().astype(int)
-
-        # Bucle para filtrado (c para los canales)
-        for i in range(m):
-            for j in range(n):
-                for c in range(3):
-                    region = imagen_padded[i:i+k, j:j+l, c]
-                    valores = np.repeat(region.flatten(), indices_repeticion) # Indica cuantas veces se repite cada indice
-                    mediana = np.median(valores)
-                    imagen_filtrada[i, j, c] = mediana
-        self.imagen_procesada = Image.fromarray(imagen_filtrada.astype(np.uint8))
-
-    # --- Mediana Ponderada
-
-    def _filtro_mediana_ponderada(self, k):
-        filtro_gauss, _ = self._filtro_gaussiano(k)
-        filtro = (filtro_gauss * 50).astype(int)
-
-        factor = 1
-        return (filtro, factor)
-
-    # --- Gaussiano
-
-    def _filtro_gaussiano(self, k):
-        filtro = np.ones((k, k)).astype(float)
-        u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
-        sigma = (k-1) / 2
-
-        for x in range(k):
-            for y in range(k):
-                filtro[x, y] = (1 / (2 * np.pi * sigma**2)) * np.exp(-((x - u)**2 + (y - u)**2)/(sigma**2))
-
-        factor = 1 / np.sum(filtro)
-        #print(f"Factor usado: {1} / {np.sum(filtro)}")
-        return (filtro, factor)
-
-    # --- Realce de Bordes
-
-    def _filtro_realce(self, k):
-        filtro = -1 * np.ones((k, k))
-        filtro[k//2, k//2] = k**2 - 1
-
-        factor = 1
-        return (filtro, factor)
-    
-    def _aplicar_filtro_directo(self, funcion):
-        filtro, factor = funcion(k=3)
-        self._aplicar_filtro(self.imagen_procesada, filtro, factor)
-
-    def _filtro_prewitt_h(self, k):
-        filtro = np.array([[-1, -1, -1],
-                           [0, 0, 0],
-                           [1, 1, 1]])
-        factor = 1 # usar 1 / 9
-        return (filtro, factor)
-    
-    def _filtro_prewitt_v(self, k):
-        filtro = np.array([[-1, 0, 1],
-                           [-1, 0, 1],
-                           [-1, 0, 1]])
-        factor = 1 # usar 1 / 9
-        return (filtro, factor)
-    
-    def _filtro_sobel_h(self, k):
-        filtro = np.array([[-1, -2, -1],
-                           [0, 0, 0],
-                           [1, 2, 1]])
-        factor = 1
-        return (filtro, factor)
-    
-    def _filtro_sobel_v(self, k):
-        filtro = np.array([[-1, 0, 1],
-                           [-2, 0, 2],
-                           [-1, 0, 1]])
-        factor = 1
-        return (filtro, factor)
-    
-    def _obtener_imagen_filtrada(self, imagen, filtro, factor):
-        imagen_np = np.array(imagen.convert('RGB')).astype(float)
-
-        m, n, _ = imagen_np.shape
-        k, l = filtro.shape
-        pad_h, pad_w = k//2, l//2
-
-        # Padding e imagen filtrada
-        imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
-        imagen_filtrada = np.zeros_like(imagen_np)
-
-        # Bucle para filtrado (c para los canales)
-        for i in range(m):
-            for j in range(n):
-                for c in range(3):
-                    region = imagen_padded[i:i+k, j:j+l, c]
-                    
-                    valor = np.sum(region * filtro) * factor
-                    
-                    imagen_filtrada[i, j, c] = valor
-
-        #resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        #resultado_np = escalar_255(imagen_filtrada)
-
-        return imagen_filtrada
-
-    @requiere_imagen
-    @refrescar_imagen
-    def _aplicar_filtro_prueba(self):
-        k=3
-        filtro1, factor1 = self._filtro_prewitt_v(k)
-        filtro2, factor2 = self._filtro_prewitt_h(k)
-
-        img1 = self._obtener_imagen_filtrada(self.imagen_procesada, filtro1, factor1)
-        img2 = self._obtener_imagen_filtrada(self.imagen_procesada, filtro2, factor2)
-
-        imagen_filtrada = np.sqrt((img1**2)+(img2**2))
-
-        resultado_np = escalar_255(imagen_filtrada)
-
-        self.imagen_procesada = Image.fromarray(resultado_np)
-
-    
-
+    # Pasado a processing y ui_dialogs
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 
