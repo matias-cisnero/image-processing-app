@@ -40,6 +40,7 @@ def aplicar_ecualizacion_histograma(imagen_np: np.ndarray) -> np.ndarray:
     """
     Realiza la ecualización del histograma.
     """
+    imagen_np = imagen_np.astype(np.uint8)
     datos_gris = imagen_np.flatten()
 
     n_r = np.bincount(datos_gris, minlength=256) # Freq abs(ni)

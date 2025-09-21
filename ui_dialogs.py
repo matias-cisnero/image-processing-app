@@ -351,41 +351,55 @@ class DialogoRuido(DialogoHerramienta):
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.tipo = tk.StringVar(value="Aditivo")
         self.valor_d = tk.StringVar(value="20")
-        self.intensidad = tk.IntVar(value="10")
+        self.intensidad = tk.StringVar(value="10")
         self.sal_y_pimienta = config['sal_y_pimienta']
 
-        ttk.Label(self.frame_herramienta, text="Porcentaje de Píxeles a Afectar (%):").pack(padx=5, pady=(10, 0))
+        frame_principal = self.frame_herramienta
+        frame_principal.columnconfigure(1, weight=1)
+
+        grupo_general = ttk.LabelFrame(frame_principal, text="Parámetros Generales", padding=10)
+        grupo_general.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
+        grupo_general.columnconfigure(1, weight=1)
+
+        ttk.Label(grupo_general, text="Píxeles a Afectar (%):").grid(row=0, column=0, sticky="w", pady=5)
         tk.Scale(
-            self.frame_herramienta,
+            grupo_general,
             from_=0,
             to=100,
             orient="horizontal",
             variable=self.valor_d,
             resolution=config['res'],
-            showvalue=True,
-            length=350
-            ).pack(padx=5, pady=5)
+            showvalue=True#,
+            #length=250
+            ).grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        
 
         if not self.sal_y_pimienta:
-            ttk.Label(self.frame_herramienta, text="Selecciona el tipo de aplicación de ruido").pack(padx=5, pady=5)
+            grupo_especifico = ttk.Labelframe(frame_principal, text="Parámetros Específicos", padding=10)
+            grupo_especifico.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+            grupo_especifico.columnconfigure(1, weight=1)
 
-            ttk.Radiobutton(self.frame_herramienta, text="Aditivo", variable=self.tipo, value="Aditivo").pack(padx=5, pady=5)
-            ttk.Radiobutton(self.frame_herramienta, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(padx=5, pady=5)
+            ttk.Label(grupo_general, text="Tipo de Aplicación:").grid(row=1, column=0, sticky="w", pady=5)
 
-            ttk.Label(self.frame_herramienta, text=self.config['param_label']).pack(padx=5, pady=(10,0))
+            frame_radios = ttk.Frame(grupo_general)
+            ttk.Radiobutton(frame_radios, text="Aditivo", variable=self.tipo, value="Aditivo").pack(side="left", padx=5)
+            ttk.Radiobutton(frame_radios, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(side="left", padx=5)
+            frame_radios.grid(row=1, column=1, sticky="w", pady=5)
+
+            ttk.Label(grupo_especifico, text=self.config['param_label']).grid(row=0, column=0, sticky="w", pady=5)
 
             tk.Scale(
-                self.frame_herramienta,
+                grupo_especifico,
                 from_=0,
                 to=50,
                 orient="horizontal",
                 variable=self.intensidad,
                 resolution=1,
-                showvalue=True,
-                length=350
-                ).pack(padx=5, pady=5)
+                showvalue=True#,
+                #length=250
+                ).grid(row=0, column=1, sticky="ew", padx=5, pady=5)
         else:
-            ttk.Label(self.frame_herramienta, text="p = (porcentaje / 2) / 100").pack(padx=5, pady=(10, 0))
+            ttk.Label(grupo_general, text="p = (porcentaje / 2) / 100").grid(row=1, column=0, columnspan=2)
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
@@ -453,9 +467,10 @@ class DialogoFiltro(DialogoHerramienta):
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
     def _actualizar_valor(self, valor):
-        k = int(valor)
-        sigma = int((k-1) / 2)
-        self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
+        if self.gaussiano:
+            k = int(valor)
+            sigma = int((k-1) / 2)
+            self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
 
     def _on_apply(self):
         k = int(self.tam_filtro.get())
@@ -465,76 +480,3 @@ class DialogoFiltro(DialogoHerramienta):
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
-
-class DialogoFiltroMedia(DialogoFiltro):
-    """
-    Diálogo específico para filtro de la media.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de la media")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_media(k)
-    
-class DialogoFiltroMediana(DialogoFiltro):
-    """
-    Diálogo específico para filtro de la mediana.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de la mediana")
-    
-    def _on_apply(self):
-        filtro, _ = self._obtener_filtro_y_factor()
-        print("Filtro usado:")
-        print(filtro)
-        self.app._aplicar_filtro_mediana(self.copia_imagen, filtro)
-        self.destroy()
-
-class DialogoFiltroMedianaPonderada(DialogoFiltro):
-    """
-    Diálogo específico para filtro de la mediana ponderada.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de la mediana ponderada")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_mediana_ponderada(k)
-    
-    def _on_apply(self):
-        filtro, _ = self._obtener_filtro_y_factor()
-        print("Filtro usado:")
-        print(filtro)
-        self.app._aplicar_filtro_mediana(self.copia_imagen, filtro)
-        self.destroy()
-    
-class DialogoFiltroGaussiano(DialogoFiltro):
-    """
-    Diálogo específico para filtro gaussiano.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro gaussiano")
-
-        self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Sigma correspondiente (σ): {int((int(self.tam_filtro.get())-1)/2)}")
-        self.label_sigma.pack(padx=5, pady=(0, 10))
-
-    def _actualizar_valor(self, valor):
-        k = int(valor)
-        sigma = int((k-1) / 2)
-        self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_gaussiano(k)
-
-class DialogoFiltroRealce(DialogoFiltro):
-    """
-    Diálogo específico para filtro de realce de bordes.
-    """
-    def __init__(self, parent, app_principal):
-        super().__init__(parent, app_principal, "Filtro de realce de bordes")
-
-    def _obtener_filtro_y_factor(self):
-        k = int(self.tam_filtro.get())
-        return self.app._filtro_realce(k)
