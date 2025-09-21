@@ -124,6 +124,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.icono_histograma, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
         menu_histogramas.add_command(label="Ecualización", image=self.icono_ecualizacion, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
+        menu_histogramas.add_separator()
         menu_histogramas.add_command(label="Generador Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
         menu_histogramas.add_command(label="Generador Rayleigh", image=self.icono_rayleigh, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
         menu_histogramas.add_command(label="Generador Exponencial", image=self.icono_exponencial, compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
@@ -142,22 +143,25 @@ class EditorDeImagenes:
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         config_filtro_media = {'titulo': "Filtro de la Media", 'gaussiano': False, 'filtro': crear_filtro_media, 'modo': 0, 'mediana': False}
+        config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': crear_filtro_gaussiano, 'modo': 0, 'mediana': False}
         config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': crear_filtro_mediana, 'modo': 2, 'mediana': True}
         config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': crear_filtro_mediana_ponderada, 'modo': 2, 'mediana': True}
-        config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': crear_filtro_gaussiano, 'modo': 0, 'mediana': False}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
         menu_filtros.add_command(label="Media", image=self.icono_media, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
+        menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
+        menu_filtros.add_separator()
         menu_filtros.add_command(label="Mediana", image=self.icono_mediana, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
         menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
-        menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
         config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
         barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
         menu_bordes.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
+        menu_bordes.add_separator()
         menu_bordes.add_command(label="Prewitt Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_h, modo=1))
         menu_bordes.add_command(label="Prewitt Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_v, modo=1))
         menu_bordes.add_command(label="Prewitt Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_h, func_filtro2=crear_filtro_prewitt_v))
+        menu_bordes.add_separator()
         menu_bordes.add_command(label="Sobel Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_h, modo=1))
         menu_bordes.add_command(label="Sobel Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_v, modo=1))
         menu_bordes.add_command(label="Sobel Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_h, func_filtro2=crear_filtro_sobel_v))
