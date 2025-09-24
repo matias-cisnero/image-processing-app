@@ -6,6 +6,7 @@ import numpy as np
 from typing import Optional, Tuple, Callable
 import matplotlib.pyplot as plt
 import webbrowser
+import customtkinter as ctk
 
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
@@ -100,12 +101,12 @@ class EditorDeImagenes:
         panel_principal.pack(fill=tk.BOTH, expand=True)
         panel_principal.grid_columnconfigure(0, weight=1)
         panel_principal.grid_columnconfigure(1, weight=1)
-        panel_principal.grid_columnconfigure(2, minsize=50)
+        panel_principal.grid_columnconfigure(2, minsize=1)
         panel_principal.grid_rowconfigure(0, weight=1)
 
         self._crear_visores_de_imagen(panel_principal)
         self._crear_panel_control_fijo(panel_principal)
-        self._crear_controles_zoom()
+        self._crear_panel_inferior()
 
     def _crear_menu(self):
         barra_menu = tk.Menu(self.root)
@@ -209,66 +210,82 @@ class EditorDeImagenes:
         return canvas
 
     def _crear_panel_control_fijo(self, parent: tk.Frame):
-        panel_control = ttk.Frame(parent, padding=10)
-        panel_control.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
-
-        # --- Grupo 1: Acciones Principales (en una sola columna) ---
-        grupo_acciones = ttk.Labelframe(panel_control, text="Herramientas", padding=10)
-        grupo_acciones.grid(row=0, column=0, sticky="n", pady=5)
+        panel_control = ttk.Frame(parent, padding=5)
+        panel_control.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
 
         # Botón 1: Volver a Original
-        btn_volver = ttk.Button(grupo_acciones, image=self.icono_imagen_original, command=self._volver_imagen_original)
+        btn_volver = ttk.Button(panel_control, image=self.icono_imagen_original, command=self._volver_imagen_original)
         btn_volver.grid(row=0, column=0, pady=4)
         Tooltip(widget=btn_volver, text="Volver a Original (Ctrl+Z)")
 
         # Botón 2: Convertir a Grises
-        btn_grises = ttk.Button(grupo_acciones, image=self.icono_escala_grises, command=self._escala_grises)
+        btn_grises = ttk.Button(panel_control, image=self.icono_escala_grises, command=self._escala_grises)
         btn_grises.grid(row=1, column=0, pady=4)
         Tooltip(widget=btn_grises, text="Convertir a escala de grises")
 
         # Botón 3: Recortar Región
-        btn_recorte = ttk.Button(grupo_acciones, image=self.icono_recorte, command=self._activar_modo_recorte)
+        btn_recorte = ttk.Button(panel_control, image=self.icono_recorte, command=self._activar_modo_recorte)
         btn_recorte.grid(row=2, column=0, pady=4)
         Tooltip(widget=btn_recorte, text="Activar modo para recortar una región")
 
         # Botón 4: Restar Imágenes
-        btn_resta = ttk.Button(grupo_acciones, image=self.icono_resta_imagenes, command=self._iniciar_resta)
+        btn_resta = ttk.Button(panel_control, image=self.icono_resta_imagenes, command=self._iniciar_resta)
         btn_resta.grid(row=3, column=0, pady=4)
         Tooltip(widget=btn_resta, text="Restar una segunda imagen de la actual")
 
         # Botón 5: Seleccionar Pixel
-        btn_pixel = ttk.Button(grupo_acciones, image=self.icono_pixel, command=self._activar_modo_seleccion)
+        btn_pixel = ttk.Button(panel_control, image=self.icono_pixel, command=self._activar_modo_seleccion)
         btn_pixel.grid(row=4, column=0, pady=4)
         Tooltip(widget=btn_pixel, text="Seleccionar un pixel y modificar su valor")
         
-        # --- Grupo 2: Edición de Píxel (Más Compacto) ---
-        frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
-        frame_pixel.grid(row=1, column=0, sticky="n", pady=5)
-        
-        panel_info_pixel = ttk.Frame(frame_pixel)
-        panel_info_pixel.pack(pady=(0, 10))
-
-        # 1. El preview de color arriba, centrado
-        self.color_preview = tk.Canvas(panel_info_pixel, width=40, height=40, bg="white", relief="sunken", borderwidth=1)
-        self.color_preview.pack(pady=5)
-
-        # 2. El grid con los valores R, G, B debajo
-        grid_rgb = ttk.Frame(panel_info_pixel)
-        grid_rgb.pack(pady=5)
-        
-        for i, canal in enumerate(self.CANALES_RGB):
-            ttk.Label(grid_rgb, text=f"{canal}:").grid(row=i, column=0, sticky="w")
-            ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=5).grid(row=i, column=1, padx=5)
-        
-    def _crear_controles_zoom(self):
+    def _crear_panel_inferior(self):
         footer_frame = ttk.Frame(self.root, padding=5)
         footer_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=2)
 
-        footer_frame.columnconfigure(1, weight=1)
+        footer_frame.columnconfigure(0, weight=1)
 
-        # --- 1. Frame Izquierdo: Controles de Zoom ---
+        # --- 1. Frame Izquierdo: Herramientas ---
+
+        frame_herramientas = ttk.Frame(footer_frame)
+        frame_herramientas.grid(row=0, column=0, sticky="w")
+
+        panel_info_pixel = ttk.Frame(frame_herramientas)
+        panel_info_pixel.pack(pady=(0, 10))
+
+        ttk.Label(panel_info_pixel, text="Color:").grid(row=0, column=0, sticky="ns", padx=(0, 5))
+
+        # 2. El preview de color
+        self.color_preview = tk.Canvas(panel_info_pixel, width=20, height=20, bg="white", relief="sunken", borderwidth=1)
+        self.color_preview.grid(row=0, column=1, sticky="ns", padx=(0, 5))
+
+        # 3. El separator
+        ttk.Separator(panel_info_pixel, orient='vertical').grid(row=0, column=2, sticky="ns")
+
+        # 4. El grid con los valores R, G, B
+        grid_rgb = ttk.Frame(panel_info_pixel)
+        grid_rgb.grid(row=0, column=3, sticky="w", padx=(5, 0))
+        
+        pos = [(0, 1), (2, 3), (4, 5)]
+        for i, canal in enumerate(self.CANALES_RGB):
+            col = pos[i]
+            ttk.Label(grid_rgb, text=f"{canal}:").grid(row=0, column=col[0], sticky="w")
+            ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=3).grid(row=0, column=col[1], padx=5)
+
+        # --- 2. Frame Central: Créditos y Enlaces ---
+        frame_creditos = ttk.Frame(footer_frame)
+        frame_creditos.grid(row=0, column=0, sticky="e")
+        
+        label_github = ttk.Label(frame_creditos, text="GitHub", foreground="blue", cursor="hand2", image=self.icono_github, compound="left")
+        label_github.pack(side=tk.LEFT, padx=5)
+        label_github.bind("<Button-1>", abrir_github)
+
+        label_creditos = ttk.Label(frame_creditos, text="Iconos por Flaticon", foreground="blue", cursor="hand2", image=self.icono_flaticon, compound="left")
+        label_creditos.pack(side=tk.LEFT, padx=10)
+        label_creditos.bind("<Button-1>", abrir_flaticon)
+
+        # --- 3. Frame Derecho: Controles de Zoom ---
         frame_zoom = ttk.Frame(footer_frame)
-        frame_zoom.grid(row=0, column=0, sticky="w")
+        frame_zoom.grid(row=0, column=2, sticky="w")
 
         ttk.Label(frame_zoom, text="Zoom:").pack(side=tk.LEFT, padx=(5, 5))
         
@@ -291,19 +308,6 @@ class EditorDeImagenes:
         )
         self.zoom_spinbox.pack(side=tk.LEFT, padx=5)
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
-
-
-        # --- 2. Frame Derecho: Créditos y Enlaces ---
-        frame_creditos = ttk.Frame(footer_frame)
-        frame_creditos.grid(row=0, column=2, sticky="e")
-        
-        label_github = ttk.Label(frame_creditos, text="GitHub", foreground="blue", cursor="hand2", image=self.icono_github, compound="left")
-        label_github.pack(side=tk.LEFT, padx=5)
-        label_github.bind("<Button-1>", abrir_github)
-
-        label_creditos = ttk.Label(frame_creditos, text="Iconos por Flaticon", foreground="blue", cursor="hand2", image=self.icono_flaticon, compound="left")
-        label_creditos.pack(side=tk.LEFT, padx=10)
-        label_creditos.bind("<Button-1>", abrir_flaticon)
 
     # =======================================================================================
     #                              2. LÓGICA DE HERRAMIENTAS

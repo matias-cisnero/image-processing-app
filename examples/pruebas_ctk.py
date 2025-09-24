@@ -19,5 +19,4 @@ progress_ttk.start()
 canvas_tk = tk.Canvas(root, width=200, height=50, bg="purple")
 canvas_tk.pack(pady=10)
 canvas_tk.create_text(100, 25, text="Canvas Clásico (tk)", fill="white")
-
 root.mainloop()
