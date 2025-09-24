@@ -9,18 +9,20 @@ import webbrowser
 
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
-from ui_dialogs import (DialogoBase, DialogoDimensiones, DialogoResultado, DialogoHerramienta, DialogoGamma, DialogoUmbralizacion,
-                        DialogoHistogramas, DialogoHistogramaDist,
-                        DialogoRuido,
-                        DialogoFiltro
+from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
+                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip
                         )
 from processing import (escalar_255, aplicar_negativo, aplicar_ecualizacion_histograma,
                         aplicar_filtro, crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
-                        crear_filtro_prewitt_h, crear_filtro_prewitt_v, crear_filtro_sobel_h, crear_filtro_sobel_v, aplicar_filtro_combinado
+                        crear_filtro_prewitt_h, crear_filtro_prewitt_v, crear_filtro_sobel_h, crear_filtro_sobel_v, aplicar_filtro_combinado,
+                        crear_filtro_laplace
                         )
 
 def abrir_github(event):
     webbrowser.open_new("https://github.com/matias-cisnero/procesamiento_imagenes")
+
+def abrir_flaticon(event):
+    webbrowser.open_new("https://www.flaticon.com/uicons")
 
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
@@ -53,11 +55,13 @@ class EditorDeImagenes:
 
         self.icono_imagen_original = tk.PhotoImage(file="icons/imagen_original.png").subsample(5,5)
         self.icono_escala_grises = tk.PhotoImage(file="icons/escala_grises.png").subsample(5,5)
-        self.icono_pixel = tk.PhotoImage(file="icons/pixel.png").subsample(5,5)
+        self.icono_pixel = tk.PhotoImage(file="icons/gotero.png").subsample(5,5)
         self.icono_recorte = tk.PhotoImage(file="icons/recorte.png").subsample(5,5)
         self.icono_analisis = tk.PhotoImage(file="icons/analisis.png").subsample(5,5)
         self.icono_resta_imagenes = tk.PhotoImage(file="icons/resta_imagenes.png").subsample(5,5)
+
         self.icono_github = tk.PhotoImage(file="icons/github.png").subsample(5,5)
+        self.icono_flaticon = tk.PhotoImage(file="icons/flaticon.png").subsample(5,5)
 
         self.icono_gamma = tk.PhotoImage(file="icons/gamma.png").subsample(5,5)
         self.icono_umbralizacion = tk.PhotoImage(file="icons/umbralizacion.png").subsample(5,5)
@@ -78,8 +82,11 @@ class EditorDeImagenes:
         self.icono_borde_h = tk.PhotoImage(file="icons/borde-superior.png").subsample(5,5)
         self.icono_borde_v = tk.PhotoImage(file="icons/borde-izquierdo.png").subsample(5,5)
         self.icono_borde_t = tk.PhotoImage(file="icons/borde-exterior.png").subsample(5,5)
+        self.icono_laplaciano = tk.PhotoImage(file="icons/laplaciano.png").subsample(5,5)
+        self.icono_pendiente = tk.PhotoImage(file="icons/pendiente.png").subsample(5,5)
 
         # Atajos de teclado
+        self.root.bind("<Control-o>", self._cargar_imagen)
         self.root.bind("<Control-s>", self._guardar_imagen_como)
         self.root.bind("<Control-z>", self._volver_imagen_original)
 
@@ -106,7 +113,7 @@ class EditorDeImagenes:
         
         menu_archivo = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Archivo", menu=menu_archivo)
-        menu_archivo.add_command(label="Cargar Imagen...", image=self.icono_cargar, compound="left", command=self._cargar_imagen)
+        menu_archivo.add_command(label="Cargar Imagen...", image=self.icono_cargar, compound="left", command=self._cargar_imagen, accelerator="Ctrl+O")
         menu_archivo.add_command(label="Guardar Imagen Como...", image=self.icono_guardar, compound="left", command=self._guardar_imagen_como, accelerator="Ctrl+S")
         menu_archivo.add_separator()
         menu_archivo.add_command(label="Salir", image=self.icono_salir, compound="left", command=self.root.quit)
@@ -165,6 +172,10 @@ class EditorDeImagenes:
         menu_bordes.add_command(label="Sobel Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_h, modo=1))
         menu_bordes.add_command(label="Sobel Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_v, modo=1))
         menu_bordes.add_command(label="Sobel Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_h, func_filtro2=crear_filtro_sobel_v))
+        menu_bordes.add_separator()
+        menu_bordes.add_command(label="Método del Laplaciano", image=self.icono_laplaciano, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_laplace, modo=0))
+        menu_bordes.add_command(label="Evaluación de la pendiente", image=self.icono_pendiente, compound="left")
+        menu_bordes.add_command(label="LOG (Marr-Hildreth)", image=self.icono_laplaciano, compound="left")
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -200,17 +211,39 @@ class EditorDeImagenes:
     def _crear_panel_control_fijo(self, parent: tk.Frame):
         panel_control = ttk.Frame(parent, padding=10)
         panel_control.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
+        # Hacemos que la columna principal del panel se expanda
+        panel_control.columnconfigure(0, weight=1)
 
-        frame_imagen_original = ttk.Labelframe(panel_control, text="Volver a imagen original", padding=10)
-        frame_imagen_original.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_imagen_original, text="Volver", image=self.icono_imagen_original, compound="left", command=self._volver_imagen_original).pack(fill=tk.X)
+        # --- Grupo 1: Acciones Principales (en una sola columna) ---
+        grupo_acciones = ttk.Labelframe(panel_control, text="Acciones Rápidas", padding=10)
+        grupo_acciones.grid(row=0, column=0, sticky="ew", pady=5)
+        # Hacemos que la columna de botones no se expanda para que mantengan su tamaño
+        grupo_acciones.columnconfigure(0, weight=0)
 
-        frame_escala_grises = ttk.Labelframe(panel_control, text="Convertir a escala de grises", padding=10)
-        frame_escala_grises.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_escala_grises, text="Convertir", image=self.icono_escala_grises, compound="left", command=self._escala_grises).pack(fill=tk.X)
+        # --- Creamos los botones solo con iconos y sus tooltips ---
+
+        # Botón 1: Volver a Original
+        btn_volver = ttk.Button(grupo_acciones, image=self.icono_imagen_original, command=self._volver_imagen_original)
+        btn_volver.grid(row=0, column=0, pady=4) # Eliminamos sticky="ew" para que no se estire
+        Tooltip(widget=btn_volver, text="Volver a Original (Ctrl+Z)")
+
+        # Botón 2: Convertir a Grises
+        btn_grises = ttk.Button(grupo_acciones, image=self.icono_escala_grises, command=self._escala_grises)
+        btn_grises.grid(row=1, column=0, pady=4)
+        Tooltip(widget=btn_grises, text="Convertir a escala de grises")
+
+        # Botón 3: Recortar Región
+        btn_recorte = ttk.Button(grupo_acciones, image=self.icono_recorte, command=self._activar_modo_recorte)
+        btn_recorte.grid(row=2, column=0, pady=4)
+        Tooltip(widget=btn_recorte, text="Activar modo para recortar una región")
+
+        # Botón 4: Restar Imágenes
+        btn_resta = ttk.Button(grupo_acciones, image=self.icono_resta_imagenes, command=self._iniciar_resta)
+        btn_resta.grid(row=3, column=0, pady=4)
+        Tooltip(widget=btn_resta, text="Restar una segunda imagen de la actual")
         
         frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
-        frame_pixel.pack(fill=tk.X, pady=5)
+        frame_pixel.grid(row=1, column=0, sticky="ew", pady=5)
         
         pixel_grid = ttk.Frame(frame_pixel)
         pixel_grid.pack(fill=tk.X)
@@ -220,56 +253,52 @@ class EditorDeImagenes:
             ttk.Label(pixel_grid, text=f"{canal}:").grid(row=i, column=0, sticky="w")
             ttk.Entry(pixel_grid, textvariable=self.rgb_vars[canal], width=5).grid(row=i, column=1, padx=5)
         
-        ttk.Button(frame_pixel, text="Activar Selección de Píxel", image=self.icono_pixel, compound="left", command=self._activar_modo_seleccion).pack(fill=tk.X, pady=(10,0))
-        
-        frame_recorte = ttk.Labelframe(panel_control, text="Recortar Región", padding=10)
-        frame_recorte.pack(fill=tk.X, pady=5)
-        ttk.Button(frame_recorte, text="Activar Selección para Recorte", image=self.icono_recorte, compound="left", command=self._activar_modo_recorte).pack(fill=tk.X)
-
-        frame_analisis = ttk.Labelframe(panel_control, text="Análisis de Región", padding=10)
-        frame_analisis.pack(fill=tk.X, pady=5)
-        
-        def add_analisis_row(parent, label, var, row):
-            ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=1)
-            ttk.Label(parent, textvariable=var).grid(row=row, column=1, sticky="w", padx=5)
-
-        add_analisis_row(frame_analisis, "Total Píxeles:", self.analisis_vars["total"], 0)
-        ttk.Separator(frame_analisis, orient=tk.HORIZONTAL).grid(row=1, columnspan=2, sticky="ew", pady=5)
-        add_analisis_row(frame_analisis, "Promedio R:", self.analisis_vars["r"], 2)
-        add_analisis_row(frame_analisis, "Promedio G:", self.analisis_vars["g"], 3)
-        add_analisis_row(frame_analisis, "Promedio B:", self.analisis_vars["b"], 4)
-        add_analisis_row(frame_analisis, "Promedio Gris:", self.analisis_vars["gris"], 5)
-        
-        ttk.Button(frame_analisis, text="Activar Análisis de Región", image=self.icono_analisis, compound="left", command=self._activar_modo_analisis).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10,0))
-
-        frame_resta_imagenes = ttk.Labelframe(panel_control, text="Resta de Imagenes", padding=10)
-        frame_resta_imagenes.pack(fill=tk.X, pady=5)
-
-        ttk.Button(frame_resta_imagenes, text="Restar Imagenes", image=self.icono_resta_imagenes, compound="left", command=self._iniciar_resta).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(10,0))
-
-        label_github = ttk.Label(panel_control, text="Mi repositorio en GitHub", foreground="blue", cursor="hand2", image=self.icono_github, compound="left")
-        label_github.pack(fill=tk.X, pady=5)
-        label_github.bind("<Button-1>", abrir_github)
+        ttk.Button(frame_pixel, text="Selección de Píxel", image=self.icono_pixel, compound="left", command=self._activar_modo_seleccion).pack(fill=tk.X, pady=(10,0))
         
     def _crear_controles_zoom(self):
-        zoom_frame = ttk.Labelframe(self.root, text="Zoom", padding=5)
-        zoom_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
+        footer_frame = ttk.Frame(self.root, padding=5)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=2)
 
-        ttk.Label(zoom_frame, text=f"{self.ZOOM_MIN*100:.0f}%").pack(side=tk.LEFT, padx=(5,0))
-        self.zoom_slider = ttk.Scale(zoom_frame, from_=self.ZOOM_MIN, to=self.ZOOM_MAX, orient=tk.HORIZONTAL, command=self._actualizar_zoom_desde_slider)
-        self.zoom_slider.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        ttk.Label(zoom_frame, text=f"{self.ZOOM_MAX*100:.0f}%").pack(side=tk.LEFT, padx=(0,5))
+        footer_frame.columnconfigure(1, weight=1)
+
+        # --- 1. Frame Izquierdo: Controles de Zoom ---
+        frame_zoom = ttk.Frame(footer_frame)
+        frame_zoom.grid(row=0, column=0, sticky="w")
+
+        ttk.Label(frame_zoom, text="Zoom:").pack(side=tk.LEFT, padx=(5, 5))
         
+        self.zoom_slider = ttk.Scale(
+            frame_zoom,
+            from_=self.ZOOM_MIN,
+            to=self.ZOOM_MAX,
+            orient=tk.HORIZONTAL,
+            command=self._actualizar_zoom_desde_slider
+        )
+        self.zoom_slider.pack(side=tk.LEFT, padx=5)
+
         self.zoom_spinbox = ttk.Spinbox(
-            zoom_frame, 
-            from_=self.ZOOM_MIN*100, 
-            to=self.ZOOM_MAX*100, 
-            textvariable=self.zoom_var, 
-            width=8, 
+            frame_zoom,
+            from_=self.ZOOM_MIN * 100,
+            to=self.ZOOM_MAX * 100,
+            textvariable=self.zoom_var,
+            width=8,
             command=self._actualizar_zoom_desde_spinbox
         )
-        self.zoom_spinbox.pack(side=tk.RIGHT, padx=5)
+        self.zoom_spinbox.pack(side=tk.LEFT, padx=5)
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
+
+
+        # --- 2. Frame Derecho: Créditos y Enlaces ---
+        frame_creditos = ttk.Frame(footer_frame)
+        frame_creditos.grid(row=0, column=2, sticky="e")
+        
+        label_github = ttk.Label(frame_creditos, text="GitHub", foreground="blue", cursor="hand2", image=self.icono_github, compound="left")
+        label_github.pack(side=tk.LEFT, padx=5)
+        label_github.bind("<Button-1>", abrir_github)
+
+        label_creditos = ttk.Label(frame_creditos, text="Iconos por Flaticon", foreground="blue", cursor="hand2", image=self.icono_flaticon, compound="left")
+        label_creditos.pack(side=tk.LEFT, padx=10)
+        label_creditos.bind("<Button-1>", abrir_flaticon)
 
     # =======================================================================================
     #                              2. LÓGICA DE HERRAMIENTAS
@@ -438,7 +467,7 @@ class EditorDeImagenes:
         self._activar_modo_region(self._on_release_analisis)
 
     # --- Lógica de Carga y Guardado ---
-    def _cargar_imagen(self):
+    def _cargar_imagen(self, event=None):
         ruta = filedialog.askopenfilename(title="Seleccionar Imagen", filetypes=self.FORMATOS_IMAGEN)
         if not ruta: return
         try:
@@ -601,12 +630,59 @@ class EditorDeImagenes:
         self._desactivar_modos()
         self.region_start_coords = None
     
+   # def _on_release_recorte(self, box: Tuple[int, int, int, int]):
+  #      """Callback que se ejecuta al soltar el mouse en modo recorte."""
+ #       if box[2] - box[0] > 0 and box[3] - box[1] > 0:
+#            recorte_pil = self.imagen_procesada.crop(box)
+#            self._mostrar_ventana_resultado(recorte_pil, "Resultado del Recorte")
+    
     def _on_release_recorte(self, box: Tuple[int, int, int, int]):
-        """Callback que se ejecuta al soltar el mouse en modo recorte."""
-        if box[2] - box[0] > 0 and box[3] - box[1] > 0:
-            recorte_pil = self.imagen_procesada.crop(box)
-            self._mostrar_ventana_resultado(recorte_pil, "Resultado del Recorte")
+        """
+        Callback que se ejecuta al soltar el mouse.
+        Ahora recorta Y analiza la región seleccionada.
+        """
+        if box[2] - box[0] <= 0 or box[3] - box[1] <= 0: return
+
+        # 1. Recorta la imagen
+        recorte_pil = self.imagen_procesada.crop(box)
         
+        # 2. Analiza la misma región recortada
+        pixeles = np.array(recorte_pil)
+        promedio_rgb = np.mean(pixeles, axis=(0, 1))
+        r = int(promedio_rgb[0])
+        g = int(promedio_rgb[1])
+        b = int(promedio_rgb[2])
+        promedio_gris = int(0.299 * r + 0.587 * g + 0.114 * b)
+        
+        # 3. Guarda los datos en un diccionario para pasárselos al nuevo diálogo
+        datos_analisis = {
+            "Total Píxeles": f"{pixeles.shape[0] * pixeles.shape[1]}",
+            "Promedio R": f"{r}",
+            "Promedio G": f"{g}",
+            "Promedio B": f"{b}",
+            "Promedio Gris": f"{promedio_gris}"
+        }
+
+        # 4. Muestra el nuevo diálogo que contiene la imagen Y los datos
+        self._mostrar_ventana_recorte_con_analisis(recorte_pil, datos_analisis)
+
+    # --- Crear un nuevo método para mostrar el diálogo mejorado ---
+    def _mostrar_ventana_recorte_con_analisis(self, imagen_pil: Image.Image, datos: dict):
+        """Muestra el nuevo diálogo con la imagen recortada y los datos de análisis."""
+        # Define la función de guardado para el botón del diálogo
+        def guardar():
+            self._guardar_imagen_pil(imagen_pil, "Guardar recorte como...")
+
+        # (Asegúrate de importar DialogoRecorteConAnalisis desde ui_dialogs.py)
+        DialogoRecorteConAnalisis(
+            parent=self.root,
+            titulo="Recorte y Análisis",
+            imagen_pil=imagen_pil,
+            datos_analisis=datos,
+            guardar_callback=guardar
+        )
+
+
     def _on_release_analisis(self, box: Tuple[int, int, int, int]):
         if box[2] - box[0] <= 0 or box[3] - box[1] <= 0: return
         region_pil = self.imagen_procesada.crop(box)
