@@ -16,3 +16,4 @@ __pycache__/
 *.vrb
 *.nav
 *.snm
+ui_dialogs_ctk.py

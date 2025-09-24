@@ -27,7 +27,7 @@ def abrir_flaticon(event):
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
 class EditorDeImagenes:
-    GEOMETRIA_VENTANA = "1200x800+200+15"
+    GEOMETRIA_VENTANA = "1200x700+220+60"
     FORMATOS_IMAGEN = [("Imágenes Soportadas", "*.jpg *.jpeg *.png *.bmp *.pgm *.raw"), ("Todos los archivos", "*.*")]
     CANALES_RGB = ("R", "G", "B")
     ZOOM_MIN, ZOOM_MAX = 0.1, 3.0
@@ -100,7 +100,7 @@ class EditorDeImagenes:
         panel_principal.pack(fill=tk.BOTH, expand=True)
         panel_principal.grid_columnconfigure(0, weight=1)
         panel_principal.grid_columnconfigure(1, weight=1)
-        panel_principal.grid_columnconfigure(2, minsize=250)
+        panel_principal.grid_columnconfigure(2, minsize=50)
         panel_principal.grid_rowconfigure(0, weight=1)
 
         self._crear_visores_de_imagen(panel_principal)
@@ -211,20 +211,14 @@ class EditorDeImagenes:
     def _crear_panel_control_fijo(self, parent: tk.Frame):
         panel_control = ttk.Frame(parent, padding=10)
         panel_control.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
-        # Hacemos que la columna principal del panel se expanda
-        panel_control.columnconfigure(0, weight=1)
 
         # --- Grupo 1: Acciones Principales (en una sola columna) ---
-        grupo_acciones = ttk.Labelframe(panel_control, text="Acciones Rápidas", padding=10)
-        grupo_acciones.grid(row=0, column=0, sticky="ew", pady=5)
-        # Hacemos que la columna de botones no se expanda para que mantengan su tamaño
-        grupo_acciones.columnconfigure(0, weight=0)
-
-        # --- Creamos los botones solo con iconos y sus tooltips ---
+        grupo_acciones = ttk.Labelframe(panel_control, text="Herramientas", padding=10)
+        grupo_acciones.grid(row=0, column=0, sticky="n", pady=5)
 
         # Botón 1: Volver a Original
         btn_volver = ttk.Button(grupo_acciones, image=self.icono_imagen_original, command=self._volver_imagen_original)
-        btn_volver.grid(row=0, column=0, pady=4) # Eliminamos sticky="ew" para que no se estire
+        btn_volver.grid(row=0, column=0, pady=4)
         Tooltip(widget=btn_volver, text="Volver a Original (Ctrl+Z)")
 
         # Botón 2: Convertir a Grises
@@ -241,19 +235,30 @@ class EditorDeImagenes:
         btn_resta = ttk.Button(grupo_acciones, image=self.icono_resta_imagenes, command=self._iniciar_resta)
         btn_resta.grid(row=3, column=0, pady=4)
         Tooltip(widget=btn_resta, text="Restar una segunda imagen de la actual")
+
+        # Botón 5: Seleccionar Pixel
+        btn_pixel = ttk.Button(grupo_acciones, image=self.icono_pixel, command=self._activar_modo_seleccion)
+        btn_pixel.grid(row=4, column=0, pady=4)
+        Tooltip(widget=btn_pixel, text="Seleccionar un pixel y modificar su valor")
         
+        # --- Grupo 2: Edición de Píxel (Más Compacto) ---
         frame_pixel = ttk.Labelframe(panel_control, text="Edición de Píxel", padding=10)
-        frame_pixel.grid(row=1, column=0, sticky="ew", pady=5)
+        frame_pixel.grid(row=1, column=0, sticky="n", pady=5)
         
-        pixel_grid = ttk.Frame(frame_pixel)
-        pixel_grid.pack(fill=tk.X)
-        self.color_preview = tk.Canvas(pixel_grid, width=40, height=40, bg="white", relief=tk.SUNKEN, borderwidth=1)
-        self.color_preview.grid(row=0, column=2, rowspan=3, padx=(10, 0))
+        panel_info_pixel = ttk.Frame(frame_pixel)
+        panel_info_pixel.pack(pady=(0, 10))
+
+        # 1. El preview de color arriba, centrado
+        self.color_preview = tk.Canvas(panel_info_pixel, width=40, height=40, bg="white", relief="sunken", borderwidth=1)
+        self.color_preview.pack(pady=5)
+
+        # 2. El grid con los valores R, G, B debajo
+        grid_rgb = ttk.Frame(panel_info_pixel)
+        grid_rgb.pack(pady=5)
+        
         for i, canal in enumerate(self.CANALES_RGB):
-            ttk.Label(pixel_grid, text=f"{canal}:").grid(row=i, column=0, sticky="w")
-            ttk.Entry(pixel_grid, textvariable=self.rgb_vars[canal], width=5).grid(row=i, column=1, padx=5)
-        
-        ttk.Button(frame_pixel, text="Selección de Píxel", image=self.icono_pixel, compound="left", command=self._activar_modo_seleccion).pack(fill=tk.X, pady=(10,0))
+            ttk.Label(grid_rgb, text=f"{canal}:").grid(row=i, column=0, sticky="w")
+            ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=5).grid(row=i, column=1, padx=5)
         
     def _crear_controles_zoom(self):
         footer_frame = ttk.Frame(self.root, padding=5)
@@ -460,12 +465,6 @@ class EditorDeImagenes:
         self._desactivar_modos()
         self._activar_modo_region(self._on_release_recorte)
 
-    @requiere_imagen
-    def _activar_modo_analisis(self):
-        self._desactivar_modos()
-        self._limpiar_resultados_analisis()
-        self._activar_modo_region(self._on_release_analisis)
-
     # --- Lógica de Carga y Guardado ---
     def _cargar_imagen(self, event=None):
         ruta = filedialog.askopenfilename(title="Seleccionar Imagen", filetypes=self.FORMATOS_IMAGEN)
@@ -630,12 +629,6 @@ class EditorDeImagenes:
         self._desactivar_modos()
         self.region_start_coords = None
     
-   # def _on_release_recorte(self, box: Tuple[int, int, int, int]):
-  #      """Callback que se ejecuta al soltar el mouse en modo recorte."""
- #       if box[2] - box[0] > 0 and box[3] - box[1] > 0:
-#            recorte_pil = self.imagen_procesada.crop(box)
-#            self._mostrar_ventana_resultado(recorte_pil, "Resultado del Recorte")
-    
     def _on_release_recorte(self, box: Tuple[int, int, int, int]):
         """
         Callback que se ejecuta al soltar el mouse.
@@ -669,11 +662,9 @@ class EditorDeImagenes:
     # --- Crear un nuevo método para mostrar el diálogo mejorado ---
     def _mostrar_ventana_recorte_con_analisis(self, imagen_pil: Image.Image, datos: dict):
         """Muestra el nuevo diálogo con la imagen recortada y los datos de análisis."""
-        # Define la función de guardado para el botón del diálogo
         def guardar():
             self._guardar_imagen_pil(imagen_pil, "Guardar recorte como...")
 
-        # (Asegúrate de importar DialogoRecorteConAnalisis desde ui_dialogs.py)
         DialogoRecorteConAnalisis(
             parent=self.root,
             titulo="Recorte y Análisis",
@@ -681,23 +672,6 @@ class EditorDeImagenes:
             datos_analisis=datos,
             guardar_callback=guardar
         )
-
-
-    def _on_release_analisis(self, box: Tuple[int, int, int, int]):
-        if box[2] - box[0] <= 0 or box[3] - box[1] <= 0: return
-        region_pil = self.imagen_procesada.crop(box)
-        pixeles = np.array(region_pil)
-        promedio_rgb = np.mean(pixeles, axis=(0, 1))
-        r, g, b = int(promedio_rgb[0]), int(promedio_rgb[1]), int(promedio_rgb[2])
-        promedio_gris = int(0.299 * r + 0.587 * g + 0.114 * b)
-        self.analisis_vars["total"].set(f"{pixeles.shape[0] * pixeles.shape[1]}")
-        self.analisis_vars["r"].set(f"{r}")
-        self.analisis_vars["g"].set(f"{g}")
-        self.analisis_vars["b"].set(f"{b}")
-        self.analisis_vars["gris"].set(f"{promedio_gris}")
-
-    def _limpiar_resultados_analisis(self):
-        for var in self.analisis_vars.values(): var.set("-")
 
     def _mostrar_ventana_resultado(self, imagen_pil: Image.Image, titulo: str):
         def guardar():
