@@ -8,6 +8,48 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import aplicar_gamma, aplicar_umbralizacion, aplicar_filtro
 
+# --- TOOLTIP ---
+
+class Tooltip:
+    """
+    Crea una etiqueta de ayuda emergente (tooltip) para cualquier widget de Tkinter.
+    """
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tip)
+        self.widget.bind("<Leave>", self.hide_tip)
+
+    def show_tip(self, event=None):
+        if self.tooltip_window:
+            return
+        
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+
+        self.tooltip_window = tk.Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+
+        # --- CORRECCIÓN AQUÍ ---
+        # Se reemplaza 'padding' por 'padx' y 'pady'.
+        label = tk.Label(
+            self.tooltip_window,
+            text=self.text,
+            background="#FFFFE0",
+            relief="solid",
+            borderwidth=1,
+            padx=5, # Padding horizontal
+            pady=3  # Padding vertical
+        )
+        label.pack()
+
+    def hide_tip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+        self.tooltip_window = None
+
 # --- DIÁLOGOS EMERGENTES ---
 
 class DialogoBase(tk.Toplevel):
@@ -95,6 +137,44 @@ class DialogoResultado(DialogoBase):
         frame_botones.pack(pady=5, padx=10, fill=tk.X)
         ttk.Button(frame_botones, text="Guardar...", command=guardar_callback).pack(side=tk.LEFT, expand=True, padx=5)
         ttk.Button(frame_botones, text="Cerrar", command=self.destroy).pack(side=tk.RIGHT, expand=True, padx=5)
+        self._finalizar_y_posicionar()
+        self.wait_window(self)
+
+class DialogoRecorteConAnalisis(DialogoBase):
+    """
+    Un diálogo que muestra una imagen, sus datos de análisis y botones.
+    """
+    def __init__(self, parent, titulo: str, imagen_pil: Image.Image, datos_analisis: dict, guardar_callback: Callable):
+        super().__init__(parent)
+        self.title(titulo)
+
+        # --- Parte de la Imagen ---
+        img_tk = ImageTk.PhotoImage(imagen_pil)
+        label_imagen = ttk.Label(self, image=img_tk)
+        label_imagen.image_ref = img_tk # Guarda la referencia
+        label_imagen.pack(padx=10, pady=10)
+        
+        ttk.Separator(self, orient='horizontal').pack(fill='x', pady=5, padx=10)
+
+        # --- Parte del Análisis ---
+        frame_analisis = ttk.Labelframe(self, text="Análisis de la Región", padding=10)
+        frame_analisis.pack(padx=10, pady=5, fill="x")
+        frame_analisis.columnconfigure(1, weight=1)
+
+        # Crea las filas de la tabla de análisis a partir del diccionario
+        row_counter = 0
+        for clave, valor in datos_analisis.items():
+            ttk.Label(frame_analisis, text=f"{clave}:").grid(row=row_counter, column=0, sticky="w")
+            ttk.Label(frame_analisis, text=valor, anchor="e").grid(row=row_counter, column=1, sticky="ew")
+            row_counter += 1
+            
+        # --- Parte de los Botones ---
+        frame_botones = ttk.Frame(self)
+        frame_botones.pack(pady=10, padx=10, fill=tk.X)
+        ttk.Button(frame_botones, text="Guardar Recorte...", command=guardar_callback).pack(side=tk.LEFT, expand=True, padx=5)
+        ttk.Button(frame_botones, text="Cerrar", command=self.destroy).pack(side=tk.RIGHT, expand=True, padx=5)
+        
+        self.resizable(False, False)
         self._finalizar_y_posicionar()
         self.wait_window(self)
 

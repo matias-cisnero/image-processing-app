@@ -138,6 +138,15 @@ def crear_filtro_sobel_v(k: int) -> Tuple[np.ndarray, float]:
     factor = 1
     return (filtro, factor)
 
+# --- Máscara de Laplace
+
+def crear_filtro_laplace(k: int) -> Tuple[np.ndarray, float]:
+    filtro = np.array([[0, -1, 0],
+                        [-1, 4, -1],
+                        [0, -1, 0]])
+    factor = 1
+    return (filtro, factor)
+
 def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=False) -> np.ndarray:
     """
     Convoluciona una máscara con la matriz de la imagen
