@@ -65,6 +65,55 @@ def aplicar_ecualizacion_histograma(imagen_np: np.ndarray) -> np.ndarray:
 
     return resultado_np
 
+# ===================================((RUIDO))===========================================
+
+# --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
+
+def generar_vector_ruido(distribucion, intensidad, cantidad) -> np.ndarray:
+    # distribucion = np.random.normal, np.random.rayleigh, np.random.exponential
+    vector_aleatorio = distribucion(scale=intensidad, size=(cantidad, 1))
+
+    return vector_aleatorio
+
+# -- Aditivo y Multiplicativo
+
+def aplicar_ruido(imagen_np: np.ndarray, tipo: str, vector_ruido: np.ndarray, d: int) -> np.ndarray:
+    """
+    Aplica un vector de ruido a una imagen de forma aditiva o multiplicativa.
+    """
+    #print("jeje, si anda el ruido")
+    m, n, _ = imagen_np.shape # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
+
+    # Cantidad de píxeles contaminados
+    num_contaminados = int((d * (m * n)) / 100)
+    # num_contaminados = len(vector_ruido)
+    D = np.unravel_index(np.random.choice(m * n, num_contaminados, replace=False),(m, n))
+
+    # Generar la imagen contaminada I_c
+    if tipo == "Aditivo": imagen_np[D] += vector_ruido
+    elif tipo == "Multiplicativo": imagen_np[D] *= vector_ruido
+    
+    resultado_np = escalar_255(imagen_np)
+    
+    return resultado_np
+
+# --- Sal y Pimienta
+
+def aplicar_ruido_sal_y_pimienta(imagen_np: np.ndarray, p: int) -> np.ndarray:
+
+    m, n, _ = imagen_np.shape
+
+    for i in range(m):
+        for j in range(n):
+            x = np.random.rand()
+            if x <= p:
+                imagen_np[i, j, :] = 0 # pimienta (negro)
+            elif x > (1-p):
+                imagen_np[i, j, :] = 255 # sal (blanco)
+
+    return imagen_np
+
+
 # ===================================((FILTROS))=========================================
 
 # --- Media

@@ -371,54 +371,7 @@ class EditorDeImagenes:
 
     # ===================================((RUIDO))===========================================
 
-    # -- Aditivo y Multiplicativo
-
-    @refrescar_imagen
-    def _aplicar_ruido(self, imagen, tipo, vector_ruido, d):
-        """
-        Aplica un vector de ruido a una imagen de forma aditiva o multiplicativa.
-        """
-        # Transformar la imágen en un formato adecuado
-        imagen_np = np.array(imagen).astype(float)
-        m, n, _ = imagen_np.shape # Esto es para quedarme con 256 x 256 e ignorar los 3 canales rgb
-
-        # Cantidad de píxeles contaminados
-        num_contaminados = int((d * (m * n)) / 100)
-        # num_contaminados = len(vector_ruido)
-        D = np.unravel_index(np.random.choice(m * n, num_contaminados, replace=False),(m, n))
-
-        # Generar la imagen contaminada I_c
-        if tipo == "Aditivo": imagen_np[D] += vector_ruido
-        elif tipo == "Multiplicativo": imagen_np[D] *= vector_ruido
-        
-        resultado_np = escalar_255(imagen_np)
-        self.imagen_procesada = Image.fromarray(resultado_np)
-
-    # --- Generar Vector Ruido (Gaussiano, Rayleigh, Exponencial)
-
-    def _generar_vector_ruido(self, distribucion, intensidad, cantidad):
-        # distribucion = np.random.normal, np.random.rayleigh, np.random.exponential
-        vector_aleatorio = distribucion(scale=intensidad, size=(cantidad, 1))
-
-        return vector_aleatorio
-
-    # --- Sal y Pimienta
-
-    @refrescar_imagen
-    def _aplicar_ruido_sal_y_pimienta(self, imagen, p):
-        imagen_np = np.array(imagen.convert('RGB'))
-
-        m, n, _ = imagen_np.shape
-
-        for i in range(m):
-            for j in range(n):
-                x = np.random.rand()
-                if x <= p:
-                    imagen_np[i, j, :] = 0 # pimienta (negro)
-                elif x > (1-p):
-                    imagen_np[i, j, :] = 255 # sal (blanco)
-
-        self.imagen_procesada = Image.fromarray(imagen_np)
+    # Pasado a processing y ui_dialogs
 
     # ===================================((FILTROS))=========================================
 

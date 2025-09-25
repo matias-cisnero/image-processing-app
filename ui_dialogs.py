@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from processing import aplicar_gamma, aplicar_umbralizacion, aplicar_filtro, aplicar_filtro_isotropico
+from processing import aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta, aplicar_filtro, aplicar_filtro_isotropico
 
 # --- TOOLTIP ---
 
@@ -401,7 +401,7 @@ class DialogoHistogramaDist(DialogoBase):
     def _actualizar_grafico(self, *args):
         intensidad = int(self.intensidad.get())
         
-        vector_resultante = self.app._generar_vector_ruido(
+        vector_resultante = generar_vector_ruido(
             distribucion = self.config['distribucion'],
             intensidad = intensidad,
             cantidad = self.num_muestras
@@ -493,19 +493,19 @@ class DialogoRuido(DialogoHerramienta):
             m, n = imagen_np.shape[:2]
             num_contaminados = int((d * (m * n)) / 100)
 
-            vector_ruido = self.app._generar_vector_ruido(
+            vector_ruido = generar_vector_ruido(
                 distribucion=self.config['distribucion'],
                 intensidad=intensidad,
                 cantidad=num_contaminados
             )
 
             if vector_ruido.size > 0:
-                self.app._aplicar_ruido(self.copia_imagen, tipo, vector_ruido, d)
+                self.app._aplicar_transformacion(self.copia_imagen, aplicar_ruido, tipo=tipo, vector_ruido=vector_ruido, d=d)
         else:
             d = int(self.valor_d.get()) / 2
             p = d / 100
-        
-            self.app._aplicar_ruido_sal_y_pimienta(self.copia_imagen, p)
+
+            self.app._aplicar_transformacion(self.copia_imagen, aplicar_ruido_sal_y_pimienta, p=p)
         self.destroy()
     
     def _on_cancel(self):
