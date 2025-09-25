@@ -5,6 +5,14 @@ from typing import Optional, Tuple, Callable
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
 """
 
+# ===============================((FUNCIONES_AUXILIARES))================================
+
+def detector_de_leclerc(gradiente: np.ndarray, sigma:int) -> np.ndarray:
+    return np.exp((-(gradiente**2))/sigma**2)
+
+def detector_de_lorentz(gradiente: np.ndarray, sigma:int) -> np.ndarray:
+    return 1/(((-(gradiente**2))/sigma**2) + 1)
+
 # ===============================((OPERADORES_PUNTUALES))================================
 
 def escalar_255(imagen_np: np.ndarray) -> np.ndarray:
@@ -84,10 +92,11 @@ def crear_filtro_mediana_ponderada(k: int) -> Tuple[np.ndarray, float]:
 
 # --- Gaussiano
 
-def crear_filtro_gaussiano(k: int) -> Tuple[np.ndarray, float]:
+def crear_filtro_gaussiano(sigma: int) -> Tuple[np.ndarray, float]:
+    k = 2 * sigma + 1
     filtro = np.ones((k, k)).astype(float)
     u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
-    sigma = (k-1) / 2
+    #sigma = (k-1) / 2
 
     for x in range(k):
         for y in range(k):
@@ -108,14 +117,14 @@ def crear_filtro_realce(k: int) -> Tuple[np.ndarray, float]:
 
 # --- Realce de Bordes Prewitt
 
-def crear_filtro_prewitt_h(k: int) -> Tuple[np.ndarray, float]:
+def crear_filtro_prewitt_x(k: int) -> Tuple[np.ndarray, float]:
     filtro = np.array([[-1, -1, -1],
                         [0, 0, 0],
                         [1, 1, 1]])
     factor = 1 # usar 1 / 9
     return (filtro, factor)
 
-def crear_filtro_prewitt_v(k: int) -> Tuple[np.ndarray, float]:
+def crear_filtro_prewitt_y(k: int) -> Tuple[np.ndarray, float]:
     filtro = np.array([[-1, 0, 1],
                         [-1, 0, 1],
                         [-1, 0, 1]])
@@ -124,14 +133,14 @@ def crear_filtro_prewitt_v(k: int) -> Tuple[np.ndarray, float]:
 
 # --- Realce de Bordes Sobel
 
-def crear_filtro_sobel_h(k: int) -> Tuple[np.ndarray, float]:
+def crear_filtro_sobel_x(k: int) -> Tuple[np.ndarray, float]:
     filtro = np.array([[-1, -2, -1],
                         [0, 0, 0],
                         [1, 2, 1]])
     factor = 1
     return (filtro, factor)
 
-def crear_filtro_sobel_v(k: int) -> Tuple[np.ndarray, float]:
+def crear_filtro_sobel_y(k: int) -> Tuple[np.ndarray, float]:
     filtro = np.array([[-1, 0, 1],
                         [-2, 0, 2],
                         [-1, 0, 1]])
@@ -198,7 +207,7 @@ def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=Fals
 
 def aplicar_filtro_combinado(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.ndarray:
     """
-    Aplica dos filtros (horizontal y vertical) y combina sus resultados.
+    Aplica dos filtros (x e y) y combina sus resultados.
     """
     img1 = aplicar_filtro(imagen_np, func_filtro=func_filtro1, modo=2)
     img2 = aplicar_filtro(imagen_np, func_filtro=func_filtro2, modo=2)
@@ -206,5 +215,13 @@ def aplicar_filtro_combinado(imagen_np: np.ndarray, func_filtro1, func_filtro2) 
     imagen_filtrada = np.sqrt((img1**2)+(img2**2))
 
     resultado_np = escalar_255(imagen_filtrada)
+
+    return resultado_np
+
+def aplicar_filtro_isotropico(imagen_np: np.ndarray, t: float) -> np.ndarray:
+    for i in range(t):
+        imagen_np = aplicar_filtro(imagen_np, func_filtro=crear_filtro_gaussiano, k=t, modo=2)
+    
+    resultado_np = escalar_255(imagen_np)
 
     return resultado_np
