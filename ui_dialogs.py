@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from processing import aplicar_gamma, aplicar_umbralizacion, aplicar_filtro
+from processing import aplicar_gamma, aplicar_umbralizacion, aplicar_filtro, aplicar_filtro_isotropico
 
 # --- TOOLTIP ---
 
@@ -520,41 +520,82 @@ class DialogoFiltro(DialogoHerramienta):
         super().__init__(parent, app_principal, config['titulo'])
         
         self.copia_imagen = self.app.imagen_procesada.copy()
-        self.tam_filtro = tk.StringVar(value="3")
         #self.factor = tk.StringVar(value="1")
         self.gaussiano = config['gaussiano']
         self.func_filtro = config['filtro']
         self.modo = config['modo']
         self.mediana = config['mediana']
 
-        ttk.Label(self.frame_herramienta, text="Tamaño de mascara (k):").pack(padx=5, pady=(10, 0))
+        valor = "1" if self.gaussiano else "3"
+        self.tam_filtro = tk.StringVar(value=valor)
+        self.param_label = "Desviación Estándar (σ):" if self.gaussiano else "Tamaño de máscara (k):"
+        self.inicio = 1 if self.gaussiano else 3
+        self.resolution = 1 if self.gaussiano else 2
+
+        ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
         tk.Scale(
             self.frame_herramienta,
-            from_=3,
+            from_=self.inicio,
             to=15,
             orient="horizontal",
             variable=self.tam_filtro,
-            resolution=2,
+            resolution=self.resolution,
             showvalue=True,
             length=200,
             command=self._actualizar_valor
             ).pack(padx=5, pady=5)
 
         if self.gaussiano:
-            self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Sigma correspondiente (σ): {int((int(self.tam_filtro.get())-1)/2)}")
+            self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Tamaño de máscara correspondiente (k): {int((int(self.tam_filtro.get())*2)+1)}")
             self.label_sigma.pack(padx=5, pady=(0, 10))
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
     def _actualizar_valor(self, valor):
         if self.gaussiano:
-            k = int(valor)
-            sigma = int((k-1) / 2)
-            self.label_sigma.config(text=f"Sigma correspondiente (σ): {sigma}")
+            sigma = int(valor)
+            k = int(2 * sigma + 1)
+            self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
 
     def _on_apply(self):
         k = int(self.tam_filtro.get())
         self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro, func_filtro=self.func_filtro, k=k, modo=self.modo, mediana=self.mediana)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoDifusion(DialogoHerramienta):
+    """
+    Clase base para diálogos de difusión.
+    """
+    def __init__(self, parent, app_principal, config):
+        super().__init__(parent, app_principal, config['titulo'])
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+        self.isotropico = config['isotropico']
+
+        self.valor = tk.StringVar(value=1)
+        self.param_label = "Tiempo (t):" if self.isotropico else "TDesviación Estándar (σ):"
+
+        ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            self.frame_herramienta,
+            from_=1,
+            to=15,
+            orient="horizontal",
+            variable=self.valor,
+            resolution=1,
+            showvalue=True,
+            length=200
+            ).pack(padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _on_apply(self):
+        t = int(self.valor.get())
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_isotropico, t=t)
         self.destroy()
     
     def _on_cancel(self):

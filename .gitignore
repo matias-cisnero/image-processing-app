@@ -4,6 +4,7 @@ procesador_imagenes_prueba1.py
 procesador_imagenes_prueba2.py
 procesador_imagenes_estable.py
 private_data/
+ideas/
 __pycache__/
 *.pyc
 *.aux
@@ -17,3 +18,4 @@ __pycache__/
 *.nav
 *.snm
 ui_dialogs_ctk.py
+main_ctk.py

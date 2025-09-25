@@ -6,16 +6,15 @@ import numpy as np
 from typing import Optional, Tuple, Callable
 import matplotlib.pyplot as plt
 import webbrowser
-import customtkinter as ctk
 
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
-                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip
+                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion
                         )
 from processing import (escalar_255, aplicar_negativo, aplicar_ecualizacion_histograma,
                         aplicar_filtro, crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
-                        crear_filtro_prewitt_h, crear_filtro_prewitt_v, crear_filtro_sobel_h, crear_filtro_sobel_v, aplicar_filtro_combinado,
+                        crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
                         crear_filtro_laplace
                         )
 
@@ -80,11 +79,14 @@ class EditorDeImagenes:
         self.icono_mediana_ponderada = tk.PhotoImage(file="icons/mediana_ponderada.png").subsample(5,5)
         
         self.icono_borde = tk.PhotoImage(file="icons/borde.png").subsample(5,5)
-        self.icono_borde_h = tk.PhotoImage(file="icons/borde-superior.png").subsample(5,5)
-        self.icono_borde_v = tk.PhotoImage(file="icons/borde-izquierdo.png").subsample(5,5)
+        self.icono_borde_x = tk.PhotoImage(file="icons/borde-superior.png").subsample(5,5)
+        self.icono_borde_y = tk.PhotoImage(file="icons/borde-izquierdo.png").subsample(5,5)
         self.icono_borde_t = tk.PhotoImage(file="icons/borde-exterior.png").subsample(5,5)
+        self.icono_gradiente = tk.PhotoImage(file="icons/gradiente.png").subsample(5,5)
         self.icono_laplaciano = tk.PhotoImage(file="icons/laplaciano.png").subsample(5,5)
         self.icono_pendiente = tk.PhotoImage(file="icons/pendiente.png").subsample(5,5)
+        self.icono_difusion = tk.PhotoImage(file="icons/difusion.png").subsample(5,5)
+        self.icono_omega = tk.PhotoImage(file="icons/omega.png").subsample(5,5)
 
         # Atajos de teclado
         self.root.bind("<Control-o>", self._cargar_imagen)
@@ -154,29 +156,35 @@ class EditorDeImagenes:
         config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': crear_filtro_gaussiano, 'modo': 0, 'mediana': False}
         config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': crear_filtro_mediana, 'modo': 2, 'mediana': True}
         config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': crear_filtro_mediana_ponderada, 'modo': 2, 'mediana': True}
+        config_isotropico = {'titulo': "Difusión Isotrópica", 'isotropico': True}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
         menu_filtros.add_command(label="Media", image=self.icono_media, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
         menu_filtros.add_command(label="Gaussiano", image=self.icono_normal, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
         menu_filtros.add_separator()
         menu_filtros.add_command(label="Mediana", image=self.icono_mediana, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
         menu_filtros.add_command(label="Mediana Ponderada", image=self.icono_mediana_ponderada, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
+        menu_filtros.add_separator()
+        menu_filtros.add_command(label="Difusión Isotrópica", image=self.icono_difusion, compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
+        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.icono_difusion, compound="left")
+        menu_filtros.add_separator()
+        menu_filtros.add_command(label="Filtro Bilateral", image=self.icono_omega, compound="left")
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
         config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
         barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
         menu_bordes.add_command(label="Realce de Bordes", image=self.icono_borde, compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Prewitt Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_h, modo=1))
-        menu_bordes.add_command(label="Prewitt Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_v, modo=1))
-        menu_bordes.add_command(label="Prewitt Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_h, func_filtro2=crear_filtro_prewitt_v))
+        menu_bordes.add_command(label="Prewitt X", image=self.icono_borde_x, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_x, modo=1))
+        menu_bordes.add_command(label="Prewitt Y", image=self.icono_borde_y, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.icono_gradiente, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Sobel Horizontal", image=self.icono_borde_h, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_h, modo=1))
-        menu_bordes.add_command(label="Sobel Vertical", image=self.icono_borde_v, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_v, modo=1))
-        menu_bordes.add_command(label="Sobel Horizontal + Vertical", image=self.icono_borde_t, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_h, func_filtro2=crear_filtro_sobel_v))
+        menu_bordes.add_command(label="Sobel X", image=self.icono_borde_x, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_x, modo=1))
+        menu_bordes.add_command(label="Sobel Y", image=self.icono_borde_y, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.icono_gradiente, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Método del Laplaciano", image=self.icono_laplaciano, compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_laplace, modo=0))
         menu_bordes.add_command(label="Evaluación de la pendiente", image=self.icono_pendiente, compound="left")
-        menu_bordes.add_command(label="LOG (Marr-Hildreth)", image=self.icono_laplaciano, compound="left")
+        menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.icono_laplaciano, compound="left")
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -252,6 +260,7 @@ class EditorDeImagenes:
         panel_info_pixel = ttk.Frame(frame_herramientas)
         panel_info_pixel.pack(pady=(0, 10))
 
+        # 1. El label color
         ttk.Label(panel_info_pixel, text="Color:").grid(row=0, column=0, sticky="ns", padx=(0, 5))
 
         # 2. El preview de color
@@ -289,23 +298,10 @@ class EditorDeImagenes:
 
         ttk.Label(frame_zoom, text="Zoom:").pack(side=tk.LEFT, padx=(5, 5))
         
-        self.zoom_slider = ttk.Scale(
-            frame_zoom,
-            from_=self.ZOOM_MIN,
-            to=self.ZOOM_MAX,
-            orient=tk.HORIZONTAL,
-            command=self._actualizar_zoom_desde_slider
-        )
+        self.zoom_slider = ttk.Scale(frame_zoom, from_=self.ZOOM_MIN, to=self.ZOOM_MAX, orient=tk.HORIZONTAL, command=self._actualizar_zoom_desde_slider)
         self.zoom_slider.pack(side=tk.LEFT, padx=5)
 
-        self.zoom_spinbox = ttk.Spinbox(
-            frame_zoom,
-            from_=self.ZOOM_MIN * 100,
-            to=self.ZOOM_MAX * 100,
-            textvariable=self.zoom_var,
-            width=8,
-            command=self._actualizar_zoom_desde_spinbox
-        )
+        self.zoom_spinbox = ttk.Spinbox(frame_zoom, from_=self.ZOOM_MIN * 100, to=self.ZOOM_MAX * 100, textvariable=self.zoom_var, width=8, command=self._actualizar_zoom_desde_spinbox)
         self.zoom_spinbox.pack(side=tk.LEFT, padx=5)
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
 
