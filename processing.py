@@ -267,6 +267,20 @@ def crear_filtro_laplace(k: int) -> Tuple[np.ndarray, float]:
     factor = 1
     return (filtro, factor)
 
+def crear_filtro_log(sigma: int) -> Tuple[np.ndarray, float]:
+    k = 4 * sigma + 1
+    filtro = np.ones((k, k)).astype(float)
+    u = k // 2 # Centro donde el valor debe ser máximo (son iguales ya que es cuadrada)
+    #sigma = (k-1) / 2
+
+    for x in range(k):
+        for y in range(k):
+            filtro[x, y] = (1 / (2 * np.pi * sigma**3)) * np.exp(-((x - u)**2 + (y - u)**2)/(2 * sigma**2)) * (((x - u)**2 + (y - u)**2)/(sigma**2) - 2)
+
+    factor = 1 #/ np.sum(filtro)
+    #print(f"Factor usado: {1} / {np.sum(filtro)}")
+    return (filtro, factor)
+
 def encontrar_cruces_por_cero(imagen_np: np.ndarray) -> np.ndarray:
     m, n, _ = imagen_np.shape
     imagen_filtrada = np.zeros_like(imagen_np) # Predeterminadamente son cero y solo cambio los 255
@@ -309,13 +323,15 @@ def encontrar_cruces_por_cero_pendiente_vectorizado(imagen_np: np.ndarray, umbra
 
     return imagen_filtrada
 
-def aplicar_metodo_del_laplaciano(imagen_np: np.ndarray, pendiente: bool = False, umbral: int = 50) -> np.ndarray:
-    img = aplicar_filtro(imagen_np, func_filtro=crear_filtro_laplace, modo=2)
+def aplicar_metodo_del_laplaciano(imagen_np: np.ndarray, log: bool = False, pendiente: bool = False, umbral: int = 50, sigma: int = 1) -> np.ndarray:
+    if not log:
+        img = aplicar_filtro(imagen_np, func_filtro=crear_filtro_laplace, modo=2)
+    else:
+        img = aplicar_filtro(imagen_np, func_filtro=crear_filtro_log, k=sigma, modo=2)
     if not pendiente:
         img = encontrar_cruces_por_cero(img)
     else:
-        img = encontrar_cruces_por_cero_pendiente_vectorizado(img, umbral=umbral)
-
+        img = encontrar_cruces_por_cero_pendiente(img, umbral=umbral)
     return img
 
 # --- Filtro Difusión ---

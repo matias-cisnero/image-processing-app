@@ -644,7 +644,7 @@ class DialogoLaplaciano(DialogoHerramienta):
             command=self._toggle_umbral_slider
         )
         check_pendiente.pack(anchor="w", pady=5)
-        
+
         self.frame_umbral = ttk.Frame(grupo_opciones)
 
         ttk.Label(self.frame_umbral, text="Umbral:").pack(anchor="w", pady=(10, 0))
@@ -679,8 +679,10 @@ class DialogoLaplaciano(DialogoHerramienta):
     def _on_apply(self):
         pendiente = self.usar_pendiente.get()
         umbral = self.umbral_pendiente.get()
+        sigma = self.sigma.get()
+        log = self.log
         
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_metodo_del_laplaciano, pendiente=pendiente, umbral=umbral)
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_metodo_del_laplaciano, log=log, pendiente=pendiente, umbral=umbral, sigma=sigma)
         self.destroy()
     
     def _on_cancel(self):
