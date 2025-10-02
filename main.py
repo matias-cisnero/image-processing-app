@@ -11,12 +11,12 @@ import os
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
-                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion
+                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion, DialogoLaplaciano
                         )
 from processing import (escalar_255, aplicar_negativo, aplicar_ecualizacion_histograma,
                         aplicar_filtro, crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
-                        crear_filtro_laplace
+                        aplicar_metodo_del_laplaciano
                         )
 
 def abrir_github(event):
@@ -136,6 +136,8 @@ class EditorDeImagenes:
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
         config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
+        config_laplaciano = {'titulo': "Método del Laplaciano", 'log': False}
+        config_log = {'titulo': "Método del LoG", 'log': True}
         barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
         menu_bordes.add_command(label="Realce de Bordes", image=self.iconos['borde'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
         menu_bordes.add_separator()
@@ -147,9 +149,8 @@ class EditorDeImagenes:
         menu_bordes.add_command(label="Sobel Y", image=self.iconos['borde_y'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
         menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['laplaciano'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_laplace, modo=0))
-        menu_bordes.add_command(label="Evaluación de la pendiente", image=self.iconos['pendiente'], compound="left")
-        menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['laplaciano'], compound="left")
+        menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
+        menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
