@@ -6,7 +6,8 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from processing import aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta, aplicar_filtro, aplicar_filtro_isotropico
+from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
+                        aplicar_filtro, aplicar_filtro_isotropico, aplicar_metodo_del_laplaciano)
 
 # --- TOOLTIP ---
 
@@ -596,6 +597,90 @@ class DialogoDifusion(DialogoHerramienta):
     def _on_apply(self):
         t = int(self.valor.get())
         self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_isotropico, t=t)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoLaplaciano(DialogoHerramienta):
+    """
+    Diálogo para aplicar el filtro Laplaciano con o sin evaluación de la pendiente.
+    """
+    def __init__(self, parent, app_principal, config):
+        super().__init__(parent, app_principal, config['titulo'])
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+        self.usar_pendiente = tk.BooleanVar(value=False)
+        self.umbral_pendiente = tk.IntVar(value=50)
+
+        self.sigma = tk.IntVar(value=1)
+        self.log = config['log']
+
+        grupo_opciones = ttk.Labelframe(self.frame_herramienta, text="Opciones", padding=10)
+        grupo_opciones.pack(fill="x", padx=10, pady=5, expand=True)
+
+
+        if self.log:
+            ttk.Label(grupo_opciones, text="Desviación Estándar (σ):").pack(padx=5, pady=(10, 0))
+            tk.Scale(
+                grupo_opciones,
+                from_=1,
+                to=100,
+                orient="horizontal",
+                variable=self.sigma,
+                resolution=1,
+                showvalue=True,
+                length=300,
+                command=self._actualizar_valor
+            ).pack(fill="x", expand=True, pady=5)
+            self.label_sigma = ttk.Label(grupo_opciones, text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma.get())*4)+1)}")
+            self.label_sigma.pack(padx=5, pady=(0, 10))
+
+        check_pendiente = ttk.Checkbutton(
+            grupo_opciones,
+            text="Usar Evaluación de la Pendiente (con umbral)",
+            variable=self.usar_pendiente,
+            command=self._toggle_umbral_slider
+        )
+        check_pendiente.pack(anchor="w", pady=5)
+        
+        self.frame_umbral = ttk.Frame(grupo_opciones)
+
+        ttk.Label(self.frame_umbral, text="Umbral:").pack(anchor="w", pady=(10, 0))
+        tk.Scale(
+            self.frame_umbral,
+            from_=0,
+            to=255,
+            orient="horizontal",
+            variable=self.umbral_pendiente,
+            resolution=1,
+            showvalue=True,
+            length=300
+        ).pack(fill="x", expand=True, pady=5)
+        
+        self._toggle_umbral_slider()
+        
+        self._finalizar_y_posicionar()
+
+    def _toggle_umbral_slider(self):
+        """Muestra u oculta el slider del umbral según el estado del checkbox."""
+        if self.usar_pendiente.get():
+            self.frame_umbral.pack(fill="x", expand=True, pady=5)
+        else:
+            self.frame_umbral.pack_forget()
+    
+    def _actualizar_valor(self, valor):
+        if self.log:
+            sigma = int(valor)
+            k = int(4 * sigma + 1)
+            self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
+
+    def _on_apply(self):
+        pendiente = self.usar_pendiente.get()
+        umbral = self.umbral_pendiente.get()
+        
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_metodo_del_laplaciano, pendiente=pendiente, umbral=umbral)
         self.destroy()
     
     def _on_cancel(self):

@@ -196,15 +196,6 @@ def crear_filtro_sobel_y(k: int) -> Tuple[np.ndarray, float]:
     factor = 1
     return (filtro, factor)
 
-# --- Máscara de Laplace
-
-def crear_filtro_laplace(k: int) -> Tuple[np.ndarray, float]:
-    filtro = np.array([[0, -1, 0],
-                        [-1, 4, -1],
-                        [0, -1, 0]])
-    factor = 1
-    return (filtro, factor)
-
 def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=False) -> np.ndarray:
     """
     Convoluciona una máscara con la matriz de la imagen
@@ -266,6 +257,68 @@ def aplicar_filtro_combinado(imagen_np: np.ndarray, func_filtro1, func_filtro2) 
     resultado_np = escalar_255(imagen_filtrada)
 
     return resultado_np
+
+# --- Laplaciano ---
+
+def crear_filtro_laplace(k: int) -> Tuple[np.ndarray, float]:
+    filtro = np.array([[0, -1, 0],
+                        [-1, 4, -1],
+                        [0, -1, 0]])
+    factor = 1
+    return (filtro, factor)
+
+def encontrar_cruces_por_cero(imagen_np: np.ndarray) -> np.ndarray:
+    m, n, _ = imagen_np.shape
+    imagen_filtrada = np.zeros_like(imagen_np) # Predeterminadamente son cero y solo cambio los 255
+
+    for i in range(m):
+        for j in range(n - 1):
+            for c in range(3):
+                if imagen_np[i, j, c] * imagen_np[i, j + 1, c] < 0:
+                    imagen_filtrada[i, j] = 255
+
+    return imagen_filtrada # Retorna una img binaria
+
+def encontrar_cruces_por_cero_vectorizado(imagen_np: np.ndarray) -> np.ndarray:
+    imagen_filtrada = np.zeros_like(imagen_np)
+
+    mascara = (imagen_np[:, :-1] * imagen_np[:, 1:]) < 0
+
+    imagen_filtrada[:, :-1][mascara] = 255
+
+    return imagen_filtrada
+
+def encontrar_cruces_por_cero_pendiente(imagen_np: np.ndarray, umbral=128) -> np.ndarray:
+    m, n, _ = imagen_np.shape
+    imagen_filtrada = np.zeros_like(imagen_np) # Predeterminadamente son cero y solo cambio los 255
+
+    for i in range(m):
+        for j in range(n - 1):
+            for c in range(3):
+                if abs(imagen_np[i, j, c]) + abs(imagen_np[i, j + 1, c]) > umbral:
+                    imagen_filtrada[i, j] = 255
+
+    return imagen_filtrada # Retorna una img binaria
+
+def encontrar_cruces_por_cero_pendiente_vectorizado(imagen_np: np.ndarray, umbral=128) -> np.ndarray:
+    imagen_filtrada = np.zeros_like(imagen_np)
+
+    mascara = (np.abs(imagen_np[:, :-1]) + np.abs(imagen_np[:, 1:])) > umbral
+
+    imagen_filtrada[:, :-1][mascara] = 255
+
+    return imagen_filtrada
+
+def aplicar_metodo_del_laplaciano(imagen_np: np.ndarray, pendiente: bool = False, umbral: int = 50) -> np.ndarray:
+    img = aplicar_filtro(imagen_np, func_filtro=crear_filtro_laplace, modo=2)
+    if not pendiente:
+        img = encontrar_cruces_por_cero(img)
+    else:
+        img = encontrar_cruces_por_cero_pendiente_vectorizado(img, umbral=umbral)
+
+    return img
+
+# --- Filtro Difusión ---
 
 def aplicar_filtro_isotropico(imagen_np: np.ndarray, t: float) -> np.ndarray:
     for i in range(t):
