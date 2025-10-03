@@ -1,7 +1,7 @@
 # Librerias
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from PIL import Image, ImageTk, ImageChops
+from PIL import Image, ImageTk
 import numpy as np
 from typing import Optional, Tuple, Callable
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
-                        restar_imagenes
+                        restar_imagenes, aplicar_umbralizacion_iterativa
                         )
 
 def abrir_github(event):
@@ -80,7 +80,7 @@ class EditorDeImagenes:
         barra_menu = tk.Menu(self.root)
         self.root.config(menu=barra_menu)
         
-        menu_archivo = tk.Menu(barra_menu, tearoff=0)
+        menu_archivo = tk.Menu(barra_menu, tearoff=0) # tk.Menu(barra_menu, tearoff=0, bg="#fcfdfd", fg="#7B7E83", activebackground="#cfd6e6", activeforeground="white", font=("Segoe UI", 10))
         barra_menu.add_cascade(label="Archivo", menu=menu_archivo)
         menu_archivo.add_command(label="Cargar Imagen...", image=self.iconos['cargar'], compound="left", command=self._cargar_imagen, accelerator="Ctrl+O")
         menu_archivo.add_command(label="Guardar Imagen Como...", image=self.iconos['guardar'], compound="left", command=self._guardar_imagen_como, accelerator="Ctrl+S")
@@ -156,7 +156,7 @@ class EditorDeImagenes:
 
         menu_umbralizacion = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
-        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left")
+        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
         menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['otsu'], compound="left")
         menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['recursos'], compound="left")
 
@@ -644,8 +644,8 @@ class EditorDeImagenes:
                 if parent_window: parent_window.destroy()
             except Exception as e:
                 messagebox.showerror("Error al Guardar", f"No se pudo guardar la imagen.\nError: {e}", parent=parent)
-
+# from ttkthemes import ThemedTk
 if __name__ == "__main__":
-    root = tk.Tk() # root = ThemedTk(theme="breeze") # Para mejores visuales
+    root = tk.Tk() # root = ThemedTk(theme="breeze") # Para mejores visuales también theme="arc"
     app = EditorDeImagenes(root)
     root.mainloop()
