@@ -395,14 +395,23 @@ def aplicar_filtro_bilateral(imagen_np: np.ndarray, sigma_s: int = 1, sigma_r: i
         for j in range(n):
             region = imagen_padded[i:i+k, j:j+l, :]
 
-            dif = region - region[pad_h, pad_w]
-            print(f"Shape de dif: {dif.shape}")
-            #Gr = np.exp(-( / 2 * sigma_r**2)) 
+            dif = region - region[pad_h, pad_w, :]
+            #print(f"Shape de dif: {dif.shape}")
+            Gr = np.exp(-(np.sum(dif**2, axis=2) / (2 * sigma_r**2)))
+            #print(f"Shape de Gr: {Gr.shape}")
 
             Wx = np.sum(Gs * Gr)
 
-            valor = (1 / Wx) * np.sum(region * Gs * Gr)
+            G = Gs * Gr
+            G = G[:, :, np.newaxis]
+
+            valor = (1 / Wx) * np.sum(region * G, axis=(0, 1))
+            #print(f"Shape de valor: {valor.shape}")
+            
             imagen_filtrada[i, j, :] = valor
+    
+    resultado_np = escalar_255(imagen_filtrada)
+    return resultado_np
 
 # ================================((UMBRALIZACIÓN))======================================
 
@@ -472,6 +481,7 @@ def aplicar_umbralizacion_rgb(imagen_np: np.ndarray) -> np.ndarray:
     banda_g = aplicar_umbralizacion_de_otsu(banda_g)
     banda_b = aplicar_umbralizacion_de_otsu(banda_b)
 
-    resultado_np = np.stack([banda_r, banda_g, banda_b], axis=2)
+    resultado_np = np.dstack([banda_r, banda_g, banda_b])
 
+    # https://numpy.org/doc/stable/reference/generated/numpy.dstack.html
     return resultado_np
