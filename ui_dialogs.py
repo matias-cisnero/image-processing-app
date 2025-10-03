@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
-                        aplicar_filtro, aplicar_filtro_isotropico, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion)
+                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion)
 
 # --- TOOLTIP ---
 

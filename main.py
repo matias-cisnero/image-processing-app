@@ -13,10 +13,10 @@ from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion, DialogoLaplaciano
                         )
-from processing import (escalar_255, aplicar_negativo, aplicar_ecualizacion_histograma,
-                        aplicar_filtro, crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
+from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
+                        crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
-                        aplicar_metodo_del_laplaciano
+                        restar_imagenes
                         )
 
 def abrir_github(event):
@@ -396,7 +396,12 @@ class EditorDeImagenes:
                 messagebox.showerror("Error de Dimensiones", "Las imágenes deben tener el mismo tamaño.")
                 return
             
-            resultado = ImageChops.subtract(image1=self.imagen_procesada, image2=img2, scale=1.0, offset=0) # mirar
+            imagen_np1 = np.array(self.imagen_procesada.convert('RGB')).astype(float)
+            imagen_np2 = np.array(img2.convert('RGB')).astype(float)
+            
+            resultado_np = restar_imagenes(imagen_np1, imagen_np2)
+
+            resultado = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
             self._mostrar_ventana_resultado(resultado, "Resultado de la Resta")
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo cargar o procesar la imagen.\n{e}")

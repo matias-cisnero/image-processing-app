@@ -5,7 +5,7 @@ from typing import Optional, Tuple, Callable
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
 """
 
-# ===============================((OPERADORES_PUNTUALES))================================
+# =================================((FUNCIONES_ÚTILES))==================================
 
 def escalar_255(imagen_np: np.ndarray) -> np.ndarray:
     """
@@ -17,6 +17,14 @@ def escalar_255(imagen_np: np.ndarray) -> np.ndarray:
         return np.zeros_like(imagen_np, dtype=np.uint8)
     array_normalizado = 255 * (imagen_np - min_val) / (max_val - min_val)
     return array_normalizado.astype(np.uint8)
+
+def restar_imagenes(imagen_np1: np.ndarray, imagen_np2: np.ndarray) -> np.ndarray:
+    resultado_np = imagen_np1 - imagen_np2
+
+    resultado_np = escalar_255(resultado_np)
+    return resultado_np
+
+# ===============================((OPERADORES_PUNTUALES))================================
 
 def aplicar_gamma(imagen_np: np.ndarray, gamma:float) -> np.ndarray:
     c = (255)**(1-gamma)
@@ -337,14 +345,6 @@ def detector_de_lorentz(gradiente, sigma:int):
     return 1/(((-(gradiente**2))/sigma**2) + 1)
 
 # --- Difusión ---
-
-def aplicar_filtro_isotropico(imagen_np: np.ndarray, t: float) -> np.ndarray:
-    for i in range(t):
-        imagen_np = aplicar_filtro(imagen_np, func_filtro=crear_filtro_gaussiano, k=t, modo=2)
-    
-    resultado_np = escalar_255(imagen_np)
-
-    return resultado_np
 
 def aplicar_filtro_difusion(imagen_np: np.ndarray, t: float, sigma: int, isotropico: bool = False, lamb: float = 0.25) -> np.ndarray:
     m, n, _ = imagen_np.shape
