@@ -20,3 +20,4 @@ __pycache__/
 *.snm
 ui_dialogs_ctk.py
 main_ctk.py
+main_theme.py
