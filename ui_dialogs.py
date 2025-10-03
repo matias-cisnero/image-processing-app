@@ -187,14 +187,21 @@ class DialogoHerramienta(DialogoBase):
         super().__init__(parent)
         self.app = app_principal
         self.title(titulo)
+
+        self.icono_aceptar = tk.PhotoImage(file="icons/aceptar.png").subsample(5,5)
+        self.icono_cancelar = tk.PhotoImage(file="icons/cancelar.png").subsample(5,5)
         
         self.frame_herramienta = ttk.Frame(self, padding=10)
         self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
 
         frame_botones = ttk.Frame(self)
         frame_botones.pack(pady=10)
-        ttk.Button(frame_botones, text="Aplicar", command=self._on_apply).pack(side=tk.LEFT, padx=5)
-        ttk.Button(frame_botones, text="Cancelar", command=self._on_cancel).pack(side=tk.LEFT, padx=5)
+        btn_aceptar = ttk.Button(frame_botones, command=self._on_apply, image=self.icono_aceptar)
+        btn_aceptar.pack(side=tk.LEFT, padx=5)
+        Tooltip(widget=btn_aceptar, text="Aplicar")
+        btn_cancelar = ttk.Button(frame_botones, command=self._on_cancel, image=self.icono_cancelar)
+        btn_cancelar.pack(side=tk.LEFT, padx=5)
+        Tooltip(widget=btn_cancelar, text="Cancelar")
         
         self.protocol("WM_DELETE_WINDOW", self._on_cancel)
 
@@ -214,8 +221,11 @@ class DialogoGamma(DialogoHerramienta):
         self.valor_gamma = tk.StringVar(value="1.0")
         self.copia_imagen = self.app.imagen_procesada.copy()
 
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Gamma", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+
         tk.Scale(
-            self.frame_herramienta,
+            label_parametros,
             from_=0,
             to=2.0,
             orient="horizontal",
@@ -247,8 +257,11 @@ class DialogoUmbralizacion(DialogoHerramienta):
         self.valor_umbral = tk.StringVar(value="128")
         self.copia_imagen = self.app.imagen_procesada.copy()
 
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Umbral", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+
         tk.Scale(
-            self.frame_herramienta,
+            label_parametros,
             from_=0,
             to=255,
             orient="horizontal",
@@ -533,9 +546,12 @@ class DialogoFiltro(DialogoHerramienta):
         self.inicio = 1 if self.gaussiano else 3
         self.resolution = 1 if self.gaussiano else 2
 
-        ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text=self.param_label, padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+
+        #ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
         tk.Scale(
-            self.frame_herramienta,
+            label_parametros,
             from_=self.inicio,
             to=15,
             orient="horizontal",
@@ -547,7 +563,7 @@ class DialogoFiltro(DialogoHerramienta):
             ).pack(padx=5, pady=5)
 
         if self.gaussiano:
-            self.label_sigma = ttk.Label(self.frame_herramienta, text=f"Tamaño de máscara correspondiente (k): {int((int(self.tam_filtro.get())*2)+1)}")
+            self.label_sigma = ttk.Label(label_parametros, text=f"Tamaño de máscara correspondiente (k): {int((int(self.tam_filtro.get())*2)+1)}")
             self.label_sigma.pack(padx=5, pady=(0, 10))
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
@@ -698,6 +714,69 @@ class DialogoLaplaciano(DialogoHerramienta):
         log = self.log
         
         self.app._aplicar_transformacion(self.copia_imagen, aplicar_metodo_del_laplaciano, log=log, pendiente=pendiente, umbral=umbral, sigma=sigma)
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoBilateral(DialogoHerramienta):
+    """
+    Diálogo para aplicar el filtro Bilateral.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Filtro Bilateral")
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        self.sigma_r = tk.IntVar(value=1)
+        self.sigma_s = tk.IntVar(value=1)
+
+        grupo_opciones = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)
+        grupo_opciones.pack(fill="x", padx=10, pady=5, expand=True)
+
+        ttk.Label(grupo_opciones, text="Constante de suavizado espacial (σ_r):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            grupo_opciones,
+            from_=1,
+            to=100,
+            orient="horizontal",
+            variable=self.sigma_r,
+            resolution=1,
+            showvalue=True,
+            length=300,
+            command=self._actualizar_valor
+        ).pack(fill="x", expand=True, pady=5)
+
+        ttk.Label(grupo_opciones, text="Constante de suavizado de intensidad (σ_s):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            grupo_opciones,
+            from_=1,
+            to=100,
+            orient="horizontal",
+            variable=self.sigma_s,
+            resolution=1,
+            showvalue=True,
+            length=300
+        ).pack(fill="x", expand=True, pady=5)
+        
+        grupo_tamaño = ttk.Labelframe(self.frame_herramienta, text="Tamaño", padding=10)
+        grupo_tamaño.pack(fill="x", padx=10, pady=5, expand=True)
+
+        self.label_sigma = ttk.Label(grupo_tamaño, text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma_r.get())*2)+1)}")
+        self.label_sigma.pack(padx=5, pady=(0, 10))
+
+        self._finalizar_y_posicionar()
+    
+    def _actualizar_valor(self, valor):
+        sigma = int(valor)
+        k = int(2 * sigma + 1)
+        self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
+
+    def _on_apply(self):
+        sigma_r = self.sigma_r.get()
+        sigma_s = self.sigma_s.get()
+
         self.destroy()
     
     def _on_cancel(self):

@@ -376,3 +376,30 @@ def aplicar_filtro_difusion(imagen_np: np.ndarray, t: float, sigma: int, isotrop
     resultado_np = escalar_255(imagen_filtrada)
     return resultado_np
 
+# ===============================((FILTRO BILATERAL))====================================
+
+def aplicar_filtro_bilateral(imagen_np: np.ndarray, sigma_s: int = 1, sigma_r: int = 1) -> np.ndarray:
+
+    Gs, factor = crear_filtro_gaussiano(sigma_s)
+    print("Filtro espacial usado:")
+    print(Gs)
+    m, n, _ = imagen_np.shape
+    k, l = Gs.shape
+    pad_h, pad_w = k//2, l//2
+
+    # Padding e imagen filtrada
+    imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+    imagen_filtrada = np.zeros_like(imagen_np)
+
+    for i in range(m):
+        for j in range(n):
+            region = imagen_padded[i:i+k, j:j+l, :]
+
+            dif = region - region[pad_h, pad_w]
+            print(f"Shape de dif: {dif.shape}")
+            #Gr = np.exp(-( / 2 * sigma_r**2)) 
+
+            Wx = np.sum(Gs * Gr)
+
+            valor = (1 / Wx) * np.sum(region * Gs * Gr)
+            imagen_filtrada[i, j, :] = valor

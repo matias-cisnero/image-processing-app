@@ -11,7 +11,8 @@ import os
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
-                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion, DialogoLaplaciano
+                        DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
+                        DialogoLaplaciano, DialogoBilateral
                         )
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
@@ -130,10 +131,10 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Mediana", image=self.iconos['mediana'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
         menu_filtros.add_command(label="Mediana Ponderada", image=self.iconos['mediana_ponderada'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
         menu_filtros.add_separator()
-        menu_filtros.add_command(label="Difusión Isotrópica", image=self.iconos['difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
-        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_anisotropico))
+        menu_filtros.add_command(label="Difusión Isotrópica", image=self.iconos['sol'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
+        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['sol'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_anisotropico))
         menu_filtros.add_separator()
-        menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['omega'], compound="left")
+        menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['omega'], compound="left", command=lambda: self._iniciar_dialogo(DialogoBilateral))
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
         config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
@@ -157,6 +158,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
         menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left")
         menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['otsu'], compound="left")
+        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['recursos'], compound="left")
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -206,17 +208,17 @@ class EditorDeImagenes:
         # Botón 3: Recortar Región
         btn_recorte = ttk.Button(panel_control, image=self.iconos['recorte'], command=self._activar_modo_recorte)
         btn_recorte.grid(row=2, column=0, pady=4)
-        Tooltip(widget=btn_recorte, text="Activar modo para recortar una región")
+        Tooltip(widget=btn_recorte, text="Recortar una región")
 
         # Botón 4: Restar Imágenes
         btn_resta = ttk.Button(panel_control, image=self.iconos['resta_imagenes'], command=self._iniciar_resta)
         btn_resta.grid(row=3, column=0, pady=4)
-        Tooltip(widget=btn_resta, text="Restar una segunda imagen de la actual")
+        Tooltip(widget=btn_resta, text="Restar imagen")
 
         # Botón 5: Seleccionar Pixel
         btn_pixel = ttk.Button(panel_control, image=self.iconos['gotero'], command=self._activar_modo_seleccion)
         btn_pixel.grid(row=4, column=0, pady=4)
-        Tooltip(widget=btn_pixel, text="Seleccionar un pixel y modificar su valor")
+        Tooltip(widget=btn_pixel, text="Seleccionar y modificar pixel")
         
     def _crear_panel_inferior(self):
         footer_frame = ttk.Frame(self.root, padding=5)
@@ -644,6 +646,6 @@ class EditorDeImagenes:
                 messagebox.showerror("Error al Guardar", f"No se pudo guardar la imagen.\nError: {e}", parent=parent)
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = tk.Tk() # root = ThemedTk(theme="breeze") # Para mejores visuales
     app = EditorDeImagenes(root)
     root.mainloop()
