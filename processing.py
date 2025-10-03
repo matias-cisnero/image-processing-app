@@ -403,3 +403,29 @@ def aplicar_filtro_bilateral(imagen_np: np.ndarray, sigma_s: int = 1, sigma_r: i
 
             valor = (1 / Wx) * np.sum(region * Gs * Gr)
             imagen_filtrada[i, j, :] = valor
+
+# ================================((UMBRALIZACIÓN))======================================
+
+# --- Cálculo iterativo del umbral (escala de grises) ---
+
+def aplicar_umbralizacion_iterativa(imagen_np: np.ndarray, n: int = 50) -> np.ndarray:
+    T = int(np.mean(imagen_np))
+    T_anterior = -1
+
+    for i in range(n):
+        if T == T_anterior: break
+        T_anterior = T
+
+        imagen_binaria = aplicar_umbralizacion(imagen_np, T)
+        nG1 = np.sum(imagen_binaria == 255)
+        nG2 = np.sum(imagen_binaria == 0)
+
+        m1 = (1 / nG1) * np.sum(imagen_np[imagen_binaria == 255])
+        m2 = (1 / nG2) * np.sum(imagen_np[imagen_binaria == 0])
+
+        T = int(0.5 * (m1 + m2))
+        print(f"T={T} en iteración {i+1}/{n}")
+
+    resultado_np = aplicar_umbralizacion(imagen_np, T)
+
+    return resultado_np
