@@ -7,7 +7,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
-                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion)
+                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral
+                        )
 
 # --- TOOLTIP ---
 
@@ -729,32 +730,32 @@ class DialogoBilateral(DialogoHerramienta):
         
         self.copia_imagen = self.app.imagen_procesada.copy()
 
-        self.sigma_r = tk.IntVar(value=1)
         self.sigma_s = tk.IntVar(value=1)
+        self.sigma_r = tk.IntVar(value=1)
 
         grupo_opciones = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)
         grupo_opciones.pack(fill="x", padx=10, pady=5, expand=True)
 
-        ttk.Label(grupo_opciones, text="Constante de suavizado espacial (σ_r):").pack(padx=5, pady=(10, 0))
-        tk.Scale(
-            grupo_opciones,
-            from_=1,
-            to=100,
-            orient="horizontal",
-            variable=self.sigma_r,
-            resolution=1,
-            showvalue=True,
-            length=300,
-            command=self._actualizar_valor
-        ).pack(fill="x", expand=True, pady=5)
-
-        ttk.Label(grupo_opciones, text="Constante de suavizado de intensidad (σ_s):").pack(padx=5, pady=(10, 0))
+        ttk.Label(grupo_opciones, text="Constante de suavizado espacial (σ_s):").pack(padx=5, pady=(10, 0))
         tk.Scale(
             grupo_opciones,
             from_=1,
             to=100,
             orient="horizontal",
             variable=self.sigma_s,
+            resolution=1,
+            showvalue=True,
+            length=300,
+            command=self._actualizar_valor
+        ).pack(fill="x", expand=True, pady=5)
+
+        ttk.Label(grupo_opciones, text="Constante de suavizado de intensidad (σ_r):").pack(padx=5, pady=(10, 0))
+        tk.Scale(
+            grupo_opciones,
+            from_=1,
+            to=100,
+            orient="horizontal",
+            variable=self.sigma_r,
             resolution=1,
             showvalue=True,
             length=300
@@ -774,9 +775,10 @@ class DialogoBilateral(DialogoHerramienta):
         self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
 
     def _on_apply(self):
-        sigma_r = self.sigma_r.get()
         sigma_s = self.sigma_s.get()
+        sigma_r = self.sigma_r.get()
 
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_bilateral, sigma_s=sigma_s, sigma_r=sigma_r)
         self.destroy()
     
     def _on_cancel(self):
