@@ -122,6 +122,7 @@ class EditorDeImagenes:
         config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': crear_filtro_mediana, 'modo': 2, 'mediana': True}
         config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': crear_filtro_mediana_ponderada, 'modo': 2, 'mediana': True}
         config_isotropico = {'titulo': "Difusión Isotrópica", 'isotropico': True}
+        config_anisotropico = {'titulo': "Difusión Anisotrópica", 'isotropico': False}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
         menu_filtros.add_command(label="Media", image=self.iconos['media'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
         menu_filtros.add_command(label="Gaussiano", image=self.iconos['normal'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
@@ -130,7 +131,7 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Mediana Ponderada", image=self.iconos['mediana_ponderada'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
         menu_filtros.add_separator()
         menu_filtros.add_command(label="Difusión Isotrópica", image=self.iconos['difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
-        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['difusion'], compound="left")
+        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_anisotropico))
         menu_filtros.add_separator()
         menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['omega'], compound="left")
         
@@ -151,6 +152,11 @@ class EditorDeImagenes:
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
         menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
+
+        menu_umbralizacion = tk.Menu(barra_menu, tearoff=0)
+        barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
+        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left")
+        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['otsu'], compound="left")
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)

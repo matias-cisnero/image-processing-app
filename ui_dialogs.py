@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
-                        aplicar_filtro, aplicar_filtro_isotropico, aplicar_metodo_del_laplaciano)
+                        aplicar_filtro, aplicar_filtro_isotropico, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion)
 
 # --- TOOLTIP ---
 
@@ -577,26 +577,41 @@ class DialogoDifusion(DialogoHerramienta):
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.isotropico = config['isotropico']
 
-        self.valor = tk.StringVar(value=1)
-        self.param_label = "Tiempo (t):" if self.isotropico else "TDesviación Estándar (σ):"
+        self.t = tk.IntVar(value=1)
+        self.sigma = tk.IntVar(value=1)
 
-        ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
+        ttk.Label(self.frame_herramienta, text="Tiempo (t):").pack(padx=5, pady=(10, 0))
         tk.Scale(
             self.frame_herramienta,
             from_=1,
             to=15,
             orient="horizontal",
-            variable=self.valor,
+            variable=self.t,
             resolution=1,
             showvalue=True,
             length=200
             ).pack(padx=5, pady=5)
+        
+        if not self.isotropico:
+            ttk.Label(self.frame_herramienta, text="Desviación Estándar (σ):").pack(padx=5, pady=(10, 0))
+            tk.Scale(
+                self.frame_herramienta,
+                from_=1,
+                to=100,
+                orient="horizontal",
+                variable=self.sigma,
+                resolution=1,
+                showvalue=True,
+                length=300
+            ).pack(fill="x", expand=True, pady=5)
+            
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
     def _on_apply(self):
-        t = int(self.valor.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_isotropico, t=t)
+        t = int(self.t.get())
+        sigma = int(self.sigma.get())
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_difusion, sigma=sigma, t=t, isotropico=self.isotropico)
         self.destroy()
     
     def _on_cancel(self):

@@ -5,14 +5,6 @@ from typing import Optional, Tuple, Callable
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
 """
 
-# ===============================((FUNCIONES_AUXILIARES))================================
-
-def detector_de_leclerc(gradiente: np.ndarray, sigma:int) -> np.ndarray:
-    return np.exp((-(gradiente**2))/sigma**2)
-
-def detector_de_lorentz(gradiente: np.ndarray, sigma:int) -> np.ndarray:
-    return 1/(((-(gradiente**2))/sigma**2) + 1)
-
 # ===============================((OPERADORES_PUNTUALES))================================
 
 def escalar_255(imagen_np: np.ndarray) -> np.ndarray:
@@ -258,7 +250,7 @@ def aplicar_filtro_combinado(imagen_np: np.ndarray, func_filtro1, func_filtro2) 
 
     return resultado_np
 
-# --- Laplaciano ---
+# ============================((MÉTODO DEL LAPLACIANO))==================================
 
 def crear_filtro_laplace(k: int) -> Tuple[np.ndarray, float]:
     filtro = np.array([[0, -1, 0],
@@ -334,7 +326,17 @@ def aplicar_metodo_del_laplaciano(imagen_np: np.ndarray, log: bool = False, pend
         img = encontrar_cruces_por_cero_pendiente(img, umbral=umbral)
     return img
 
-# --- Filtro Difusión ---
+# ==============================((FILTRO DE DIFUSIÓN))===================================
+
+# --- Detectores de borde ---
+
+def detector_de_leclerc(gradiente, sigma:int):
+    return np.exp((-(gradiente**2))/sigma**2)
+
+def detector_de_lorentz(gradiente, sigma:int):
+    return 1/(((-(gradiente**2))/sigma**2) + 1)
+
+# --- Difusión ---
 
 def aplicar_filtro_isotropico(imagen_np: np.ndarray, t: float) -> np.ndarray:
     for i in range(t):
@@ -343,3 +345,34 @@ def aplicar_filtro_isotropico(imagen_np: np.ndarray, t: float) -> np.ndarray:
     resultado_np = escalar_255(imagen_np)
 
     return resultado_np
+
+def aplicar_filtro_difusion(imagen_np: np.ndarray, t: float, sigma: int, isotropico: bool = False, lamb: float = 0.25) -> np.ndarray:
+    m, n, _ = imagen_np.shape
+    imagen_filtrada = imagen_np.copy()
+
+    for _ in range(t):
+        for i in range(1, m - 1):
+            for j in range(1, n - 1):
+                for c in range(3):
+
+                    # Gradientes
+                    DN = imagen_filtrada[i, j + 1, c] - imagen_filtrada[i, j, c]
+                    DE = imagen_filtrada[i - 1, j, c] - imagen_filtrada[i, j, c]
+                    DO = imagen_filtrada[i + 1, j, c] - imagen_filtrada[i, j, c]
+                    DS = imagen_filtrada[i, j - 1, c] - imagen_filtrada[i, j, c]
+                    
+                    # Coeficientes
+                    if isotropico:
+                        cN = cE = cO = cS = 1
+                    else:
+                        cN = detector_de_leclerc(DN, sigma)
+                        cE = detector_de_leclerc(DE, sigma)
+                        cO = detector_de_leclerc(DO, sigma)
+                        cS = detector_de_leclerc(DS, sigma)
+
+                    # Actualización
+                    imagen_filtrada[i, j, c] += lamb * (DN * cN + DE * cE + DO * cO + DS * cS)
+    
+    resultado_np = escalar_255(imagen_filtrada)
+    return resultado_np
+
