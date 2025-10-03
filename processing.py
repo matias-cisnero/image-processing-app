@@ -463,3 +463,15 @@ def aplicar_umbralizacion_de_otsu(imagen_np: np.ndarray) -> np.ndarray:
 
     return resultado_np
 
+def aplicar_umbralizacion_rgb(imagen_np: np.ndarray) -> np.ndarray:
+    banda_r = imagen_np[:, :, 0]
+    banda_g = imagen_np[:, :, 1]
+    banda_b = imagen_np[:, :, 2]
+
+    banda_r = aplicar_umbralizacion_de_otsu(banda_r)
+    banda_g = aplicar_umbralizacion_de_otsu(banda_g)
+    banda_b = aplicar_umbralizacion_de_otsu(banda_b)
+
+    resultado_np = np.stack([banda_r, banda_g, banda_b], axis=2)
+
+    return resultado_np

@@ -17,7 +17,7 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
-                        restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu
+                        restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb
                         )
 
 def abrir_github(event):
@@ -158,7 +158,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
         menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
         menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['otsu'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
-        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['recursos'], compound="left")
+        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['recursos'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
