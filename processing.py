@@ -424,8 +424,42 @@ def aplicar_umbralizacion_iterativa(imagen_np: np.ndarray, n: int = 50) -> np.nd
         m2 = (1 / nG2) * np.sum(imagen_np[imagen_binaria == 0])
 
         T = int(0.5 * (m1 + m2))
-        print(f"T={T} en iteración {i+1}/{n}")
+        #print(f"T={T} en iteración {i+1}/{n}")
 
+    print(f"Valor de umbral utilizado(T) = {T} en iteración {i}/{n}")
     resultado_np = aplicar_umbralizacion(imagen_np, T)
 
     return resultado_np
+
+def aplicar_umbralizacion_de_otsu(imagen_np: np.ndarray) -> np.ndarray:
+    imagen_np = imagen_np.astype(np.uint8)
+    datos_gris = imagen_np.flatten()
+
+    intensidad = np.arange(256)
+    fi = np.bincount(datos_gris, minlength=256) 
+    N = datos_gris.size
+    pi = fi / N
+
+    # Computar las sumas acumuladas (array) y promedios ponderados (array)
+    P1 = np.zeros(256)
+    m = np.zeros(256)
+    for t in range(256):
+        P1[t] = np.sum(pi[0:t+1])
+        m[t] = np.sum(intensidad[0:t+1] * pi[0:t+1])
+    
+    # Computar el promedio ponderado global (escalar)
+    mG = m[255] # np.sum(intensidad * pi)
+
+    # Computar la varianza entre clases
+    sigma_B = np.zeros(256)
+    for t in range(256):
+        if P1[t] > 0 and P1[t] < 1:
+            sigma_B[t] = ((mG * P1[t] - m[t])**2) / (P1[t] * (1 - P1[t]))
+
+    t_estrella = np.argmax(sigma_B)
+
+    print(f"Valor de umbral utilizado(T) = {t_estrella}")
+    resultado_np = aplicar_umbralizacion(imagen_np, t_estrella)
+
+    return resultado_np
+
