@@ -45,7 +45,7 @@ def cerrar(event):
 
 class EditorDeImagenes:
     GEOMETRIA_VENTANA = "1100x700+250+60"
-    FORMATOS_IMAGEN = [("Imágenes Soportadas", "*.jpg *.jpeg *.png *.bmp *.pgm *.raw"), ("Todos los archivos", "*.*")]
+    FORMATOS_IMAGEN = [("Imágenes Soportadas", "*.jpg *.jpeg *.png *.bmp *.pgm *.raw *.tif"), ("Todos los archivos", "*.*")]
     CANALES_RGB = ("R", "G", "B")
     ZOOM_MIN, ZOOM_MAX = 0.1, 3.0
 
