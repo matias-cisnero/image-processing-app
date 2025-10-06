@@ -1,12 +1,13 @@
 # Librerias
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, ttk, scrolledtext
 from PIL import Image, ImageTk
 import numpy as np
 from typing import Optional, Tuple, Callable
 import matplotlib.pyplot as plt
 import webbrowser
 import os
+import sys
 
 # Importaciones de código en archivos
 from utils import requiere_imagen, refrescar_imagen
@@ -20,16 +21,30 @@ from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplic
                         restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb
                         )
 
+class Redirector:
+    def __init__(self, text_widget):
+        self.text_widget = text_widget
+
+    def write(self, mensaje):
+        self.text_widget.insert(tk.END, mensaje)
+        self.text_widget.see(tk.END)  # auto-scroll hacia abajo
+
+    def flush(self):
+        pass  # requerido por sys.stdout
+
 def abrir_github(event):
     webbrowser.open_new("https://github.com/matias-cisnero/procesamiento_imagenes")
 
 def abrir_flaticon(event):
     webbrowser.open_new("https://www.flaticon.com/uicons")
 
+def cerrar(event):
+    root.destroy()
+
 # --- CLASE PRINCIPAL DE LA APLICACIÓN ---
 
 class EditorDeImagenes:
-    GEOMETRIA_VENTANA = "1200x700+220+60"
+    GEOMETRIA_VENTANA = "1100x700+250+60"
     FORMATOS_IMAGEN = [("Imágenes Soportadas", "*.jpg *.jpeg *.png *.bmp *.pgm *.raw"), ("Todos los archivos", "*.*")]
     CANALES_RGB = ("R", "G", "B")
     ZOOM_MIN, ZOOM_MAX = 0.1, 3.0
@@ -58,6 +73,7 @@ class EditorDeImagenes:
         self.root.bind("<Control-o>", self._cargar_imagen)
         self.root.bind("<Control-s>", self._guardar_imagen_como)
         self.root.bind("<Control-z>", self._volver_imagen_original)
+        self.root.bind("<Escape>", cerrar)
 
         self._setup_ui()
         self._vincular_eventos()
@@ -65,6 +81,7 @@ class EditorDeImagenes:
     # --- 1. CONFIGURACIÓN DE LA UI PRINCIPAL ---
     def _setup_ui(self):
         self._crear_menu()
+        self._crear_panel_superior()
         panel_principal = tk.Frame(self.root)
         panel_principal.pack(fill=tk.BOTH, expand=True)
         panel_principal.grid_columnconfigure(0, weight=1)
@@ -73,8 +90,9 @@ class EditorDeImagenes:
         panel_principal.grid_rowconfigure(0, weight=1)
 
         self._crear_visores_de_imagen(panel_principal)
-        self._crear_panel_control_fijo(panel_principal)
         self._crear_panel_inferior()
+
+        print("Bienvenido al Programa Procesador de Imágenes")
 
     def _crear_menu(self):
         barra_menu = tk.Menu(self.root)
@@ -82,28 +100,28 @@ class EditorDeImagenes:
         
         menu_archivo = tk.Menu(barra_menu, tearoff=0) # tk.Menu(barra_menu, tearoff=0, bg="#fcfdfd", fg="#7B7E83", activebackground="#cfd6e6", activeforeground="white", font=("Segoe UI", 10))
         barra_menu.add_cascade(label="Archivo", menu=menu_archivo)
-        menu_archivo.add_command(label="Cargar Imagen...", image=self.iconos['cargar'], compound="left", command=self._cargar_imagen, accelerator="Ctrl+O")
-        menu_archivo.add_command(label="Guardar Imagen Como...", image=self.iconos['guardar'], compound="left", command=self._guardar_imagen_como, accelerator="Ctrl+S")
+        menu_archivo.add_command(label="Cargar Imagen...", image=self.iconos['h_carpeta'], compound="left", command=self._cargar_imagen, accelerator="Ctrl+O")
+        menu_archivo.add_command(label="Guardar Imagen Como...", image=self.iconos['h_disquete'], compound="left", command=self._guardar_imagen_como, accelerator="Ctrl+S")
         menu_archivo.add_separator()
-        menu_archivo.add_command(label="Salir", image=self.iconos['salir'], compound="left", command=self.root.quit)
+        menu_archivo.add_command(label="Salir", image=self.iconos['h_salir'], compound="left", command=cerrar)
         
         menu_operadores_puntuales = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
-        menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.iconos['gamma'], compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
-        menu_operadores_puntuales.add_command(label="Umbralización", image=self.iconos['umbralizacion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['negativo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
+        menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.iconos['h_y'], compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
+        menu_operadores_puntuales.add_command(label="Umbralización", image=self.iconos['h_u'], compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_negativo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
         config_dist_rayleigh = {'titulo': "Histograma Rayleigh", 'param_label': "Parámetro Xi (ξ):", 'distribucion': np.random.rayleigh}
         config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
-        menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.iconos['histograma'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", image=self.iconos['ecualizacion'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
+        menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.iconos['h_barras'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
+        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda2'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
         menu_histogramas.add_separator()
-        menu_histogramas.add_command(label="Generador Gaussiano", image=self.iconos['normal'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
-        menu_histogramas.add_command(label="Generador Rayleigh", image=self.iconos['rayleigh'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
-        menu_histogramas.add_command(label="Generador Exponencial", image=self.iconos['exponencial'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
+        menu_histogramas.add_command(label="Generador Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
+        menu_histogramas.add_command(label="Generador Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
+        menu_histogramas.add_command(label="Generador Exponencial", image=self.iconos['h_e'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_exponencial))
 
         menu_ruido = tk.Menu(barra_menu, tearoff=0)
         config_gaussiano = {'titulo': "Ruido Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal, 'sal_y_pimienta': False, 'res': 1}
@@ -111,10 +129,10 @@ class EditorDeImagenes:
         config_exponencial = {'titulo': "Ruido Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential, 'sal_y_pimienta': False, 'res': 1}
         config_sal_y_pimienta = {'titulo': "Sal y Pimienta", 'param_label': "-", 'distribucion': np.random.normal, 'sal_y_pimienta': True, 'res': 2}
         barra_menu.add_cascade(label="Ruido", menu=menu_ruido)
-        menu_ruido.add_command(label="Gaussiano", image=self.iconos['normal'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_gaussiano))
-        menu_ruido.add_command(label="Rayleigh", image=self.iconos['rayleigh'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
-        menu_ruido.add_command(label="Exponencial", image=self.iconos['exponencial'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_exponencial))
-        menu_ruido.add_command(label="Sal y Pimienta", image=self.iconos['sal_y_pimienta'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_sal_y_pimienta))
+        menu_ruido.add_command(label="Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_gaussiano))
+        menu_ruido.add_command(label="Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
+        menu_ruido.add_command(label="Exponencial", image=self.iconos['h_e'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_exponencial))
+        menu_ruido.add_command(label="Sal y Pimienta", image=self.iconos['h_syp'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_sal_y_pimienta))
         #menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
@@ -125,40 +143,118 @@ class EditorDeImagenes:
         config_isotropico = {'titulo': "Difusión Isotrópica", 'isotropico': True}
         config_anisotropico = {'titulo': "Difusión Anisotrópica", 'isotropico': False}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
-        menu_filtros.add_command(label="Media", image=self.iconos['media'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
-        menu_filtros.add_command(label="Gaussiano", image=self.iconos['normal'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
+        menu_filtros.add_command(label="Media", image=self.iconos['h_x'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_media))
+        menu_filtros.add_command(label="Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_gaussiano))
         menu_filtros.add_separator()
-        menu_filtros.add_command(label="Mediana", image=self.iconos['mediana'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
-        menu_filtros.add_command(label="Mediana Ponderada", image=self.iconos['mediana_ponderada'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
+        menu_filtros.add_command(label="Mediana", image=self.iconos['h_m'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana))
+        menu_filtros.add_command(label="Mediana Ponderada", image=self.iconos['h_peso'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_mediana_ponderada))
         menu_filtros.add_separator()
-        menu_filtros.add_command(label="Difusión Isotrópica", image=self.iconos['sol'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
-        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['sol'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_anisotropico))
+        menu_filtros.add_command(label="Difusión Isotrópica", image=self.iconos['h_difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_isotropico))
+        menu_filtros.add_command(label="Difusión Anisotrópica", image=self.iconos['h_difusion'], compound="left", command=lambda: self._iniciar_dialogo(DialogoDifusion, config=config_anisotropico))
         menu_filtros.add_separator()
-        menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['omega'], compound="left", command=lambda: self._iniciar_dialogo(DialogoBilateral))
+        menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['h_omega'], compound="left", command=lambda: self._iniciar_dialogo(DialogoBilateral))
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
         config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
         config_laplaciano = {'titulo': "Método del Laplaciano", 'log': False}
         config_log = {'titulo': "Método del LoG", 'log': True}
         barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
-        menu_bordes.add_command(label="Realce de Bordes", image=self.iconos['borde'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
+        menu_bordes.add_command(label="Realce de Bordes", image=self.iconos['h_borde'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Prewitt X", image=self.iconos['borde_x'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_x, modo=1))
-        menu_bordes.add_command(label="Prewitt Y", image=self.iconos['borde_y'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
+        menu_bordes.add_command(label="Prewitt X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_x, modo=1))
+        menu_bordes.add_command(label="Prewitt Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Sobel X", image=self.iconos['borde_x'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_x, modo=1))
-        menu_bordes.add_command(label="Sobel Y", image=self.iconos['borde_y'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
+        menu_bordes.add_command(label="Sobel X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_x, modo=1))
+        menu_bordes.add_command(label="Sobel Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
-        menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
+        menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
+        menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
 
         menu_umbralizacion = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
-        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
-        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['otsu'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
-        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['recursos'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
+        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['h_ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
+        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['h_combinar'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
+        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['h_formas'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
+
+    def _crear_panel_superior(self):
+    
+        top_frame = ttk.Frame(self.root, padding=0)
+        top_frame.pack(side="top", fill="x", padx=10, pady=(5, 5))
+
+        # ================================((PANEL_IZQUIERDO_BOTONES))========================================
+
+        panel_botones = ttk.Frame(top_frame)
+        panel_botones.grid(row=0, column=0, sticky="w")
+
+        # Botón 1: Cargar Imagen
+        btn_grises = ttk.Button(panel_botones, image=self.iconos['h_carpeta'], command=self._cargar_imagen)
+        btn_grises.grid(row=0, column=0, pady=0)
+        Tooltip(widget=btn_grises, text="Cargar imagen (Ctrl+O)")
+
+        # Botón 2: Guardar Imagen
+        btn_grises = ttk.Button(panel_botones, image=self.iconos['h_disquete'], command=self._guardar_imagen_como)
+        btn_grises.grid(row=0, column=1, pady=0)
+        Tooltip(widget=btn_grises, text="Guadar imagen (Ctrl+S)")
+
+        ttk.Separator(panel_botones, orient="vertical").grid(row=0, column=2, sticky="ns", padx=5)
+
+        # Botón 3: Seleccionar Pixel
+        btn_pixel = ttk.Button(panel_botones, image=self.iconos['h_gotero'], command=self._activar_modo_seleccion)
+        btn_pixel.grid(row=0, column=3, pady=0)
+        Tooltip(widget=btn_pixel, text="Seleccionar y modificar pixel")
+
+        # Botón 4: Recortar Región
+        btn_recorte = ttk.Button(panel_botones, image=self.iconos['h_tijera'], command=self._activar_modo_recorte)
+        btn_recorte.grid(row=0, column=4, pady=0)
+        Tooltip(widget=btn_recorte, text="Recortar una región")
+
+        # Botón 5: Convertir a Grises
+        btn_grises = ttk.Button(panel_botones, image=self.iconos['h_grises'], command=self._escala_grises)
+        btn_grises.grid(row=0, column=5, pady=0)
+        Tooltip(widget=btn_grises, text="Convertir a escala de grises")
+
+        # Botón 6: Restar Imágenes
+        btn_resta = ttk.Button(panel_botones, image=self.iconos['h_resta'], command=self._iniciar_resta)
+        btn_resta.grid(row=0, column=6, pady=0)
+        Tooltip(widget=btn_resta, text="Restar imagen")
+
+        ttk.Separator(panel_botones, orient="vertical").grid(row=0, column=7, sticky="ns", padx=5)
+
+        # Botón 7: Volver a Original
+        btn_volver = ttk.Button(panel_botones, image=self.iconos['h_anterior'], command=self._volver_imagen_original)
+        btn_volver.grid(row=0, column=8, pady=0)
+        Tooltip(widget=btn_volver, text="Volver a imagen original (Ctrl+Z)")
+
+        # ================================((PANEL_DERECHO_COLORES))========================================
+
+        top_frame.columnconfigure(1, weight=1)
+
+        panel_info_pixel = ttk.Frame(top_frame)
+        panel_info_pixel.grid(row=0, column=2, sticky="e", padx=(10, 0))
+
+        # 1. El label color
+        ttk.Label(panel_info_pixel, image=self.iconos['h_rgb']).grid(row=0, column=0, sticky="ns", padx=(0, 5))
+
+        # 2. El preview de color
+        self.color_preview = tk.Canvas(panel_info_pixel, width=20, height=20, bg="white", relief="sunken", borderwidth=1)
+        self.color_preview.grid(row=0, column=1, sticky="ns", padx=(0, 5))
+
+        # 3. El separator
+        ttk.Separator(panel_info_pixel, orient='vertical').grid(row=0, column=2, sticky="ns")
+
+        # 4. El grid con los valores R, G, B
+        grid_rgb = ttk.Frame(panel_info_pixel)
+        grid_rgb.grid(row=0, column=3, sticky="w", padx=(5, 0))
+
+        pos = [(0, 1), (2, 3), (4, 5)]
+        img_labels = {"R": self.iconos['h_red'], "G": self.iconos['h_green'], "B": self.iconos['h_blue']}
+
+        for i, canal in enumerate(self.CANALES_RGB):
+            col = pos[i]
+            ttk.Label(grid_rgb, image=img_labels[canal]).grid(row=0, column=col[0], sticky="w")
+            ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=3).grid(row=0, column=col[1], padx=5)
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
         frame_visores = tk.Frame(parent)
@@ -186,83 +282,46 @@ class EditorDeImagenes:
 
     def _crear_panel_canvas(self, parent: tk.Frame, col: int, titulo: str) -> tk.Canvas:
         frame = ttk.Labelframe(parent, text=titulo, padding=5)
-        frame.grid(row=0, column=col, sticky="nsew", padx=5, pady=5)
+        frame.grid(row=0, column=col, sticky="nsew", padx=5, pady=0)
         canvas = tk.Canvas(frame, bg="gray")
         canvas.pack(fill=tk.BOTH, expand=True)
         return canvas
-
-    def _crear_panel_control_fijo(self, parent: tk.Frame):
-        panel_control = ttk.Frame(parent, padding=5)
-        panel_control.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
-
-        # Botón 1: Volver a Original
-        btn_volver = ttk.Button(panel_control, image=self.iconos['volver'], command=self._volver_imagen_original)
-        btn_volver.grid(row=0, column=0, pady=4)
-        Tooltip(widget=btn_volver, text="Volver a Original (Ctrl+Z)")
-
-        # Botón 2: Convertir a Grises
-        btn_grises = ttk.Button(panel_control, image=self.iconos['escala_grises'], command=self._escala_grises)
-        btn_grises.grid(row=1, column=0, pady=4)
-        Tooltip(widget=btn_grises, text="Convertir a escala de grises")
-
-        # Botón 3: Recortar Región
-        btn_recorte = ttk.Button(panel_control, image=self.iconos['recorte'], command=self._activar_modo_recorte)
-        btn_recorte.grid(row=2, column=0, pady=4)
-        Tooltip(widget=btn_recorte, text="Recortar una región")
-
-        # Botón 4: Restar Imágenes
-        btn_resta = ttk.Button(panel_control, image=self.iconos['resta_imagenes'], command=self._iniciar_resta)
-        btn_resta.grid(row=3, column=0, pady=4)
-        Tooltip(widget=btn_resta, text="Restar imagen")
-
-        # Botón 5: Seleccionar Pixel
-        btn_pixel = ttk.Button(panel_control, image=self.iconos['gotero'], command=self._activar_modo_seleccion)
-        btn_pixel.grid(row=4, column=0, pady=4)
-        Tooltip(widget=btn_pixel, text="Seleccionar y modificar pixel")
         
     def _crear_panel_inferior(self):
-        footer_frame = ttk.Frame(self.root, padding=5)
-        footer_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=2)
+        footer_frame = ttk.Frame(self.root, padding=0)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=(0, 10))
 
         footer_frame.columnconfigure(0, weight=1)
 
-        # --- 1. Frame Izquierdo: Herramientas ---
+        # --- 1. Frame Izquierdo: Consola de Salida ---
 
-        frame_herramientas = ttk.Frame(footer_frame)
-        frame_herramientas.grid(row=0, column=0, sticky="w")
+        frame_consola = ttk.Frame(footer_frame)
+        frame_consola.grid(row=0, column=0, sticky="w")
 
-        panel_info_pixel = ttk.Frame(frame_herramientas)
-        panel_info_pixel.pack(pady=(0, 10))
+        ttk.Label(frame_consola, image=self.iconos['h_terminal']).grid(row=0, column=0, padx=0, sticky="nw")
 
-        # 1. El label color
-        ttk.Label(panel_info_pixel, text="Color:").grid(row=0, column=0, sticky="ns", padx=(0, 5))
+        log = scrolledtext.ScrolledText(
+            frame_consola,
+            width=70,
+            height=5,
+            bg="#f5f5f5",
+            fg="#111827",
+            insertbackground="white",
+            font=("Consolas", 8)
+        )
+        log.grid(row=0, column=1, padx=5)
 
-        # 2. El preview de color
-        self.color_preview = tk.Canvas(panel_info_pixel, width=20, height=20, bg="white", relief="sunken", borderwidth=1)
-        self.color_preview.grid(row=0, column=1, sticky="ns", padx=(0, 5))
-
-        # 3. El separator
-        ttk.Separator(panel_info_pixel, orient='vertical').grid(row=0, column=2, sticky="ns")
-
-        # 4. El grid con los valores R, G, B
-        grid_rgb = ttk.Frame(panel_info_pixel)
-        grid_rgb.grid(row=0, column=3, sticky="w", padx=(5, 0))
-        
-        pos = [(0, 1), (2, 3), (4, 5)]
-        for i, canal in enumerate(self.CANALES_RGB):
-            col = pos[i]
-            ttk.Label(grid_rgb, text=f"{canal}:").grid(row=0, column=col[0], sticky="w")
-            ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=3).grid(row=0, column=col[1], padx=5)
+        sys.stdout = Redirector(log)
 
         # --- 2. Frame Central: Créditos y Enlaces ---
         frame_creditos = ttk.Frame(footer_frame)
-        frame_creditos.grid(row=0, column=0, sticky="e")
+        frame_creditos.grid(row=0, column=1, sticky="e")
         
-        label_github = ttk.Label(frame_creditos, text="GitHub", foreground="blue", cursor="hand2", image=self.iconos['github'], compound="left")
+        label_github = ttk.Label(frame_creditos, text="GitHub", foreground="blue", cursor="hand2", image=self.iconos['h_github'], compound="left")
         label_github.pack(side=tk.LEFT, padx=5)
         label_github.bind("<Button-1>", abrir_github)
 
-        label_creditos = ttk.Label(frame_creditos, text="Iconos por Flaticon", foreground="blue", cursor="hand2", image=self.iconos['flaticon'], compound="left")
+        label_creditos = ttk.Label(frame_creditos, text="Iconos por Flaticon", foreground="blue", cursor="hand2", image=self.iconos['h_flaticon'], compound="left")
         label_creditos.pack(side=tk.LEFT, padx=10)
         label_creditos.bind("<Button-1>", abrir_flaticon)
 
@@ -270,16 +329,19 @@ class EditorDeImagenes:
         frame_zoom = ttk.Frame(footer_frame)
         frame_zoom.grid(row=0, column=2, sticky="w")
 
-        ttk.Label(frame_zoom, text="Zoom:").pack(side=tk.LEFT, padx=(5, 5))
+        ttk.Separator(frame_zoom, orient='vertical').grid(row=0, column=0, sticky="ns")
+
+        ttk.Label(frame_zoom, image=self.iconos['h_alejar']).grid(row=0, column=1, padx=10)
         
         self.zoom_slider = ttk.Scale(frame_zoom, from_=self.ZOOM_MIN, to=self.ZOOM_MAX, orient=tk.HORIZONTAL, command=self._actualizar_zoom_desde_slider)
-        self.zoom_slider.pack(side=tk.LEFT, padx=5)
+        self.zoom_slider.grid(row=0, column=2, sticky="w")
+
+        ttk.Label(frame_zoom, image=self.iconos['h_acercar']).grid(row=0, column=3, padx=10)
+
 
         self.zoom_spinbox = ttk.Spinbox(frame_zoom, from_=self.ZOOM_MIN * 100, to=self.ZOOM_MAX * 100, textvariable=self.zoom_var, width=8, command=self._actualizar_zoom_desde_spinbox)
-        self.zoom_spinbox.pack(side=tk.LEFT, padx=5)
+        self.zoom_spinbox.grid(row=0, column=4, sticky="e")
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
-
-    # En main.py, dentro de la clase EditorDeImagenes
 
     def _cargar_iconos(self):
         """
@@ -297,7 +359,7 @@ class EditorDeImagenes:
                 ruta_completa = os.path.join(icons_dir, filename)
                 
                 try:
-                    imagen = tk.PhotoImage(file=ruta_completa).subsample(5, 5)
+                    imagen = tk.PhotoImage(file=ruta_completa).subsample(4, 4)
                     self.iconos[nombre_clave] = imagen
                 except tk.TclError as e:
                     print(f"Advertencia: No se pudo cargar el ícono '{filename}': {e}")
@@ -324,7 +386,7 @@ class EditorDeImagenes:
     def _cancelar_cambio(self, imagen):
         self.imagen_procesada = imagen
 
-    # =============================((APLICAR_TRANSFORMACIÓN))================================
+    # --- Aplicar Transformación
 
     @requiere_imagen
     @refrescar_imagen
@@ -339,8 +401,6 @@ class EditorDeImagenes:
         resultado_np = funcion(imagen_np, *args, **kwargs)
 
         self.imagen_procesada = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
-
-    # ================================((HISTOGRAMAS))========================================
 
     # --- Niveles de Gris y RGB
 
@@ -366,14 +426,6 @@ class EditorDeImagenes:
             'verde': datos_g,
             'azul': datos_b
         }
-
-    # ===================================((RUIDO))===========================================
-
-    # Pasado a processing y ui_dialogs
-
-    # ===================================((FILTROS))=========================================
-
-    # Pasado a processing y ui_dialogs
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 

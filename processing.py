@@ -209,8 +209,7 @@ def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=Fals
     filtro, factor = func_filtro(k)
     print("Filtro usado:")
     print(filtro)
-    print("Factor usado:")
-    print(factor)
+    print(f"Factor usado: {factor}")
     m, n, _ = imagen_np.shape
     k, l = filtro.shape
     pad_h, pad_w = k//2, l//2
