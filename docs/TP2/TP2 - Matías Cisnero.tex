@@ -1,0 +1,190 @@
+\documentclass{beamer}
+
+\usetheme{Madrid} % Singapore, Madrid, Ilmenau, CambridgeUS
+\setbeamertemplate{navigation symbols}{}
+
+% --- Colores personalizados ---
+\definecolor{unahurverde}{HTML}{005C5C}
+\definecolor{unahurgris}{HTML}{EAEAEA}
+\setbeamercolor{structure}{fg=unahurverde}
+\setbeamercolor{frametitle}{bg=unahurverde, fg=white}
+\setbeamercolor{title}{fg=unahurverde}
+\setbeamercolor{block title}{bg=unahurverde, fg=white}
+\setbeamercolor{block body}{bg=unahurgris, fg=black}
+
+% --- Logo en esquina superior derecha ---
+\addtobeamertemplate{frametitle}{}{%
+	\begin{textblock*}{3cm}(11.88cm,0.12cm)
+		\includegraphics[height=0.7cm]{logo_unahur.png}
+	\end{textblock*}
+}
+
+\setbeamertemplate{caption}[numbered]
+
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{ragged2e}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+%\usepackage{enumitem}
+\usepackage[absolute,overlay]{textpos} % Necesario para el logo
+
+\usefonttheme[onlymath]{serif}
+
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolor}{rgb}{0.95,0.95,0.95}
+\definecolor{verdecelda}{HTML}{B7CBA6}
+\definecolor{rojocelda}{HTML}{FF9999}
+\definecolor{lightgray}{gray}{0.6}
+
+\definecolor{codebg}{rgb}{0.95,0.97,0.98}       % fondo celeste muy suave
+\definecolor{codecomment}{rgb}{0.42,0.55,0.34}  % verde oliva suave y cursiva
+\definecolor{codekeyword}{rgb}{0.0,0.45,0.73}    % azul turquesa
+\definecolor{codestring}{rgb}{0.78,0.36,0.14}   % naranja marrón claro
+\definecolor{codenumber}{rgb}{0.5,0.5,0.5}      % gris numeración
+\definecolor{coderule}{rgb}{0.7,0.8,0.9}        % borde celeste suave
+
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{codebg},
+	commentstyle=\color{codecomment},
+	keywordstyle=\color{codekeyword}\bfseries,
+	stringstyle=\color{codestring},
+	numberstyle=\tiny\color{codenumber},
+	basicstyle=\ttfamily\footnotesize,
+	breaklines=true,
+	captionpos=b,
+	keepspaces=true,
+	numbersep=7pt,
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=2,
+	inputencoding=utf8,
+	extendedchars=true,
+	frame=single,
+	rulecolor=\color{coderule},
+	numbers=none,
+	xleftmargin=10pt,
+	literate={π}{{$\pi$}}1 {θ}{{$\theta$}}1 {μ}{{$\mu$}}1 {β}{{$\beta$}}1 {η}{{$\eta$}}1 {δ}{{$\delta$}}1 {Δ}{{$\Delta$}}1
+	{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+	{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+	{ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ζ}{{$\zeta$}}1
+}
+
+\lstset{style=mystyle}
+
+\lstset{
+	language=Python,
+	emph={self, _aplicar_gamma, _escalar_255, _generar_vector_ruido, _aplicar_ruido_sal_y_pimienta, _aplicar_ruido, _aplicar_ecualizacion_histograma, _aplicar_umbralizacion, _aplicar_negativo}, emphstyle=\color{purple}\bfseries,
+}
+
+\title{Trabajo Práctico 1 Procesamiento de Imágenes y Visión por Computadora}
+\author{Matías Cisnero}
+\date{11 de agosto de 2025}
+
+\begin{document}
+	
+	% Portada
+\begin{frame}
+	\centering
+	\includegraphics[width=0.25\textwidth]{UNAHUR.png}
+	\vfill
+	{\huge \textbf{Trabajo Práctico 1}}\\[0.2cm]
+	{\Large Procesamiento de Imágenes y Visión por Computadora}\\
+	\vfill
+	{\large Matías Cisnero}\\
+	{\small 11 de agosto de 2025}
+\end{frame}
+	
+\section{Ejercicio 1}
+	
+\begin{frame}
+	\begin{center}
+		\textcolor{unahurverde}{\textbf{Consigna 1:}}
+	\end{center}
+	\justifying
+	
+	Implementar la función de potencia $\gamma, 0 < \gamma < 2$ y $\gamma \neq 1$.
+\end{frame}
+
+\begin{frame}[fragile]{Transformación Gamma $\gamma$}
+	\justifying
+
+	\begin{block}{Definición}
+		\[
+		T(r) = c . r^\gamma, \quad 0 < \gamma < 2, \ \gamma \neq 1
+		\]
+	\end{block}
+	
+	Donde $c$ es una constante apropiada, de tal forma que $T(255) = 255$.
+	
+	\begin{block}{Constante $c$}
+		\[
+		c = 255^{1-\gamma}
+		\]
+	\end{block}
+	
+	Y $r$ los niveles de gris de una imagen $f$.
+\end{frame}
+
+\begin{frame}[fragile]{Filtro Realce de Bordes}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def _filtro_realce(self, k):
+	filtro = -1 * np.ones((k, k))
+	filtro[k//2, k//2] = k**2 - 1
+	
+	factor = 1
+	return (filtro, factor)
+	\end{lstlisting}
+\end{frame}
+
+\section{Repositorio}
+
+\begin{frame}{Repositorio de GitHub}
+	\justifying
+	Todo el código y los resultados de este trabajo están disponibles en mi repositorio de GitHub: 
+	
+	\vspace{0.5cm}
+	\centering
+	\href{https://github.com/matias-cisnero/procesamiento_imagenes}{\textcolor{unahurverde}{\textbf{https://github.com/matias-cisnero/procesamiento\_imagenes}}}
+\end{frame}
+
+\section{Bibliografía}
+	
+\begin{frame}{Referencias}
+	\tiny
+	\begin{thebibliography}{10}
+		\beamertemplateonlinebibitems
+		\bibitem{numpy-broadcasting}
+		NumPy Documentation: Broadcasting. 
+		\newblock \url{https://numpy.org/doc/stable/user/basics.broadcasting.html}
+		
+		\bibitem{numpy.where}
+		NumPy Documentation: numpy.where. 
+		\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.where.html}
+		
+		\bibitem{numpy.bincount}
+		NumPy Documentation: numpy.bincount. 
+		\newblock \url{https://numpy.org/doc/stable/reference/generated/numpy.bincount.html}
+		
+		\bibitem{wikimedia-leucanthemum}
+		Imagen \textit{“Leucanthemum vulgare Blüte”} por Mariofan13. 
+		\newblock Wikimedia Commons. Licencia \textit{CC BY-SA 3.0 Unported}. 
+		\newblock \href{https://commons.wikimedia.org/wiki/File:Leucanthemum_vulgare_Bl\%C3\%BCte.JPG}{Ver imagen en Wikimedia Commons}
+		
+	\end{thebibliography}
+\end{frame}
+
+\begin{frame}{}
+	\centering
+	{\huge ¡Gracias!}\\
+	\vspace{1cm}
+	\includegraphics[width=0.2\textwidth]{UNAHUR.png}
+\end{frame}
+	
+\end{document}

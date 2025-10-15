@@ -189,8 +189,8 @@ class DialogoHerramienta(DialogoBase):
         self.app = app_principal
         self.title(titulo)
 
-        self.icono_aceptar = tk.PhotoImage(file="icons/aceptar.png").subsample(5,5)
-        self.icono_cancelar = tk.PhotoImage(file="icons/cancelar.png").subsample(5,5)
+        self.icono_aceptar = tk.PhotoImage(file="icons/ui_aceptar.png").subsample(4,4)
+        self.icono_cancelar = tk.PhotoImage(file="icons/ui_cancelar.png").subsample(4,4)
         
         self.frame_herramienta = ttk.Frame(self, padding=10)
         self.frame_herramienta.pack(expand=True, fill=tk.BOTH)
@@ -218,62 +218,83 @@ class DialogoGamma(DialogoHerramienta):
     """
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Transformación Gamma")
-        
-        self.valor_gamma = tk.StringVar(value="1.0")
+
+        self.valor_gamma = tk.DoubleVar(value=1.0)
         self.copia_imagen = self.app.imagen_procesada.copy()
 
+        # Frame principal con título
         label_parametros = ttk.Labelframe(self.frame_herramienta, text="Gamma", padding=10)
         label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
 
-        tk.Scale(
+        # Label del valor a la izquierda
+        lbl_valor = ttk.Label(label_parametros, text=f"{self.valor_gamma.get():.1f}", width=4)
+        lbl_valor.grid(row=0, column=0, padx=(0, 10), sticky="w")
+
+        # Scale de ttk
+        scale_gamma = ttk.Scale(
             label_parametros,
-            from_=0,
+            from_=0.0,
             to=2.0,
             orient="horizontal",
             variable=self.valor_gamma,
-            resolution=0.1,
-            showvalue=True,
-            length=200,
-            command=lambda value: self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=float(value))
-            ).pack(padx=5, pady=5)
-        
+            command=lambda value: self._actualizar_gamma(value, lbl_valor)
+        )
+        scale_gamma.grid(row=0, column=1, sticky="ew")
+        label_parametros.columnconfigure(1, weight=1)
+
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _actualizar_gamma(self, value, label):
+        valor = float(value)
+        label.config(text=f"{valor:.1f}")
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=valor)
 
     def _on_apply(self):
         gamma = float(self.valor_gamma.get())
         self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=gamma)
         self.destroy()
-    
+
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
 
 class DialogoUmbralizacion(DialogoHerramienta):
     """
-    Dialogo para umbralizar una imágen.
+    Diálogo para umbralizar una imagen.
     """
     def __init__(self, parent, app_principal):
         super().__init__(parent, app_principal, "Umbralización")
         
-        self.valor_umbral = tk.StringVar(value="128")
+        self.valor_umbral = tk.DoubleVar(value=128.0)
         self.copia_imagen = self.app.imagen_procesada.copy()
 
+        # Frame principal con título
         label_parametros = ttk.Labelframe(self.frame_herramienta, text="Umbral", padding=10)
         label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
 
-        tk.Scale(
+        # Label que muestra el valor actual
+        lbl_valor = ttk.Label(label_parametros, text=f"{self.valor_umbral.get():.0f}", width=4)
+        lbl_valor.grid(row=0, column=0, padx=(0, 10), sticky="w")
+
+        # Scale de ttk
+        scale_umbral = ttk.Scale(
             label_parametros,
             from_=0,
             to=255,
             orient="horizontal",
             variable=self.valor_umbral,
-            resolution=1,
-            showvalue=True,
-            length=350,
-            command=lambda value: self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, float(value))
-            ).pack(padx=5, pady=5)
-        
+            command=lambda value: self._actualizar_umbral(value, lbl_valor)
+        )
+        scale_umbral.grid(row=0, column=1, sticky="ew")
+        label_parametros.columnconfigure(1, weight=1)
+
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _actualizar_umbral(self, value, label):
+        """Actualiza el label y aplica la transformación mientras se mueve el slider."""
+        valor = round(float(value))
+        label.config(text=str(valor))
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, umbral=valor)
 
     def _on_apply(self):
         umbral = float(self.valor_umbral.get())
@@ -445,59 +466,66 @@ class DialogoRuido(DialogoHerramienta):
         
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.tipo = tk.StringVar(value="Aditivo")
-        self.valor_d = tk.StringVar(value="20")
-        self.intensidad = tk.StringVar(value="10")
+        self.valor_d = tk.DoubleVar(value=20.0)
+        self.intensidad = tk.DoubleVar(value=10.0)
         self.sal_y_pimienta = config['sal_y_pimienta']
 
         frame_principal = self.frame_herramienta
         frame_principal.columnconfigure(1, weight=1)
 
+        # ----- GRUPO GENERAL -----
         grupo_general = ttk.LabelFrame(frame_principal, text="Parámetros Generales", padding=10)
         grupo_general.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
         grupo_general.columnconfigure(1, weight=1)
 
+        # Etiqueta y Scale para % de píxeles afectados
         ttk.Label(grupo_general, text="Píxeles a Afectar (%):").grid(row=0, column=0, sticky="w", pady=5)
-        tk.Scale(
+        self.lbl_valor_d = ttk.Label(grupo_general, text=f"{int(self.valor_d.get())}", width=4)
+        self.lbl_valor_d.grid(row=0, column=2, padx=(5, 0), sticky="e")
+
+        ttk.Scale(
             grupo_general,
             from_=0,
             to=100,
             orient="horizontal",
             variable=self.valor_d,
-            resolution=config['res'],
-            showvalue=True#,
-            #length=250
-            ).grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        
+            command=lambda v: self.lbl_valor_d.config(text=f"{float(v):.0f}")
+        ).grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
+        # ----- SI NO ES SAL Y PIMIENTA -----
         if not self.sal_y_pimienta:
             grupo_especifico = ttk.Labelframe(frame_principal, text="Parámetros Específicos", padding=10)
             grupo_especifico.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
             grupo_especifico.columnconfigure(1, weight=1)
 
-            ttk.Label(grupo_general, text="Tipo de Aplicación:").grid(row=1, column=0, sticky="w", pady=5)
-
-            frame_radios = ttk.Frame(grupo_general)
+            # Tipo de aplicación
+            ttk.Label(grupo_especifico, text="Tipo de Aplicación:").grid(row=0, column=0, sticky="w", pady=5)
+            frame_radios = ttk.Frame(grupo_especifico)
             ttk.Radiobutton(frame_radios, text="Aditivo", variable=self.tipo, value="Aditivo").pack(side="left", padx=5)
             ttk.Radiobutton(frame_radios, text="Multiplicativo", variable=self.tipo, value="Multiplicativo").pack(side="left", padx=5)
-            frame_radios.grid(row=1, column=1, sticky="w", pady=5)
+            frame_radios.grid(row=0, column=1, sticky="w", pady=5)
 
-            ttk.Label(grupo_especifico, text=self.config['param_label']).grid(row=0, column=0, sticky="w", pady=5)
+            # Parámetro de intensidad
+            ttk.Label(grupo_especifico, text=self.config['param_label']).grid(row=1, column=0, sticky="w", pady=5)
+            self.lbl_intensidad = ttk.Label(grupo_especifico, text=f"{int(self.intensidad.get())}", width=4)
+            self.lbl_intensidad.grid(row=1, column=2, padx=(5, 0), sticky="e")
 
-            tk.Scale(
+            ttk.Scale(
                 grupo_especifico,
                 from_=0,
                 to=50,
                 orient="horizontal",
                 variable=self.intensidad,
-                resolution=1,
-                showvalue=True#,
-                #length=250
-                ).grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+                command=lambda v: self.lbl_intensidad.config(text=f"{float(v):.0f}")
+            ).grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+
+        # ----- SI ES SAL Y PIMIENTA -----
         else:
-            ttk.Label(grupo_general, text="p = (porcentaje / 2) / 100").grid(row=1, column=0, columnspan=2)
+            ttk.Label(grupo_general, text="p = (porcentaje / 2) / 100").grid(row=1, column=0, columnspan=3, pady=(5, 0))
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
 
+    # ----- APLICAR -----
     def _on_apply(self):
         if not self.sal_y_pimienta:
             d = int(self.valor_d.get())
@@ -515,17 +543,24 @@ class DialogoRuido(DialogoHerramienta):
             )
 
             if vector_ruido.size > 0:
-                self.app._aplicar_transformacion(self.copia_imagen, aplicar_ruido, tipo=tipo, vector_ruido=vector_ruido, d=d)
+                self.app._aplicar_transformacion(
+                    self.copia_imagen, 
+                    aplicar_ruido, 
+                    tipo=tipo, 
+                    vector_ruido=vector_ruido, 
+                    d=d
+                )
         else:
             d = int(self.valor_d.get()) / 2
             p = d / 100
-
             self.app._aplicar_transformacion(self.copia_imagen, aplicar_ruido_sal_y_pimienta, p=p)
         self.destroy()
     
+    # ----- CANCELAR -----
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()
+
 
 class DialogoFiltro(DialogoHerramienta):
     """
@@ -535,49 +570,75 @@ class DialogoFiltro(DialogoHerramienta):
         super().__init__(parent, app_principal, config['titulo'])
         
         self.copia_imagen = self.app.imagen_procesada.copy()
-        #self.factor = tk.StringVar(value="1")
         self.gaussiano = config['gaussiano']
         self.func_filtro = config['filtro']
         self.modo = config['modo']
         self.mediana = config['mediana']
 
-        valor = "1" if self.gaussiano else "3"
-        self.tam_filtro = tk.StringVar(value=valor)
+        # Valores iniciales según tipo
+        valor_inicial = 1 if self.gaussiano else 3
+        self.tam_filtro = tk.DoubleVar(value=valor_inicial)
         self.param_label = "Desviación Estándar (σ):" if self.gaussiano else "Tamaño de máscara (k):"
         self.inicio = 1 if self.gaussiano else 3
-        self.resolution = 1 if self.gaussiano else 2
 
         label_parametros = ttk.Labelframe(self.frame_herramienta, text=self.param_label, padding=10)
         label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
 
-        #ttk.Label(self.frame_herramienta, text=self.param_label).pack(padx=5, pady=(10, 0))
-        tk.Scale(
+        # Label del valor a la izquierda
+        self.lbl_valor = ttk.Label(label_parametros, text=f"{int(self.tam_filtro.get())}", width=4)
+        self.lbl_valor.grid(row=0, column=0, padx=(0, 10), sticky="w")
+
+        # Slider (usa escala continua, pero ajustamos manualmente a valores impares)
+        self.scale = ttk.Scale(
             label_parametros,
             from_=self.inicio,
             to=15,
             orient="horizontal",
             variable=self.tam_filtro,
-            resolution=self.resolution,
-            showvalue=True,
-            length=200,
             command=self._actualizar_valor
-            ).pack(padx=5, pady=5)
+        )
+        self.scale.grid(row=0, column=1, sticky="ew")
+        label_parametros.columnconfigure(1, weight=1)
 
+        # Label auxiliar para mostrar tamaño de máscara si es gaussiano
         if self.gaussiano:
-            self.label_sigma = ttk.Label(label_parametros, text=f"Tamaño de máscara correspondiente (k): {int((int(self.tam_filtro.get())*2)+1)}")
-            self.label_sigma.pack(padx=5, pady=(0, 10))
+            k = int(2 * self.tam_filtro.get() + 1)
+            self.label_sigma = ttk.Label(label_parametros, text=f"Tamaño de máscara correspondiente (k): {k}")
+            self.label_sigma.grid(row=1, column=0, columnspan=2, pady=(5, 0), sticky="w")
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
     
     def _actualizar_valor(self, valor):
+        """Actualiza el label y asegura valores impares o consistentes según tipo."""
+        val = float(valor)
         if self.gaussiano:
-            sigma = int(valor)
+            sigma = int(round(val))
             k = int(2 * sigma + 1)
+            self.lbl_valor.config(text=str(sigma))
             self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
+        else:
+            # Forzamos que sea impar
+            k = int(round(val))
+            if k % 2 == 0:
+                k += 1 if k < 15 else -1  # mantiene dentro del rango
+            self.tam_filtro.set(k)
+            self.lbl_valor.config(text=str(k))
 
     def _on_apply(self):
-        k = int(self.tam_filtro.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro, func_filtro=self.func_filtro, k=k, modo=self.modo, mediana=self.mediana)
+        """Aplica el filtro solo al confirmar."""
+        if self.gaussiano:
+            sigma = int(self.tam_filtro.get())
+            k = int(2 * sigma + 1)
+        else:
+            k = int(self.tam_filtro.get())
+        self.app._aplicar_transformacion(
+            self.copia_imagen,
+            aplicar_filtro,
+            func_filtro=self.func_filtro,
+            k=k,
+            modo=self.modo,
+            mediana=self.mediana
+        )
         self.destroy()
     
     def _on_cancel(self):
@@ -586,7 +647,7 @@ class DialogoFiltro(DialogoHerramienta):
 
 class DialogoDifusion(DialogoHerramienta):
     """
-    Clase base para diálogos de difusión.
+    Diálogo para aplicar difusión isotrópica o anisotrópica a una imagen.
     """
     def __init__(self, parent, app_principal, config):
         super().__init__(parent, app_principal, config['titulo'])
@@ -594,41 +655,62 @@ class DialogoDifusion(DialogoHerramienta):
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.isotropico = config['isotropico']
 
-        self.t = tk.IntVar(value=1)
-        self.sigma = tk.IntVar(value=1)
+        self.t = tk.DoubleVar(value=1.0)
+        self.sigma = tk.DoubleVar(value=1.0)
 
-        ttk.Label(self.frame_herramienta, text="Tiempo (t):").pack(padx=5, pady=(10, 0))
-        tk.Scale(
-            self.frame_herramienta,
+        # --- Labelframe principal ---
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+        label_parametros.columnconfigure(1, weight=1)
+
+        # --- Tiempo (t) ---
+        ttk.Label(label_parametros, text="Tiempo (t):").grid(row=0, column=0, sticky="w", pady=(0, 3))
+        lbl_t_valor = ttk.Label(label_parametros, text=f"{self.t.get():.0f}", width=4)
+        lbl_t_valor.grid(row=0, column=2, sticky="e", padx=(10, 0))
+
+        scale_t = ttk.Scale(
+            label_parametros,
             from_=1,
             to=15,
             orient="horizontal",
             variable=self.t,
-            resolution=1,
-            showvalue=True,
-            length=200
-            ).pack(padx=5, pady=5)
-        
+            command=lambda value: self._actualizar_label(value, lbl_t_valor)
+        )
+        scale_t.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+
+        # --- Sigma (solo si no es isotrópico) ---
         if not self.isotropico:
-            ttk.Label(self.frame_herramienta, text="Desviación Estándar (σ):").pack(padx=5, pady=(10, 0))
-            tk.Scale(
-                self.frame_herramienta,
+            ttk.Label(label_parametros, text="Desviación Estándar (σ):").grid(row=1, column=0, sticky="w", pady=(10, 3))
+            lbl_sigma_valor = ttk.Label(label_parametros, text=f"{self.sigma.get():.0f}", width=4)
+            lbl_sigma_valor.grid(row=1, column=2, sticky="e", padx=(10, 0))
+
+            scale_sigma = ttk.Scale(
+                label_parametros,
                 from_=1,
                 to=100,
                 orient="horizontal",
                 variable=self.sigma,
-                resolution=1,
-                showvalue=True,
-                length=300
-            ).pack(fill="x", expand=True, pady=5)
-            
+                command=lambda value: self._actualizar_label(value, lbl_sigma_valor)
+            )
+            scale_sigma.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
 
         self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    # --- Actualiza solo el label, sin aplicar la transformación ---
+    def _actualizar_label(self, value, label):
+        valor = round(float(value))
+        label.config(text=str(valor))
 
     def _on_apply(self):
         t = int(self.t.get())
         sigma = int(self.sigma.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_difusion, sigma=sigma, t=t, isotropico=self.isotropico)
+        self.app._aplicar_transformacion(
+            self.copia_imagen,
+            aplicar_filtro_difusion,
+            sigma=sigma,
+            t=t,
+            isotropico=self.isotropico
+        )
         self.destroy()
     
     def _on_cancel(self):
@@ -645,80 +727,94 @@ class DialogoLaplaciano(DialogoHerramienta):
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.usar_pendiente = tk.BooleanVar(value=False)
         self.umbral_pendiente = tk.IntVar(value=50)
-
-        self.sigma = tk.IntVar(value=1)
+        self.sigma = tk.DoubleVar(value=1.0)
         self.log = config['log']
 
+        # --- Labelframe de opciones ---
         grupo_opciones = ttk.Labelframe(self.frame_herramienta, text="Opciones", padding=10)
         grupo_opciones.pack(fill="x", padx=10, pady=5, expand=True)
-
+        grupo_opciones.columnconfigure(1, weight=1)
 
         if self.log:
-            ttk.Label(grupo_opciones, text="Desviación Estándar (σ):").pack(padx=5, pady=(10, 0))
-            tk.Scale(
+            # Label sigma
+            ttk.Label(grupo_opciones, text="Desviación Estándar (σ):").grid(row=0, column=0, sticky="w", pady=(5, 0))
+            lbl_sigma_valor = ttk.Label(grupo_opciones, text=f"{self.sigma.get():.0f}", width=4)
+            lbl_sigma_valor.grid(row=0, column=2, sticky="e", padx=(10,0))
+
+            # Scale sigma
+            scale_sigma = ttk.Scale(
                 grupo_opciones,
                 from_=1,
                 to=100,
                 orient="horizontal",
                 variable=self.sigma,
-                resolution=1,
-                showvalue=True,
-                length=300,
-                command=self._actualizar_valor
-            ).pack(fill="x", expand=True, pady=5)
-            self.label_sigma = ttk.Label(grupo_opciones, text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma.get())*4)+1)}")
-            self.label_sigma.pack(padx=5, pady=(0, 10))
+                command=lambda value: self._actualizar_sigma(value, lbl_sigma_valor)
+            )
+            scale_sigma.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
+            # Label tamaño de máscara
+            self.label_sigma = ttk.Label(
+                grupo_opciones,
+                text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma.get())*4)+1)}"
+            )
+            self.label_sigma.grid(row=1, column=0, columnspan=3, sticky="w", pady=(0, 10))
+
+        # --- Checkbutton para usar pendiente ---
         check_pendiente = ttk.Checkbutton(
             grupo_opciones,
             text="Usar Evaluación de la Pendiente (con umbral)",
             variable=self.usar_pendiente,
             command=self._toggle_umbral_slider
         )
-        check_pendiente.pack(anchor="w", pady=5)
+        check_pendiente.grid(row=2, column=0, columnspan=3, sticky="w", pady=5)
 
+        # --- Frame del slider de umbral ---
         self.frame_umbral = ttk.Frame(grupo_opciones)
-
-        ttk.Label(self.frame_umbral, text="Umbral:").pack(anchor="w", pady=(10, 0))
-        tk.Scale(
+        ttk.Label(self.frame_umbral, text="Umbral:").grid(row=0, column=0, sticky="w", pady=(5, 0))
+        self.lbl_umbral_valor = ttk.Label(self.frame_umbral, text=f"{self.umbral_pendiente.get():.0f}", width=4)
+        self.lbl_umbral_valor.grid(row=0, column=2, sticky="e", padx=(10,0))
+        scale_umbral = ttk.Scale(
             self.frame_umbral,
             from_=0,
             to=255,
             orient="horizontal",
             variable=self.umbral_pendiente,
-            resolution=1,
-            showvalue=True,
-            length=300
-        ).pack(fill="x", expand=True, pady=5)
-        
+            command=lambda value: self.lbl_umbral_valor.config(text=str(round(float(value))))
+        )
+        scale_umbral.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.frame_umbral.columnconfigure(1, weight=1)
+
         self._toggle_umbral_slider()
-        
         self._finalizar_y_posicionar()
+
+    def _actualizar_sigma(self, value, label):
+        """Actualiza label y tamaño de máscara k."""
+        valor = round(float(value))
+        label.config(text=str(valor))
+        k = 4 * valor + 1
+        self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
 
     def _toggle_umbral_slider(self):
         """Muestra u oculta el slider del umbral según el estado del checkbox."""
         if self.usar_pendiente.get():
-            self.frame_umbral.pack(fill="x", expand=True, pady=5)
+            self.frame_umbral.grid(row=3, column=0, columnspan=3, sticky="ew", pady=5)
         else:
-            self.frame_umbral.pack_forget()
-    
-    def _actualizar_valor(self, valor):
-        if self.log:
-            sigma = int(valor)
-            k = int(4 * sigma + 1)
-            self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
+            self.frame_umbral.grid_forget()
 
     def _on_apply(self):
         pendiente = self.usar_pendiente.get()
-        umbral = self.umbral_pendiente.get()
-        sigma = self.sigma.get()
+        umbral = int(self.umbral_pendiente.get())
+        sigma = int(self.sigma.get())
         log = self.log
         
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_metodo_del_laplaciano, log=log, pendiente=pendiente, umbral=umbral, sigma=sigma)
-        self.destroy()
-    
-    def _on_cancel(self):
-        self.app._cancelar_cambio(self.copia_imagen)
+        self.app._aplicar_transformacion(
+            self.copia_imagen,
+            aplicar_metodo_del_laplaciano,
+            log=log,
+            pendiente=pendiente,
+            umbral=umbral,
+            sigma=sigma
+        )
         self.destroy()
 
 class DialogoBilateral(DialogoHerramienta):
@@ -730,57 +826,71 @@ class DialogoBilateral(DialogoHerramienta):
         
         self.copia_imagen = self.app.imagen_procesada.copy()
 
-        self.sigma_s = tk.IntVar(value=1)
-        self.sigma_r = tk.IntVar(value=1)
+        self.sigma_s = tk.DoubleVar(value=1.0)
+        self.sigma_r = tk.DoubleVar(value=1.0)
 
+        # --- Labelframe principal ---
         grupo_opciones = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)
         grupo_opciones.pack(fill="x", padx=10, pady=5, expand=True)
+        grupo_opciones.columnconfigure(1, weight=1)
 
-        ttk.Label(grupo_opciones, text="Constante de suavizado espacial (σ_s):").pack(padx=5, pady=(10, 0))
-        tk.Scale(
+        # --- Sigma_s ---
+        ttk.Label(grupo_opciones, text="Constante de suavizado espacial (σ_s):").grid(row=0, column=0, sticky="w", pady=(5, 0))
+        lbl_sigma_s_valor = ttk.Label(grupo_opciones, text=f"{self.sigma_s.get():.0f}", width=4)
+        lbl_sigma_s_valor.grid(row=0, column=2, sticky="e", padx=(10, 0))
+
+        scale_sigma_s = ttk.Scale(
             grupo_opciones,
             from_=1,
             to=100,
             orient="horizontal",
             variable=self.sigma_s,
-            resolution=1,
-            showvalue=True,
-            length=300,
-            command=self._actualizar_valor
-        ).pack(fill="x", expand=True, pady=5)
+            command=lambda value: self._actualizar_label(value, lbl_sigma_s_valor, actualizar_k=True)
+        )
+        scale_sigma_s.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
-        ttk.Label(grupo_opciones, text="Constante de suavizado de intensidad (σ_r):").pack(padx=5, pady=(10, 0))
-        tk.Scale(
+        # --- Sigma_r ---
+        ttk.Label(grupo_opciones, text="Constante de suavizado de intensidad (σ_r):").grid(row=1, column=0, sticky="w", pady=(10, 0))
+        lbl_sigma_r_valor = ttk.Label(grupo_opciones, text=f"{self.sigma_r.get():.0f}", width=4)
+        lbl_sigma_r_valor.grid(row=1, column=2, sticky="e", padx=(10, 0))
+
+        scale_sigma_r = ttk.Scale(
             grupo_opciones,
             from_=1,
             to=100,
             orient="horizontal",
             variable=self.sigma_r,
-            resolution=1,
-            showvalue=True,
-            length=300
-        ).pack(fill="x", expand=True, pady=5)
-        
-        grupo_tamaño = ttk.Labelframe(self.frame_herramienta, text="Tamaño", padding=10)
-        grupo_tamaño.pack(fill="x", padx=10, pady=5, expand=True)
+            command=lambda value: self._actualizar_label(value, lbl_sigma_r_valor)
+        )
+        scale_sigma_r.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
 
-        self.label_sigma = ttk.Label(grupo_tamaño, text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma_r.get())*2)+1)}")
+        # --- Tamaño de máscara ---
+        grupo_tamano = ttk.Labelframe(self.frame_herramienta, text="Tamaño", padding=10)
+        grupo_tamano.pack(fill="x", padx=10, pady=5, expand=True)
+
+        self.label_sigma = ttk.Label(
+            grupo_tamano,
+            text=f"Tamaño de máscara correspondiente (k): {int((int(self.sigma_s.get())*2)+1)}"
+        )
         self.label_sigma.pack(padx=5, pady=(0, 10))
 
         self._finalizar_y_posicionar()
-    
-    def _actualizar_valor(self, valor):
-        sigma = int(valor)
-        k = int(2 * sigma + 1)
-        self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
+
+    def _actualizar_label(self, value, label, actualizar_k=False):
+        """Actualiza solo el label del slider; si actualizar_k=True, actualiza tamaño de máscara."""
+        valor = round(float(value))
+        label.config(text=str(valor))
+        if actualizar_k:
+            k = 2 * valor + 1
+            self.label_sigma.config(text=f"Tamaño de máscara correspondiente (k): {k}")
 
     def _on_apply(self):
-        sigma_s = self.sigma_s.get()
-        sigma_r = self.sigma_r.get()
-
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_filtro_bilateral, sigma_s=sigma_s, sigma_r=sigma_r)
-        self.destroy()
-    
-    def _on_cancel(self):
-        self.app._cancelar_cambio(self.copia_imagen)
+        sigma_s = int(self.sigma_s.get())
+        sigma_r = int(self.sigma_r.get())
+        self.app._aplicar_transformacion(
+            self.copia_imagen,
+            aplicar_filtro_bilateral,
+            sigma_s=sigma_s,
+            sigma_r=sigma_r
+        )
         self.destroy()

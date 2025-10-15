@@ -8,6 +8,7 @@ ideas/
 img-env/
 __pycache__/
 examples/
+icons_legacy
 *.pyc
 *.aux
 *.log
@@ -25,3 +26,4 @@ main_theme.py
 main_notebook.py
 main_qt.py
 main_legacy.py
+ui_dialogs_legacy.py

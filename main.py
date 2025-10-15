@@ -10,7 +10,7 @@ import os
 import sys
 
 # Importaciones de código en archivos
-from utils import requiere_imagen, refrescar_imagen
+from utils import requiere_imagen, refrescar_imagen, cargar_iconos
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
                         DialogoLaplaciano, DialogoBilateral
@@ -66,8 +66,7 @@ class EditorDeImagenes:
         self.analisis_vars = {"total": tk.StringVar(value="-"), "r": tk.StringVar(value="-"), "g": tk.StringVar(value="-"), "b": tk.StringVar(value="-"), "gris": tk.StringVar(value="-")}
         
         # Carga de iconos
-        self.iconos = {}
-        self._cargar_iconos()
+        self.iconos = cargar_iconos()
 
         # Atajos de teclado
         self.root.bind("<Control-o>", self._cargar_imagen)
@@ -206,7 +205,7 @@ class EditorDeImagenes:
         Tooltip(widget=btn_pixel, text="Seleccionar y modificar pixel")
 
         # Botón 4: Recortar Región
-        btn_recorte = ttk.Button(panel_botones, image=self.iconos['h_tijera'], command=self._activar_modo_recorte)
+        btn_recorte = ttk.Button(panel_botones, image=self.iconos['h_tijera2'], command=self._activar_modo_recorte)
         btn_recorte.grid(row=0, column=4, pady=0)
         Tooltip(widget=btn_recorte, text="Recortar una región")
 
