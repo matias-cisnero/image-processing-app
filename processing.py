@@ -432,7 +432,6 @@ def aplicar_umbralizacion_iterativa(imagen_np: np.ndarray, n: int = 50) -> np.nd
         m2 = (1 / nG2) * np.sum(imagen_np[imagen_binaria == 0])
 
         T = int(0.5 * (m1 + m2))
-        #print(f"T={T} en iteración {i+1}/{n}")
 
     print(f"Valor de umbral utilizado(T) = {T} en iteración {i}/{n}")
     resultado_np = aplicar_umbralizacion(imagen_np, T)

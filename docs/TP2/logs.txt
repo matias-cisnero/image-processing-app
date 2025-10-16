@@ -42,7 +42,7 @@ ej7c_img1_gauss: R=128, 132, 116
 
 ej7a_img2: T=123 en iteración 4
 ej7b_img2: T=125
-ej7c_img2: R=136, 142, 117
+ej7c_img2: R=119, 126, 138
 
 ej7a_img2_gauss: T=113 en iteración 2
 ej7b_img2_gauss: T=115

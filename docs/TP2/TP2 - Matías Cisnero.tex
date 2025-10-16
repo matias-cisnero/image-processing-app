@@ -79,7 +79,7 @@
 \lstset{
 	language=Python,
 	emph={self, escalar_255, aplicar_umbralizacion, aplicar_magnitud_del_gradiente, aplicar_filtro, encontrar_cruces_por_cero, encontrar_cruces_por_cero_pendiente}, emphstyle=\color{purple}\bfseries,
-	emph={[2]np.ndarray, np, sqrt, sum, ndarray, zeros_like, shape, zeros, copy, exp},
+	emph={[2]np.ndarray, np, sqrt, sum, ndarray, zeros_like, shape, zeros, copy, exp, newaxis},
 	emphstyle={[2]\color{teal}\bfseries},
 }
 
@@ -815,48 +815,67 @@ img_filt[i, j, c] += lamb * (DN * cN + DE * cE + DO * cO + DS * cS)
 	Implementar el filtro bilateral. Aplicarlo a imágenes con ruido gaussiano y con ruido sal y pimienta. Comparar con el filtro de difusión anisotrópica.
 \end{frame}
 
-\begin{frame}[fragile]{Implementación}
+\begin{frame}[fragile]{Filtro Bilateral}
 	\justifying
 	
-	La implementación consiste en calcular:
+	Es un filtro donde el valor de cada pixel se reemplaza por el promedio pesado de los pixeles vecinos, el peso depende de la distancia de los pixeles al centro y de la diferencia en la intensidad del color.
 	
-	\begin{block}{Implementación de Perona - Malik}
+	\begin{block}{Filtro Bilateral}
 		\[
-		I^{t+1}(x,y) = I^t(x,y) + \lambda (D_N c_N + D_E c_E + D_O c_O + D_S c_S)
+		I^{filt}(x) = \frac{1}{W_x} \sum_{x_i \in \Omega} I(x_i) G_{\sigma_s}(\|x_i - x\|) G_{\sigma_r}(\|I(x_i) - I(x)\|)
 		\]
-		T veces.
 	\end{block}
 	
 	\begin{block}{Donde}
 		\[
-		\begin{array}{cc}
-			D_N = I(x, y+1) - I(x, y) & D_E = I(x-1, y) - I(x, y) \\[0.4em]
-			D_O = I(x+1, y) - I(x, y) & D_S = I(x, y-1) - I(x, y)
-		\end{array}
+		W_x = \sum_{x_i \in \Omega} G_{\sigma_s}(\|x_i - x\|) G_{\sigma_r}(\|I(x_i) - I(x)\|)
 		\]
+		$W_x$ es un factor de normalización.
 	\end{block}
 	
-	\begin{block}{Y los coeficientes se calculan como}
+\end{frame}
+
+\begin{frame}[fragile]{Filtros $G_{\sigma_s}$ y $G_{\sigma_r}$}
+	\justifying
+	
+	Luego los filtros se construyen como:
+	
+	\begin{block}{Filtros}
 		\[
-		c_N = g(D_N) \quad c_E = g(D_E) \quad c_O = g(D_O) \quad c_S = g(D_S)
+		 G_{\sigma_s} = e^{-\frac{(x^1-x^1_i)^2 + (x^2-x^2_i)^2}{2 \sigma_s^2}}
 		\]
-		Si el filtro es isotrópico $c_N = c_E = c_O = c_S = 1$
+		\[
+		G_{\sigma_r} = e^{-\frac{\|I(x) - I(x_i)\|^2}{2 \sigma_r^2}}
+		\]
 	\end{block}
 	
 	\vfill
-	\footnotesize \textcolor{lightgray}{(*) $\lambda = 0.25$}
+	\footnotesize \textcolor{lightgray}{(*) Recordar que $I(x)$ es un vector.}
 \end{frame}
 
 \begin{frame}[fragile]{Código: Detectores de borde}
 	\justifying
+	Para cada pixel (i, j) se calcula su valor como:
 	
 	\begin{lstlisting}[language=Python]
-		def detector_de_leclerc(gradiente, sigma:int):
-		return np.exp((-(gradiente**2))/sigma**2)
-		
-		def detector_de_lorentz(gradiente, sigma:int):
-		return 1/(((-(gradiente**2))/sigma**2) + 1)
+region = imagen_padded[i:i+k, j:j+l, :]
+
+dif = region - region[pad_h, pad_w, :]
+
+Gr = np.exp(-(np.sum(dif**2, axis=2) / (2 * sigma_r**2)))
+
+Wx = np.sum(Gs * Gr)
+
+G = Gs * Gr
+G = G[:, :, np.newaxis]
+
+valor = (1 / Wx) * np.sum(region * G, axis=(0, 1))
+
+imagen_filtrada[i, j, :] = valor
 	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) Gs está calculado de ante mano por eficiencia.}
 \end{frame}
 
 \begin{frame}[fragile]{Resultados Bilateral con ruido Gaussiano}
@@ -942,6 +961,73 @@ img_filt[i, j, c] += lamb * (DN * cN + DE * cE + DO * cO + DS * cS)
 		\item Método de umbralización de Otsu.
 		\item Segmentación de imágenes en color (RGB) utilizando umbralización por bandas.
 	\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Umbralización Iterativa}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+for i in range(n):
+	if T == T_anterior: break
+	T_anterior = T
+	
+	imagen_binaria = aplicar_umbralizacion(imagen_np, T)
+	nG1 = np.sum(imagen_binaria == 255)
+	nG2 = np.sum(imagen_binaria == 0)
+	
+	m1 = (1 / nG1) * np.sum(imagen_np[imagen_binaria == 255])
+	m2 = (1 / nG2) * np.sum(imagen_np[imagen_binaria == 0])
+	
+	T = int(0.5 * (m1 + m2))
+	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) A manera de establecer un tope n=50.}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Umbralización de Otsu}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+intensidad = np.arange(256)
+fi = np.bincount(datos_gris, minlength=256) 
+N = datos_gris.size
+pi = fi / N
+
+P1 = np.zeros(256)
+m = np.zeros(256)
+for t in range(256):
+	P1[t] = np.sum(pi[0:t+1])
+	m[t] = np.sum(intensidad[0:t+1] * pi[0:t+1])
+mG = m[255] # np.sum(intensidad * pi)
+
+sigma_B = np.zeros(256)
+for t in range(256):
+	if P1[t] > 0 and P1[t] < 1:
+		sigma_B[t] = ((mG * P1[t] - m[t])**2) / (P1[t] * (1 - P1[t]))
+t_estrella = np.argmax(sigma_B)
+resultado_np = aplicar_umbralizacion(imagen_np, t_estrella)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Umbralización por bandas}
+	\justifying
+	
+	\begin{lstlisting}[language=Python]
+def aplicar_umbralizacion_rgb(imagen_np: np.ndarray) -> np.ndarray:
+	banda_r = imagen_np[:, :, 0]
+	banda_g = imagen_np[:, :, 1]
+	banda_b = imagen_np[:, :, 2]
+	
+	banda_r = aplicar_umbralizacion_de_otsu(banda_r)
+	banda_g = aplicar_umbralizacion_de_otsu(banda_g)
+	banda_b = aplicar_umbralizacion_de_otsu(banda_b)
+	
+	resultado_np = np.dstack([banda_r, banda_g, banda_b])
+	
+	# https://numpy.org/doc/stable/reference/generated/numpy.dstack.html
+	return resultado_np
+	\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Resultados Umbralización imagen 1}
