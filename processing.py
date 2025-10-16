@@ -244,16 +244,16 @@ def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=Fals
 
     return resultado_np
 
-def aplicar_filtro_combinado(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.ndarray:
+def aplicar_magnitud_del_gradiente(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.ndarray:
     """
-    Aplica dos filtros (x e y) y combina sus resultados.
+    Calcula Ix e Iy y realiza la raiz de la suma de sus cuadrados.
     """
-    img1 = aplicar_filtro(imagen_np, func_filtro=func_filtro1, modo=2)
-    img2 = aplicar_filtro(imagen_np, func_filtro=func_filtro2, modo=2)
+    ix = aplicar_filtro(imagen_np, func_filtro=func_filtro1, modo=2)
+    iy= aplicar_filtro(imagen_np, func_filtro=func_filtro2, modo=2)
 
-    imagen_filtrada = np.sqrt((img1**2)+(img2**2))
+    magnitud = np.sqrt((ix**2)+(iy**2))
 
-    resultado_np = escalar_255(imagen_filtrada)
+    resultado_np = escalar_255(magnitud)
 
     return resultado_np
 

@@ -1,0 +1,49 @@
+EJERCICIO 4
+
+ej4b_img1: U=128
+ej4c_img1: sigma=1
+
+ej4b_img1_gauss: U=128
+ej4c_img1_gauss: sigma=1
+
+ej4b_img2: U=40
+ej4c_img2: sigma=1
+
+ruido usado en lena: 40% ruido, simga=20 -> en gauss
+ruido usando en lena: 2%, osea p=1 -> en syp
+
+ej4b_img2_gauss: U=40
+ej4c_img2_gauss: sigma=1
+
+EJERCICIO 5
+
+ej5a1: t=2
+ej5b1: t=5, sigma=40
+ej5c1: k=3
+
+ej5a2: t=15
+ej5b1: t=10, sigma=50
+ej5c1: k=5
+
+EJERCICIO 6
+
+ej6a: simga_s=10, sigma_r=50
+ej6b: simga_s=10, sigma_r=50
+
+EJERCICIO 7
+
+ej7a_img1: T=136 en iteración 3
+ej7b_img1: T=136
+ej7c_img1: R=136, 142, 117
+
+ej7a_img1_gauss: T=128 en iteración 3
+ej7b_img1_gauss: T=128
+ej7c_img1_gauss: R=128, 132, 116
+
+ej7a_img2: T=123 en iteración 4
+ej7b_img2: T=125
+ej7c_img2: R=136, 142, 117
+
+ej7a_img2_gauss: T=113 en iteración 2
+ej7b_img2_gauss: T=115
+ej7c_img2_gauss: R=112, 115, 122

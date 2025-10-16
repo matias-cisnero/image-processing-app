@@ -726,7 +726,7 @@ class DialogoLaplaciano(DialogoHerramienta):
         
         self.copia_imagen = self.app.imagen_procesada.copy()
         self.usar_pendiente = tk.BooleanVar(value=False)
-        self.umbral_pendiente = tk.IntVar(value=50)
+        self.umbral_pendiente = tk.IntVar(value=128)
         self.sigma = tk.DoubleVar(value=1.0)
         self.log = config['log']
 

@@ -17,7 +17,7 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
                         )
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
-                        crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_filtro_combinado,
+                        crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
                         restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb
                         )
 
@@ -162,11 +162,11 @@ class EditorDeImagenes:
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Prewitt X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_x, modo=1))
         menu_bordes.add_command(label="Prewitt Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
+        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_magnitud_del_gradiente, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Sobel X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_x, modo=1))
         menu_bordes.add_command(label="Sobel Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro_combinado, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
+        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_magnitud_del_gradiente, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
         menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
