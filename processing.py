@@ -207,9 +207,10 @@ def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=Fals
     mediana = True -> aplica la mediana
     """
     filtro, factor = func_filtro(k)
-    print("Filtro usado:")
-    print(filtro)
-    print(f"Factor usado: {factor}")
+    if modo != 2:
+        print("Filtro usado:")
+        print(filtro)
+        print(f"Factor usado: {factor}")
     m, n, _ = imagen_np.shape
     k, l = filtro.shape
     pad_h, pad_w = k//2, l//2
@@ -234,13 +235,13 @@ def aplicar_filtro(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=Fals
 
     if modo == 0:
         resultado_np = escalar_255(imagen_filtrada)
-        print("modo 0")
+        print("Se aplicó un filtro con modo 0 (escalado)")
     elif modo == 1:
         resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
-        print("modo 1")
+        print("Se aplicó un filtro con modo 1 (clipeado)")
     elif modo == 2:
         resultado_np = imagen_filtrada
-        print("modo 2")
+        print("Se aplicó un filtro con modo 2 (np.array)")
 
     return resultado_np
 
@@ -486,16 +487,106 @@ def aplicar_umbralizacion_rgb(imagen_np: np.ndarray) -> np.ndarray:
 
 # ================================((DETECTORES DE BORDE AVANZADOS))======================================
 
+def discretizar_angulos(phi_grados: np.ndarray) -> np.ndarray:
+    angulo = np.zeros_like(phi_grados)
+
+    mask = (phi_grados <= 22.5) | (phi_grados > 157.5) # Zona amarilla
+    angulo[mask] = 0
+    mask = (phi_grados > 22.5) & (phi_grados <= 67.5) # Zona verde
+    angulo[mask] = 45
+    mask = (phi_grados > 67.5) & (phi_grados <= 112.5) # Zona azul
+    angulo[mask] = 90
+    mask = (phi_grados > 112.5) & (phi_grados <= 157.5) # Zona roja
+    angulo[mask] = 135
+
+    return angulo
+
+def obtener_vecinos(magnitud: np.ndarray, i: int, j: int, angulo: float) -> np.ndarray:
+    if angulo == 0:
+        return [magnitud[i, j-1], magnitud[i, j+1]]
+    elif angulo == 45:
+        return [magnitud[i-1, j+1], magnitud[i+1, j-1]]
+    elif angulo == 90:
+        return [magnitud[i-1, j], magnitud[i+1, j]]
+    elif angulo == 135:
+        return [magnitud[i-1, j-1], magnitud[i+1, j+1]]
+    else:
+        return []
+
+def aplicar_umbralizacion_histeresis(magnitud: np.ndarray, t1: int, t2: int) -> np.ndarray:
+    m, n = magnitud.shape
+    pad = 1
+
+    magnitud_padded = np.pad(magnitud, ((pad, pad), (pad, pad)), mode='constant')
+
+    for i in range(m):
+        for j in range(n):
+
+            region = magnitud_padded[i:i+2*pad+1, j:j+2*pad+1]
+
+            centro = region[pad, pad]
+
+            if centro > t2:
+                magnitud[i, j] = 255
+            elif centro < t1:
+                magnitud[i, j] = 0
+            else:
+                if np.any(region > t2):
+                    magnitud[i, j] = 255
+                else:
+                    magnitud[i, j] = 0
+    return magnitud
+
+def aplicar_detector_canny(imagen_np: np.ndarray, t1: int, t2: int) -> np.ndarray:
+
+    imagen_np = np.stack([imagen_np, imagen_np, imagen_np], axis=-1) # para tener los 3 canales
+    # 1) aplico filtro gaussiano
+
+    # 2) aplico sobel y calculo la magnitud
+    ix = aplicar_filtro(imagen_np, func_filtro=crear_filtro_sobel_x, modo=2)[:, :, 0]
+    iy= aplicar_filtro(imagen_np, func_filtro=crear_filtro_sobel_y, modo=2)[:, :, 0]
+    magnitud = np.sqrt((ix**2)+(iy**2))
+    #magnitud = escalar_255(magnitud)
+
+    # 3) calculo el angulo del gradiente
+    phi = np.arctan2(iy, ix) # ángulos en [-π, π] -> https://numpy.org/doc/stable/reference/generated/numpy.arctan2.html
+    phi[phi < 0] += np.pi # convertimos negativos a [0, π]
+    phi_grados = np.degrees(phi)  # convierte a grados: 0 a 180
+
+    # 4) se discretizan los angulos
+    angulo = discretizar_angulos(phi_grados)
+    print(f"angulo calculado correctamente")
+
+    # 5) supresión de no máximos
+    m, n = magnitud.shape
+
+    for i in range(1, m-1):
+        for j in range(1, n-1):
+            if magnitud[i, j] == 0:
+                continue
+            vecinos = obtener_vecinos(magnitud, i, j, angulo[i, j])
+            if magnitud[i, j] < max(vecinos):
+                magnitud[i, j] = 0
+
+    # 6) aplico umbralización por histéresis
+    resultado_np = aplicar_umbralizacion_histeresis(magnitud, t1, t2)
+    resultado_np = np.stack([resultado_np, resultado_np, resultado_np], axis=-1)
+
+    return resultado_np
+
+def crear_mascara_circular() -> np.ndarray:
+    mascara = np.array([[0, 0, 1, 1, 1, 0, 0],
+                        [0, 1, 1, 1, 1, 1, 0],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [0, 1, 1, 1, 1, 1, 0],
+                        [0, 0, 1, 1, 1, 0, 0]], dtype=int)
+    return mascara
+
 def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
     t = 15
-    filtro = np.array([
-    [0, 0, 1, 1, 1, 0, 0],
-    [0, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 0],
-    [0, 0, 1, 1, 1, 0, 0]], dtype=int)
+    filtro = crear_mascara_circular()
 
     m, n, _ = imagen_np.shape
     k, l = filtro.shape
@@ -516,8 +607,6 @@ def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
 
             n_r0 = np.sum(c_r0)
             s_r0 = 1 - (n_r0 / 37)
-
-            #print(f"dim de dif: {dif.shape}, dim de c_r0: {c_r0.shape}, dim de n_r0: {n_r0.shape}, dim de s_r0: {s_r0.shape}")
 
             if s_r0 < 0.35:
                 continue  # no borde

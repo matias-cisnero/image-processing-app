@@ -13,13 +13,13 @@ import sys
 from utils import requiere_imagen, refrescar_imagen, cargar_iconos
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
-                        DialogoLaplaciano, DialogoBilateral
+                        DialogoLaplaciano, DialogoBilateral, DialogoCanny
                         )
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
                         restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb,
-                        aplicar_metodo_susan
+                        aplicar_metodo_susan, aplicar_detector_canny
                         )
 
 class Redirector:
@@ -182,7 +182,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Bordes Avanzados", menu=menu_bordes_avanzados)
         menu_bordes_avanzados.add_command(label="Método de SUSAN Bordes", image=self.iconos['h_borde0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="borde"))
         menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
-        #menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde'], compound="left")
+        menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde'], compound="left", command=lambda: self._iniciar_dialogo(DialogoCanny))
         menu_bordes_avanzados.add_separator()
         #menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_borde'], compound="left")
         #menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_borde'], compound="left")

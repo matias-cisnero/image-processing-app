@@ -7,7 +7,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
-                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral
+                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
+                        aplicar_detector_canny
                         )
 
 # --- TOOLTIP ---
@@ -894,3 +895,73 @@ class DialogoBilateral(DialogoHerramienta):
             sigma_r=sigma_r
         )
         self.destroy()
+
+class DialogoCanny(DialogoHerramienta):
+    """
+    Diálogo para aplicar detector de Canny a una imagen.
+    """
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Detector de Canny")
+        
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        self.t1 = tk.IntVar(value=1.0)
+        self.t2 = tk.IntVar(value=1.0)
+
+        # --- Labelframe principal ---
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+        label_parametros.columnconfigure(1, weight=1)
+
+        ttk.Label(label_parametros, text="Umbral t1:").grid(row=0, column=0, sticky="w", pady=(0, 3))
+        label_t1 = ttk.Label(label_parametros, text=f"{self.t1.get():.0f}", width=4)
+        label_t1.grid(row=0, column=2, sticky="e", padx=(10, 0))
+
+        scale_t1 = ttk.Scale(
+            label_parametros,
+            from_=0,
+            to=255,
+            orient="horizontal",
+            variable=self.t1,
+            length=250,
+            command=lambda value: self._actualizar_label(value, label_t1)
+        )
+        scale_t1.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+
+        ttk.Label(label_parametros, text="Umbral t2:").grid(row=1, column=0, sticky="w", pady=(0, 3))
+        label_t2 = ttk.Label(label_parametros, text=f"{self.t2.get():.0f}", width=4)
+        label_t2.grid(row=1, column=2, sticky="e", padx=(10, 0))
+
+        scale_t2 = ttk.Scale(
+            label_parametros,
+            from_=0,
+            to=255,
+            orient="horizontal",
+            variable=self.t2,
+            length=250,
+            command=lambda value: self._actualizar_label(value, label_t2)
+        )
+        scale_t2.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    # --- Actualiza solo el label, sin aplicar la transformación ---
+    def _actualizar_label(self, value, label):
+        valor = round(float(value))
+        label.config(text=str(valor))
+
+    def _on_apply(self):
+        t1 = int(self.t1.get())
+        t2 = int(self.t2.get())
+        self.app._aplicar_transformacion(
+            self.copia_imagen,
+            aplicar_detector_canny,
+            t1=t1,
+            t2=t2,
+            byn=True
+        )
+        self.destroy()
+    
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy() 
