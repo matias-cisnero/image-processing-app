@@ -483,3 +483,54 @@ def aplicar_umbralizacion_rgb(imagen_np: np.ndarray) -> np.ndarray:
 
     # https://numpy.org/doc/stable/reference/generated/numpy.dstack.html
     return resultado_np
+
+# ================================((DETECTORES DE BORDE AVANZADOS))======================================
+
+def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
+    t = 15
+    filtro = np.array([
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 0],
+    [0, 0, 1, 1, 1, 0, 0]], dtype=int)
+
+    m, n, _ = imagen_np.shape
+    k, l = filtro.shape
+    pad_h, pad_w = k//2, l//2
+
+    # Padding e imagen filtrada
+    imagen_padded = np.pad(imagen_np, ((pad_h, pad_h), (pad_w, pad_w), (0, 0)), mode='constant')
+    imagen_filtrada = np.zeros_like(imagen_np)
+
+    for i in range(m):
+        for j in range(n):
+            region = imagen_padded[i:i+k, j:j+l, :]
+            region_circular = region[filtro == 1]
+            centro = region[pad_h, pad_w, :]
+
+            dif = np.linalg.norm(region_circular - centro, axis=1)
+            c_r0 = (dif < t).astype(int)
+
+            n_r0 = np.sum(c_r0)
+            s_r0 = 1 - (n_r0 / 37)
+
+            #print(f"dim de dif: {dif.shape}, dim de c_r0: {c_r0.shape}, dim de n_r0: {n_r0.shape}, dim de s_r0: {s_r0.shape}")
+
+            if s_r0 < 0.35:
+                continue  # no borde
+            elif s_r0 > 0.35 and modo == "borde":
+                imagen_filtrada[i, j, 2] = 255  # borde color azul
+            elif s_r0 > 0.60 and modo == "esquina":
+                imagen_filtrada[i, j, 0] = 255  # esquina color rojo
+
+    bordes = np.any(imagen_filtrada != 0, axis=-1)
+    resultado_np = imagen_np.copy()
+    resultado_np[bordes] = imagen_filtrada[bordes]
+
+    return resultado_np
+    
+
+

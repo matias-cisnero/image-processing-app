@@ -18,7 +18,8 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
-                        restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb
+                        restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb,
+                        aplicar_metodo_susan
                         )
 
 class Redirector:
@@ -81,7 +82,7 @@ class EditorDeImagenes:
     def _setup_ui(self):
         self._crear_menu()
         self._crear_panel_superior()
-        panel_principal = tk.Frame(self.root)
+        panel_principal = ttk.Frame(self.root)
         panel_principal.pack(fill=tk.BOTH, expand=True)
         panel_principal.grid_columnconfigure(0, weight=1)
         panel_principal.grid_columnconfigure(1, weight=1)
@@ -108,7 +109,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.iconos['h_y'], compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
         menu_operadores_puntuales.add_command(label="Umbralización", image=self.iconos['h_u'], compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_negativo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_invertir'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
@@ -116,7 +117,7 @@ class EditorDeImagenes:
         config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.iconos['h_barras'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda2'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
+        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
         menu_histogramas.add_separator()
         menu_histogramas.add_command(label="Generador Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
         menu_histogramas.add_command(label="Generador Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
@@ -174,8 +175,17 @@ class EditorDeImagenes:
         menu_umbralizacion = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
         menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['h_ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
-        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['h_combinar'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
-        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['h_formas'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
+        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['h_umbral0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
+        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['h_segmentar'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
+
+        menu_bordes_avanzados = tk.Menu(barra_menu, tearoff=0)
+        barra_menu.add_cascade(label="Bordes Avanzados", menu=menu_bordes_avanzados)
+        menu_bordes_avanzados.add_command(label="Método de SUSAN Bordes", image=self.iconos['h_borde0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="borde"))
+        menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
+        #menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde'], compound="left")
+        menu_bordes_avanzados.add_separator()
+        #menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_borde'], compound="left")
+        #menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_borde'], compound="left")
 
     def _crear_panel_superior(self):
     
@@ -200,12 +210,12 @@ class EditorDeImagenes:
         ttk.Separator(panel_botones, orient="vertical").grid(row=0, column=2, sticky="ns", padx=5)
 
         # Botón 3: Seleccionar Pixel
-        btn_pixel = ttk.Button(panel_botones, image=self.iconos['h_gotero'], command=self._activar_modo_seleccion)
+        btn_pixel = ttk.Button(panel_botones, image=self.iconos['h_gotero0'], command=self._activar_modo_seleccion)
         btn_pixel.grid(row=0, column=3, pady=0)
         Tooltip(widget=btn_pixel, text="Seleccionar y modificar pixel")
 
         # Botón 4: Recortar Región
-        btn_recorte = ttk.Button(panel_botones, image=self.iconos['h_tijera2'], command=self._activar_modo_recorte)
+        btn_recorte = ttk.Button(panel_botones, image=self.iconos['h_tijera0'], command=self._activar_modo_recorte)
         btn_recorte.grid(row=0, column=4, pady=0)
         Tooltip(widget=btn_recorte, text="Recortar una región")
 
@@ -256,7 +266,7 @@ class EditorDeImagenes:
             ttk.Entry(grid_rgb, textvariable=self.rgb_vars[canal], width=3).grid(row=0, column=col[1], padx=5)
 
     def _crear_visores_de_imagen(self, parent: tk.Frame):
-        frame_visores = tk.Frame(parent)
+        frame_visores = ttk.Frame(parent)
         frame_visores.grid(row=0, column=0, columnspan=2, sticky="nsew")
         frame_visores.grid_rowconfigure(0, weight=1)
         frame_visores.grid_columnconfigure(0, weight=1)
