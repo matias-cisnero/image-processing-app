@@ -905,8 +905,8 @@ class DialogoCanny(DialogoHerramienta):
         
         self.copia_imagen = self.app.imagen_procesada.copy()
 
-        self.t1 = tk.IntVar(value=1.0)
-        self.t2 = tk.IntVar(value=1.0)
+        self.t1 = tk.IntVar(value=50)
+        self.t2 = tk.IntVar(value=150)
 
         # --- Labelframe principal ---
         label_parametros = ttk.Labelframe(self.frame_herramienta, text="Parámetros", padding=10)

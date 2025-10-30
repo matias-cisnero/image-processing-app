@@ -503,13 +503,13 @@ def discretizar_angulos(phi_grados: np.ndarray) -> np.ndarray:
 
 def obtener_vecinos(magnitud: np.ndarray, i: int, j: int, angulo: float) -> np.ndarray:
     if angulo == 0:
-        return [magnitud[i, j-1], magnitud[i, j+1]]
-    elif angulo == 45:
-        return [magnitud[i-1, j+1], magnitud[i+1, j-1]]
-    elif angulo == 90:
         return [magnitud[i-1, j], magnitud[i+1, j]]
-    elif angulo == 135:
+    elif angulo == 45:
         return [magnitud[i-1, j-1], magnitud[i+1, j+1]]
+    elif angulo == 90:
+        return [magnitud[i, j-1], magnitud[i, j+1]]
+    elif angulo == 135:
+        return [magnitud[i-1, j+1], magnitud[i+1, j-1]]
     else:
         return []
 
@@ -537,16 +537,43 @@ def aplicar_umbralizacion_histeresis(magnitud: np.ndarray, t1: int, t2: int) -> 
                     magnitud[i, j] = 0
     return magnitud
 
+def aplicar_umbralizacion_histeresis2(imagen_np: np.ndarray, t1: int, t2: int) -> np.ndarray:
+    m, n = imagen_np.shape
+    
+    # Clasificar píxeles: 255 (Fuerte), 128 (Débil), 0 (No-Borde)
+    bordes = np.zeros((m, n), dtype=np.uint8)
+    bordes[imagen_np > t2] = 255
+    bordes[(imagen_np >= t1) & (imagen_np <= t2)] = 128
+
+    # Bucle de propagación
+    while True:
+        pixeles_promovidos = 0
+        
+        for i in range(1, m - 1):
+            for j in range(1, n - 1):
+                if bordes[i, j] == 128: # Si es un píxel débil
+                    vecindad = bordes[i-1 : i+2, j-1 : j+2]
+                    if np.any(vecindad == 255): # Si toca a un píxel fuerte
+                        bordes[i, j] = 255
+                        pixeles_promovidos += 1
+                        
+        if pixeles_promovidos == 0:
+            break
+
+    # Limpieza final: elimina los débiles que no se conectaron
+    bordes[bordes == 128] = 0
+    return bordes
+
 def aplicar_detector_canny(imagen_np: np.ndarray, t1: int, t2: int) -> np.ndarray:
 
     imagen_np = np.stack([imagen_np, imagen_np, imagen_np], axis=-1) # para tener los 3 canales
     # 1) aplico filtro gaussiano
+    #imagen_np = aplicar_filtro(imagen_np, func_filtro=crear_filtro_gaussiano, modo=0)
 
     # 2) aplico sobel y calculo la magnitud
     ix = aplicar_filtro(imagen_np, func_filtro=crear_filtro_sobel_x, modo=2)[:, :, 0]
     iy= aplicar_filtro(imagen_np, func_filtro=crear_filtro_sobel_y, modo=2)[:, :, 0]
     magnitud = np.sqrt((ix**2)+(iy**2))
-    #magnitud = escalar_255(magnitud)
 
     # 3) calculo el angulo del gradiente
     phi = np.arctan2(iy, ix) # ángulos en [-π, π] -> https://numpy.org/doc/stable/reference/generated/numpy.arctan2.html
@@ -559,17 +586,18 @@ def aplicar_detector_canny(imagen_np: np.ndarray, t1: int, t2: int) -> np.ndarra
 
     # 5) supresión de no máximos
     m, n = magnitud.shape
+    magnitud_snm = magnitud.copy()
 
     for i in range(1, m-1):
         for j in range(1, n-1):
-            if magnitud[i, j] == 0:
+            if magnitud_snm[i, j] == 0:
                 continue
             vecinos = obtener_vecinos(magnitud, i, j, angulo[i, j])
-            if magnitud[i, j] < max(vecinos):
-                magnitud[i, j] = 0
+            if magnitud_snm[i, j] < max(vecinos):
+                magnitud_snm[i, j] = 0
 
     # 6) aplico umbralización por histéresis
-    resultado_np = aplicar_umbralizacion_histeresis(magnitud, t1, t2)
+    resultado_np = aplicar_umbralizacion_histeresis2(magnitud_snm, t1, t2)
     resultado_np = np.stack([resultado_np, resultado_np, resultado_np], axis=-1)
 
     return resultado_np
