@@ -78,8 +78,8 @@
 
 \lstset{
 	language=Python,
-	emph={self, escalar_255, aplicar_umbralizacion, aplicar_magnitud_del_gradiente, aplicar_filtro, encontrar_cruces_por_cero, encontrar_cruces_por_cero_pendiente}, emphstyle=\color{purple}\bfseries,
-	emph={[2]np.ndarray, np, sqrt, sum, ndarray, zeros_like, shape, zeros, copy, exp, newaxis},
+	emph={self, escalar_255, aplicar_umbralizacion, aplicar_magnitud_del_gradiente, aplicar_filtro, aplicar_umbralizacion_histeresis, discretizar_angulos, obtener_vecinos}, emphstyle=\color{purple}\bfseries,
+	emph={[2]np.ndarray, np, sqrt, sum, ndarray, zeros_like, shape, zeros, copy, exp, newaxis, pi, arctan2, degrees, linalg, norm, astype},
 	emphstyle={[2]\color{teal}\bfseries},
 }
 
@@ -113,7 +113,7 @@
 
 \begin{frame}[fragile]{Estrategia}
 	\justifying
-	\begin{block}{Detecto de Canny}
+	\begin{block}{Detector de Canny}
 		\begin{enumerate}
 			\item Aplicar un filtro Gaussiano.
 			\item Aplicar el método de Sobel para calcular aproximadamente el gradiente y con esto la Magnitud de Borde.
@@ -126,6 +126,103 @@
 	
 	\vfill
 	\footnotesize \textcolor{lightgray}{(*) Obviaremos el paso 1 y 2 porque ya lo hemos realizado anteriormente.}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 3}
+	\justifying
+	El código Para calcular el ángulo del gradiente es:
+	\begin{lstlisting}[language=Python]
+phi = np.arctan2(iy, ix) # ángulos en [-π, π]
+phi[phi < 0] += np.pi # convertimos negativos a [0, π]
+phi_grados = np.degrees(phi)  # convierte a grados: 0 a 180
+
+# 4) se discretizan los angulos
+angulo = discretizar_angulos(phi_grados)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 4}
+	\justifying
+	Luego, la discretización se hace con la siguiente función:
+
+	\begin{lstlisting}[language=Python]
+def discretizar_angulos(phi_grados: np.ndarray) -> np.ndarray:
+angulo = np.zeros_like(phi_grados)
+
+mask = (phi_grados <= 22.5) | (phi_grados > 157.5) # Zona amarilla
+angulo[mask] = 0
+mask = (phi_grados > 22.5) & (phi_grados <= 67.5) # Zona verde
+angulo[mask] = 45
+mask = (phi_grados > 67.5) & (phi_grados <= 112.5) # Zona azul
+angulo[mask] = 90
+mask = (phi_grados > 112.5) & (phi_grados <= 157.5) # Zona roja
+angulo[mask] = 135
+
+return angulo
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 5a}
+	\justifying
+	Código para aplicar la supresión de no máximos:
+	
+	\begin{lstlisting}[language=Python]
+m, n = magnitud.shape
+magnitud_snm = magnitud.copy()
+
+for i in range(1, m-1):
+for j in range(1, n-1):
+if magnitud_snm[i, j] == 0:
+	continue
+vecinos = obtener_vecinos(magnitud, i, j, angulo[i, j])
+if magnitud_snm[i, j] < max(vecinos):
+	magnitud_snm[i, j] = 0
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 5b}
+	\justifying
+	Los vecinos se obtienen como:
+	
+	\begin{lstlisting}[language=Python]
+def obtener_vecinos(magnitud: np.ndarray, i: int, j: int, angulo: float) -> np.ndarray:
+if angulo == 0:
+return [magnitud[i-1, j], magnitud[i+1, j]]
+elif angulo == 45:
+return [magnitud[i-1, j-1], magnitud[i+1, j+1]]
+elif angulo == 90:
+return [magnitud[i, j-1], magnitud[i, j+1]]
+elif angulo == 135:
+return [magnitud[i-1, j+1], magnitud[i+1, j-1]]
+else:
+return []
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 6}
+	\justifying
+	Finalmente se aplica la umbralización con histéresis:
+	
+	\begin{lstlisting}[language=Python]
+def aplicar_umbralizacion_histeresis(imagen_np: np.ndarray, t1: int, t2: int) -> np.ndarray:
+m, n = imagen_np.shape
+bordes = np.zeros((m, n), dtype=np.uint8)
+bordes[imagen_np > t2] = 255
+bordes[(imagen_np >= t1) & (imagen_np <= t2)] = 128
+while True:
+	pixeles_promovidos = 0
+	for i in range(1, m - 1):
+		for j in range(1, n - 1):
+			if bordes[i, j] == 128: # Si es un píxel débil
+				vecindad = bordes[i-1 : i+2, j-1 : j+2]
+				if np.any(vecindad == 255): # Si toca px fuerte
+					bordes[i, j] = 255
+					pixeles_promovidos += 1
+	if pixeles_promovidos == 0:
+		break
+bordes[bordes == 128] = 0
+return bordes
+	\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Resultados}
@@ -207,6 +304,63 @@
 	Aplicarlos a la imagen Test y a su versión contaminada.
 \end{frame}
 
+\begin{frame}[fragile]{Estrategia}
+	\justifying
+	\begin{block}{Método de SUSAN}
+		\begin{enumerate}
+			\item Ubicar una máscara circular alrededor de cada pixel.
+			\item Calcular la cantidad de pixeles dentro de la máscara que tienen el mismo nivel de gris que el núcleo, salvo un umbral.
+			\[
+			c(r, r_0) =
+			\begin{cases}
+				1, & \text{si } |I(r) - I(r_0)| < t,\\
+				0, & \text{si } |I(r) - I(r_0)| \geq t.
+			\end{cases}
+			\]
+			\item Luego se calculan $n(r_0)$ y $s(r_0)$.
+			\item Finalmente:
+			\[
+			r_0 =
+			\begin{cases}
+				\text{nada}, & \text{si } s(r_0) \approx 0,\\
+				\text{es un borde}, & \text{si } s(r_0) \approx 0,5,\\
+				\text{es esquina}, & \text{si } s(r_0) \approx 0,75.
+			\end{cases}
+			\]
+		\end{enumerate}
+	\end{block}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) c.}
+\end{frame}
+
+\begin{frame}[fragile]{Código: SUSAN}
+	\justifying
+	Para cada pixel $(i, j)$ se realiza:
+	
+	\begin{lstlisting}[language=Python]
+region = imagen_padded[i:i+k, j:j+l, :]
+region_circular = region[filtro == 1]
+centro = region[pad_h, pad_w, :]
+
+dif = np.linalg.norm(region_circular - centro, axis=1)
+c_r0 = (dif < t).astype(int)
+
+n_r0 = np.sum(c_r0)
+s_r0 = 1 - (n_r0 / 37)
+
+if s_r0 < 0.35:
+continue  # no borde
+elif s_r0 > 0.35 and modo == "borde":
+imagen_filtrada[i, j, 2] = 255  # borde color azul
+elif s_r0 > 0.60 and modo == "esquina":
+imagen_filtrada[i, j, 0] = 255  # esquina color rojo
+	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) Se realizó un padding.}
+\end{frame}
+
 \begin{frame}[fragile]{Resultados}
 	\justifying
 	Al aplicar el \textcolor{unahurverde}{\textbf{Método de SUSAN}} sobre la imagen Test de la Figura~\ref{fig:ej2}, se obtuvieron las imágenes con bordes y esquinas resaltados visibles en la Figura~\ref{fig:ej2a} y Figura~\ref{fig:ej2b}.
@@ -283,47 +437,6 @@
 	\end{center}
 	\justifying
 	 Implementar el método de segmentación basado en conjuntos de nivel e intercambio de pixels y aplicarlo a imágenes estáticas. Aplicarlo también a imágenes contaminadas con ruido. Analizar para que tipo de imágenes es conveniente utilizar el método.
-\end{frame}
-
-\begin{frame}[fragile]{Operadores de gradiente}
-	\justifying
-	
-	Los operadores de gradiente se basan en calcular estimaciones del \textbf{gradiente}.
-	\begin{block}{En imágenes se calcula como:}
-		$I : \Re^2 \rightarrow [0,...,255]$
-		\[
-		\nabla I = (I_x, I_y)
-		\]
-		El vector $\nabla I$ representa el gradiente de la imagen, y para cada píxel apunta en la dirección de mayor cambio de intensidad.
-	\end{block}
-	
-	$I_x$ y $I_y$ se pueden aproximar con los operadores de \textbf{Prewitt} y de \textbf{Sobel}.
-	
-	\begin{block}{Magnitud del gradiente}
-		Para cada píxel se calcula:
-		\[
-		|\nabla I|= \sqrt{I^2_x + I^2_y}
-		\]
-		Este valor indica la magnitud del cambio en la intensidad.
-	\end{block}
-	
-\end{frame}
-
-\begin{frame}[fragile]{Código: Magnitud del gradiente}
-	\justifying
-	El código detectar los bordes de una imagen mediante los operadores de gradiente es:
-	\begin{lstlisting}[language=Python]
-		def aplicar_magnitud_del_gradiente(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.ndarray:
-		
-		ix = aplicar_filtro(imagen_np, func_filtro=func_filtro1, modo=2)
-		iy= aplicar_filtro(imagen_np, func_filtro=func_filtro2, modo=2)
-		
-		magnitud = np.sqrt((ix**2)+(iy**2))
-		
-		resultado_np = escalar_255(magnitud)
-		
-		return resultado_np
-	\end{lstlisting}
 \end{frame}
 
 \section{Repositorio}

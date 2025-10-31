@@ -648,6 +648,32 @@ def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
     resultado_np[bordes] = imagen_filtrada[bordes]
 
     return resultado_np
+
+def aplicar_transformada_de_hough(imagen_np: np.ndarray) -> np.ndarray:
+
+    imagen_np = np.stack([imagen_np, imagen_np, imagen_np], axis=-1) 
+
+    #1 Hallar los bordes de la imagen utilizando un método de detección de bordes.
+    magnitud = aplicar_magnitud_del_gradiente(imagen_np, crear_filtro_sobel_x, crear_filtro_sobel_y)
+
+    #2 Umbralizar para obtener una imagen binaria.
+    magnitud = aplicar_umbralizacion_de_otsu(magnitud)
+    magnitud[:, :, 0]
     
+    #3 Subdividir el plano (r, θ) discretizando en una cantidad específica de puntos.
+    
+    #4 Para cada pixel blanco de la imagen, decidir si cumple la ecuación normal de la recta, en caso afirmativo aumentar el acumulador.
+    
+    #5 Examinar el contenido de las celdas del acumulador con altas concentraciones (tomar el máximo o umbralizar).
 
+    #6 Graficar las rectas encontradas.
 
+    resultado_np = magnitud
+    resultado_np = np.stack([resultado_np, resultado_np, resultado_np], axis=-1)
+
+    return resultado_np
+
+# ================================((CONTORNOS ACTIVOS))======================================
+
+def aplicar_segmentacion_cn_ip(imagen_np: np.ndarray) -> np.ndarray:
+    return

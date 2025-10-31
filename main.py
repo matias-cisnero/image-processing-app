@@ -19,7 +19,7 @@ from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplic
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
                         restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb,
-                        aplicar_metodo_susan, aplicar_detector_canny
+                        aplicar_metodo_susan, aplicar_transformada_de_hough
                         )
 
 class Redirector:
@@ -185,8 +185,9 @@ class EditorDeImagenes:
         menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
         menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde_fino'], compound="left", command=lambda: self._iniciar_dialogo(DialogoCanny))
         menu_bordes_avanzados.add_separator()
-        #menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_borde'], compound="left")
-        #menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_borde'], compound="left")
+        menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_borde'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_transformada_de_hough, byn=True))
+        menu_bordes_avanzados.add_separator()
+        menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_borde'], compound="left")
 
     def _crear_panel_superior(self):
     
