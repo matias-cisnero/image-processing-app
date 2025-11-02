@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
-                        aplicar_detector_canny
+                        aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde
                         )
 
 # --- TOOLTIP ---
@@ -965,3 +965,64 @@ class DialogoCanny(DialogoHerramienta):
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy() 
+
+class DialogoCNIP(DialogoHerramienta):
+    """
+    Diálogo para ir expandiendo el contorno activo.
+    """
+    def __init__(self, parent, app_principal, config):
+        super().__init__(parent, app_principal, "Intercambio de pixeles")
+
+        self.iteracion = tk.IntVar(value=0)
+        self.imagen = config['imagen'] 
+        self.imagen_np = np.array(self.imagen.convert('RGB')).astype(float)
+        self.copia_imagen = self.imagen.copy()
+
+        box = config['region']
+        self.x1, self.y1, self.x2, self.y2 = box
+        self.region1 = self._iniciar_region1()
+
+        # Frame principal con título
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Control de expansión", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+
+        # Label del valor a la izquierda
+        lbl_valor = ttk.Label(label_parametros, text=f"{self.iteracion.get()}", width=4)
+        lbl_valor.grid(row=0, column=0, padx=(0, 10), sticky="w")
+
+        # Button paso a paso
+        boton_i = ttk.Button(label_parametros, text="Expandir", command=lambda: self._expandir(lbl_valor))
+        boton_i.grid(row=0, column=1, padx=(0, 10), sticky="w")
+
+        # Button paso a paso
+        boton_i = ttk.Button(label_parametros, text="Expandir todo", command=lambda: self._expandir_completo(lbl_valor))
+        boton_i.grid(row=0, column=2, padx=(0, 10), sticky="w")
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _iniciar_region1(self):
+        region1 = np.zeros(self.imagen_np.shape[:2], dtype=bool) # Esto es para diferenciar el fondo y objeto
+        region1[self.y1:self.y2, self.x1:self.x2] = True
+        return region1
+
+    def _expandir(self, label):
+        valor = self.iteracion.get() + 1
+        self.iteracion.set(valor)
+        label.config(text=f"{valor}")
+
+        self.region1 = obtener_segmentacion_cn_ip(imagen_np=self.imagen_np, region1=self.region1)
+
+        self.app._aplicar_transformacion(self.imagen, marcar_borde, region1=self.region1)
+
+    def _expandir_completo(self, label):
+        for _ in range(50):
+            reg_anterior = self.region1
+            self._expandir(label)
+            if np.array_equal(reg_anterior, self.region1): break
+
+    def _on_apply(self):
+        self.destroy()
+
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()

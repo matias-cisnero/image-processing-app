@@ -675,5 +675,74 @@ def aplicar_transformada_de_hough(imagen_np: np.ndarray) -> np.ndarray:
 
 # ================================((CONTORNOS ACTIVOS))======================================
 
-def aplicar_segmentacion_cn_ip(imagen_np: np.ndarray) -> np.ndarray:
-    return
+def Fd(θ_0, θ_1, θ_x) -> float:
+    return np.log(np.linalg.norm(θ_0 - θ_x, axis=1)/np.linalg.norm(θ_1 - θ_x, axis=1))
+
+def Φ(x: int) -> int:
+    return 
+
+def encontrar_bordes(region1: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Devuelve L_out (borde externo) y L_in (borde interno) de una región binaria.
+    region1 debe ser una máscara booleana (True = objeto, False = fondo).
+    """
+    
+    # Dilatación (para borde externo)
+    dilatacion = (
+        region1 |
+        np.roll(region1, 1, axis=0) | np.roll(region1, -1, axis=0) |
+        np.roll(region1, 1, axis=1) | np.roll(region1, -1, axis=1) |
+        np.roll(np.roll(region1, 1, axis=0), 1, axis=1) |
+        np.roll(np.roll(region1, 1, axis=0), -1, axis=1) |
+        np.roll(np.roll(region1, -1, axis=0), 1, axis=1) |
+        np.roll(np.roll(region1, -1, axis=0), -1, axis=1)
+    )
+    L_out = np.logical_and(~region1, dilatacion)
+
+    # Erosión (para borde interno)
+    erosion = (
+        region1 &
+        np.roll(region1, 1, axis=0) & np.roll(region1, -1, axis=0) &
+        np.roll(region1, 1, axis=1) & np.roll(region1, -1, axis=1) &
+        np.roll(np.roll(region1, 1, axis=0), 1, axis=1) &
+        np.roll(np.roll(region1, 1, axis=0), -1, axis=1) &
+        np.roll(np.roll(region1, -1, axis=0), 1, axis=1) &
+        np.roll(np.roll(region1, -1, axis=0), -1, axis=1)
+    )
+    L_in = np.logical_and(region1, ~erosion)
+
+    # Limpieza de bordes
+    L_out[[0, -1], :] = L_out[:, [0, -1]] = False
+    L_in[[0, -1], :] = L_in[:, [0, -1]] = False
+
+    return L_out, L_in
+
+def obtener_segmentacion_cn_ip(imagen_np: np.ndarray, region1: np.ndarray) -> np.ndarray:
+
+    region0 = ~region1
+
+    θ_0 = np.mean(imagen_np[region0], axis=0)
+    θ_1 = np.mean(imagen_np[region1], axis=0)
+
+    L_out, L_in = encontrar_bordes(region1)
+
+    region1_nueva = region1.copy()
+
+    Fd_L_out = Fd(θ_0, θ_1, imagen_np[L_out])
+    region1_nueva[L_out] = Fd_L_out > 0 # Out = False
+
+    Fd_L_in = Fd(θ_0, θ_1, imagen_np[L_in])
+    region1_nueva[L_in] = Fd_L_in > 0 # In = True
+
+    return region1_nueva
+
+def marcar_borde(imagen_np: np.ndarray, region1: np.ndarray) -> np.ndarray:
+    resultado_np = imagen_np.copy()
+
+    L_out, L_in = encontrar_bordes(region1)
+
+    resultado_np[L_out] = [255, 0, 0]
+    
+    resultado_np[L_in] = [0, 255, 0]
+
+    return resultado_np

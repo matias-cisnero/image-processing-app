@@ -13,7 +13,7 @@ import sys
 from utils import requiere_imagen, refrescar_imagen, cargar_iconos
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
-                        DialogoLaplaciano, DialogoBilateral, DialogoCanny
+                        DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP
                         )
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
@@ -185,9 +185,9 @@ class EditorDeImagenes:
         menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
         menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde_fino'], compound="left", command=lambda: self._iniciar_dialogo(DialogoCanny))
         menu_bordes_avanzados.add_separator()
-        menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_borde'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_transformada_de_hough, byn=True))
+        menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_lineas'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_transformada_de_hough, byn=True))
         menu_bordes_avanzados.add_separator()
-        menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_borde'], compound="left")
+        menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_expandir'], compound="left", command=self._iniciar_seleccion_contorno_activo)
 
     def _crear_panel_superior(self):
     
@@ -437,6 +437,39 @@ class EditorDeImagenes:
             'verde': datos_g,
             'azul': datos_b
         }
+
+    @requiere_imagen
+    def _iniciar_seleccion_contorno_activo(self):
+        """
+        Pone la app en modo de selección de región, pero para los Contornos Activos.
+        """
+        self._desactivar_modos()
+        self._activar_modo_region(self._on_release_contorno_activo)
+
+    def _on_release_contorno_activo(self, box: Tuple[int, int, int, int]):
+        """
+        Callback que se ejecuta al soltar el mouse para la selección
+        de Contornos Activos.
+        """
+        if box[2] - box[0] <= 0 or box[3] - box[1] <= 0: 
+            return
+        
+        print(f"Puntos seleccinados: (x1={box[0]}, y1={box[1]}, x2={box[2]}, y2={box[3]})")
+        #x1, y1, x2, y2 = box
+        
+        # 'box' es la tupla (x1, y1, x2, y2) que define el área inicial.
+        # Ahora, puedes pasar esta información a tu nuevo diálogo.
+        
+        # --- AQUÍ LLAMARÍAS A TU NUEVO DIÁLOGO ---
+        # Ejemplo (reemplaza con tu código real):
+        #
+        config_contornos = {
+             'region': box,
+             'imagen': self.imagen_procesada
+        }
+        self._iniciar_dialogo(DialogoCNIP, config=config_contornos)
+        #self._aplicar_transformacion(self.imagen_procesada, aplicar_segmentacion_cn_ip, x1=x1, y1=y1, x2=x2, y2=y2)
+        
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 
