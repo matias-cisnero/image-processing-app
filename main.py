@@ -13,7 +13,7 @@ import sys
 from utils import requiere_imagen, refrescar_imagen, cargar_iconos
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
-                        DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP
+                        DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP, DialogoHough
                         )
 from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
@@ -185,7 +185,7 @@ class EditorDeImagenes:
         menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
         menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde_fino'], compound="left", command=lambda: self._iniciar_dialogo(DialogoCanny))
         menu_bordes_avanzados.add_separator()
-        menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_lineas'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_transformada_de_hough, byn=True))
+        menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_lineas'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHough))
         menu_bordes_avanzados.add_separator()
         menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_expandir'], compound="left", command=self._iniciar_seleccion_contorno_activo)
 

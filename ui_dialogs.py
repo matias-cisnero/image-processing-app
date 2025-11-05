@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
-                        aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde
+                        aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
                         )
 
 # --- TOOLTIP ---
@@ -1023,6 +1023,49 @@ class DialogoCNIP(DialogoHerramienta):
     def _on_apply(self):
         self.destroy()
 
+    def _on_cancel(self):
+        self.app._cancelar_cambio(self.copia_imagen)
+        self.destroy()
+
+class DialogoHough(DialogoHerramienta):
+    def __init__(self, parent, app_principal):
+        super().__init__(parent, app_principal, "Transformada de Hough")
+        
+        self.valor_umbral = tk.IntVar(value=100)
+        self.copia_imagen = self.app.imagen_procesada.copy()
+
+        # Frame principal con título
+        label_parametros = ttk.Labelframe(self.frame_herramienta, text="Umbral", padding=10)
+        label_parametros.pack(fill="x", padx=10, pady=5, expand=True)
+
+        # Label que muestra el valor actual
+        lbl_valor = ttk.Label(label_parametros, text=f"{self.valor_umbral.get():.0f}", width=4)
+        lbl_valor.grid(row=0, column=0, padx=(0, 10), sticky="w")
+
+        # Scale de ttk
+        scale_umbral = ttk.Scale(
+            label_parametros,
+            from_=0,
+            to=500,
+            orient="horizontal",
+            variable=self.valor_umbral,
+            command=lambda value: self._actualizar_umbral(value, lbl_valor)
+        )
+        scale_umbral.grid(row=0, column=1, sticky="ew")
+        label_parametros.columnconfigure(1, weight=1)
+
+        self._finalizar_y_posicionar(self.app.canvas_izquierdo)
+
+    def _actualizar_umbral(self, value, label):
+        """Actualiza el label y aplica la transformación mientras se mueve el slider."""
+        valor = round(float(value))
+        label.config(text=str(valor))
+
+    def _on_apply(self):
+        umbral = float(self.valor_umbral.get())
+        self.app._aplicar_transformacion(self.copia_imagen, aplicar_transformada_de_hough, umbral=umbral, byn=True)
+        self.destroy()
+    
     def _on_cancel(self):
         self.app._cancelar_cambio(self.copia_imagen)
         self.destroy()

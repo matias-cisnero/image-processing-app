@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple
 
 """
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
@@ -649,7 +649,9 @@ def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
 
     return resultado_np
 
-def aplicar_transformada_de_hough(imagen_np: np.ndarray) -> np.ndarray:
+from PIL import Image, ImageDraw
+
+def aplicar_transformada_de_hough(imagen_np: np.ndarray, umbral: int = 100) -> np.ndarray:
 
     imagen_np = np.stack([imagen_np, imagen_np, imagen_np], axis=-1) 
 
@@ -658,28 +660,63 @@ def aplicar_transformada_de_hough(imagen_np: np.ndarray) -> np.ndarray:
 
     #2 Umbralizar para obtener una imagen binaria.
     magnitud = aplicar_umbralizacion_de_otsu(magnitud)
-    magnitud[:, :, 0]
+    magnitud = magnitud[:, :, 0]
     
     #3 Subdividir el plano (r, θ) discretizando en una cantidad específica de puntos.
+    m, n = magnitud.shape
+    diagonal = int(np.round(np.sqrt(m**2 + n**2)))
+    r = np.arange(-diagonal, diagonal)
+
+    θ = np.linspace(-np.pi/2, np.pi/2, 180) # valores entre +-90
+    cos_θ = np.cos(θ)
+    sin_θ = np.sin(θ)
+    
+    A = np.zeros((len(r), len(θ)), dtype=np.int32)
     
     #4 Para cada pixel blanco de la imagen, decidir si cumple la ecuación normal de la recta, en caso afirmativo aumentar el acumulador.
-    
+    ϵ = 2
+    y, x = np.where(magnitud == 255)
+
+    # x e (P, 1), cos_θ e (1, θ) => x * cos_θ e (P, θ)
+    prod = x[:, None] * cos_θ[None, :] + y[:, None] * sin_θ[None, :]   # (P, θ)
+    print(f"Shape de prod: {prod.shape}, p={len(x)}, θ={len(θ)}, r={len(r)}")
+
+    # resta e (P, θ, 1), r e (1, 1, R) => resta * r e (P, θ, R)
+    for i, r_i in enumerate(r):
+        dif = np.abs(r_i - prod)
+        A[i, :] = np.sum(dif < ϵ, axis=0)
+
     #5 Examinar el contenido de las celdas del acumulador con altas concentraciones (tomar el máximo o umbralizar).
+    maximos = np.argwhere(A >= umbral)
+    print(f"Lineas encontradas: {maximos.shape[0]}")
 
     #6 Graficar las rectas encontradas.
+    img_pil = Image.fromarray(np.uint8(imagen_np))
+    draw = ImageDraw.Draw(img_pil)
 
-    resultado_np = magnitud
-    resultado_np = np.stack([resultado_np, resultado_np, resultado_np], axis=-1)
+    for i_r, i_θ in maximos:
+        r_val = r[i_r]
+        θ_val = θ[i_θ]
+        
+        a = np.cos(θ_val)
+        b = np.sin(θ_val)
+        x0 = a * r_val
+        y0 = b * r_val
 
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        
+        draw.line([(x1, y1), (x2, y2)], fill=(255, 0, 0), width=1)
+    
+    resultado_np = np.array(img_pil)
     return resultado_np
 
 # ================================((CONTORNOS ACTIVOS))======================================
 
 def Fd(θ_0, θ_1, θ_x) -> float:
     return np.log(np.linalg.norm(θ_0 - θ_x, axis=1)/np.linalg.norm(θ_1 - θ_x, axis=1))
-
-def Φ(x: int) -> int:
-    return 
 
 def encontrar_bordes(region1: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
