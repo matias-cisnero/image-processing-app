@@ -1058,7 +1058,9 @@ class DialogoHough(DialogoHerramienta):
 
     def _actualizar_umbral(self, value, label):
         """Actualiza el label y aplica la transformación mientras se mueve el slider."""
-        valor = round(float(value))
+        paso = 10
+        valor = round(float(value) / paso) * paso
+        self.valor_umbral.set(valor)
         label.config(text=str(valor))
 
     def _on_apply(self):

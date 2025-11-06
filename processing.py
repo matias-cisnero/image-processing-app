@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Optional, Tuple
+from PIL import Image, ImageDraw
 
 """
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
@@ -649,7 +650,28 @@ def aplicar_metodo_susan(imagen_np: np.ndarray, modo: str) -> np.ndarray:
 
     return resultado_np
 
-from PIL import Image, ImageDraw
+def dibujar_rectas(imagen_np: np.ndarray, maximos: np.ndarray, r: np.ndarray, θ: np.ndarray) -> np.ndarray:
+    img_pil = Image.fromarray(np.uint8(imagen_np))
+    draw = ImageDraw.Draw(img_pil)
+
+    for i_r, i_θ in maximos:
+        r_val = r[i_r]
+        θ_val = θ[i_θ]
+        
+        a = np.cos(θ_val)
+        b = np.sin(θ_val)
+        x0 = a * r_val
+        y0 = b * r_val
+
+        # Dibujar línea larga atravesando toda la imagen
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        
+        draw.line([(x1, y1), (x2, y2)], fill=(255, 0, 0), width=1)
+
+    return np.array(img_pil)
 
 def aplicar_transformada_de_hough(imagen_np: np.ndarray, umbral: int = 100) -> np.ndarray:
 
@@ -671,17 +693,14 @@ def aplicar_transformada_de_hough(imagen_np: np.ndarray, umbral: int = 100) -> n
     cos_θ = np.cos(θ)
     sin_θ = np.sin(θ)
     
-    A = np.zeros((len(r), len(θ)), dtype=np.int32)
-    
     #4 Para cada pixel blanco de la imagen, decidir si cumple la ecuación normal de la recta, en caso afirmativo aumentar el acumulador.
+    A = np.zeros((len(r), len(θ)), dtype=np.int32)
     ϵ = 2
     y, x = np.where(magnitud == 255)
 
-    # x e (P, 1), cos_θ e (1, θ) => x * cos_θ e (P, θ)
     prod = x[:, None] * cos_θ[None, :] + y[:, None] * sin_θ[None, :]   # (P, θ)
-    print(f"Shape de prod: {prod.shape}, p={len(x)}, θ={len(θ)}, r={len(r)}")
+    #print(f"Shape de prod: {prod.shape}, p={len(x)}, θ={len(θ)}, r={len(r)}")
 
-    # resta e (P, θ, 1), r e (1, 1, R) => resta * r e (P, θ, R)
     for i, r_i in enumerate(r):
         dif = np.abs(r_i - prod)
         A[i, :] = np.sum(dif < ϵ, axis=0)
@@ -691,26 +710,8 @@ def aplicar_transformada_de_hough(imagen_np: np.ndarray, umbral: int = 100) -> n
     print(f"Lineas encontradas: {maximos.shape[0]}")
 
     #6 Graficar las rectas encontradas.
-    img_pil = Image.fromarray(np.uint8(imagen_np))
-    draw = ImageDraw.Draw(img_pil)
+    resultado_np = dibujar_rectas(imagen_np, maximos, r, θ)
 
-    for i_r, i_θ in maximos:
-        r_val = r[i_r]
-        θ_val = θ[i_θ]
-        
-        a = np.cos(θ_val)
-        b = np.sin(θ_val)
-        x0 = a * r_val
-        y0 = b * r_val
-
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-        
-        draw.line([(x1, y1), (x2, y2)], fill=(255, 0, 0), width=1)
-    
-    resultado_np = np.array(img_pil)
     return resultado_np
 
 # ================================((CONTORNOS ACTIVOS))======================================

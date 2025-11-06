@@ -68,10 +68,10 @@
 	rulecolor=\color{coderule},
 	numbers=none,
 	xleftmargin=10pt,
-	literate={π}{{$\pi$}}1 {θ}{{$\theta$}}1 {μ}{{$\mu$}}1 {β}{{$\beta$}}1 {η}{{$\eta$}}1 {δ}{{$\delta$}}1 {Δ}{{$\Delta$}}1
+	literate={π}{{$\pi$}}1 {θ}{{$\theta$}}1 {μ}{{$\mu$}}1 {β}{{$\beta$}}1 {η}{{$\eta$}}1 {δ}{{$\delta$}}1 {Δ}{{$\Delta$}}1 {ϵ}{{$\epsilon$}}1
 	{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
 	{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
-	{ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ζ}{{$\zeta$}}1
+	{ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ζ}{{$\zeta$}}1 
 }
 
 \lstset{style=mystyle}
@@ -130,7 +130,7 @@
 
 \begin{frame}[fragile]{Código: Paso 3}
 	\justifying
-	El código Para calcular el ángulo del gradiente es:
+	El código para calcular el ángulo del gradiente es:
 	\begin{lstlisting}[language=Python]
 phi = np.arctan2(iy, ix) # ángulos en [-π, π]
 phi[phi < 0] += np.pi # convertimos negativos a [0, π]
@@ -429,6 +429,113 @@ imagen_filtrada[i, j, 0] = 255  # esquina color rojo
 	 Implementar la transformada de Hough para detectar rectas y aplicarla a la imagen Test y a su versión contaminada.
 \end{frame}
 
+\begin{frame}[fragile]{Estrategia}
+	\justifying
+	La Transformada de Hough consiste en encontrar formas parametrizables (rectas, círculos, elipses) dentro de una imagen.
+	\begin{block}{Transformada de Hough}
+		\begin{enumerate}
+			\item Hallar los bordes la imagen utilizando un método de detección de bordes.
+			\item Umbralizar la imagen para obtener una imagen binaria.
+			\item Subdividir el plano ($r, \theta$) discretizando en una cantidad específica de puntos.
+			\item Para cada pixel blanco de la imagen, decidir si cumple la ecuación normal de la recta, en caso afirmativo aumentar el acumulador.
+			\item Examinar el contenido de las celdas del acumulador con altas concentraciones (tomar el máximo o umbralizar).
+			\item Graficar las rectas encontradas.
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 3}
+	\justifying
+	El código para subdividir el plano es:
+	\begin{lstlisting}[language=Python]
+m, n = magnitud.shape
+diagonal = int(np.round(np.sqrt(m**2 + n**2)))
+r = np.arange(-diagonal, diagonal)
+
+θ = np.linspace(-np.pi/2, np.pi/2, 180) # valores entre +-90
+cos_θ = np.cos(θ)
+sin_θ = np.sin(θ)
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 4}
+	\justifying
+	Luego se calculan todas las rectas y se suma al acumulador cuando corresponde.
+	\begin{lstlisting}[language=Python]
+A = np.zeros((len(r), len(θ)), dtype=np.int32)
+ϵ = 2
+y, x = np.where(magnitud == 255)
+
+prod = x[:, None] * cos_θ[None, :] + y[:, None] * sin_θ[None, :]   # (P, θ)
+
+for i, r_i in enumerate(r):
+	dif = np.abs(r_i - prod)
+	A[i, :] = np.sum(dif < ϵ, axis=0)
+	\end{lstlisting}
+	
+	\vfill
+	\footnotesize \textcolor{lightgray}{(*) No realicé ambas operaciones de manera vectorizada ya que ocupaba demasiado lugar en memoria.}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 5}
+	\justifying
+	Con las celdas del acumulador computadas procedemos a examinarlas, en este caso dado un umbral:
+	\begin{lstlisting}[language=Python]
+maximos = np.argwhere(A >= umbral)
+print(f"Lineas encontradas: {maximos.shape[0]}")
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Código: Paso 6}
+	\justifying
+	Finalmente se dibujan las rectas correspondientes:
+	\begin{lstlisting}[language=Python]
+resultado_np = dibujar_rectas(imagen_np, maximos, r, θ)
+
+return resultado_np
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Sobre la misma imagen original se aplicó la \textcolor{unahurverde}{\textbf{Transformada de Hough}} para la detección de líneas, considerando dos casos: la imagen original y la imagen afectada por ruido \textbf{Sal y Pimienta}.
+	
+	{\footnotesize
+		\begin{itemize}
+			\item Figuras~\ref{fig:ej3} y~\ref{fig:ej3a}: imagen original con \textbf{umbral = 200}.
+			\item Figuras~\ref{fig:ej3_ruido} y~\ref{fig:ej3a_ruido}: imagen con ruido \textbf{Sal y Pimienta} ($p = 5$) con \textbf{umbral = 350}.
+		\end{itemize}
+	}
+	
+	\vspace{0.3cm}
+	
+	\centering
+	\begin{minipage}{0.24\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{test}
+		\captionof{figure}{Imagen original}
+		\label{fig:ej3}
+	\end{minipage}\hfill
+	\begin{minipage}{0.24\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej3a}
+		\captionof{figure}{Hough (umbral = 200)}
+		\label{fig:ej3a}
+	\end{minipage}\hfill
+	\begin{minipage}{0.24\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{test_syp}
+		\captionof{figure}{Ruido SyP ($p=5$)}
+		\label{fig:ej3_ruido}
+	\end{minipage}\hfill
+	\begin{minipage}{0.24\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej3b}
+		\captionof{figure}{Hough (umbral = 350)}
+		\label{fig:ej3a_ruido}
+	\end{minipage}
+\end{frame}
+
 \section{Ejercicio 4}
 
 \begin{frame}
@@ -437,6 +544,115 @@ imagen_filtrada[i, j, 0] = 255  # esquina color rojo
 	\end{center}
 	\justifying
 	 Implementar el método de segmentación basado en conjuntos de nivel e intercambio de pixels y aplicarlo a imágenes estáticas. Aplicarlo también a imágenes contaminadas con ruido. Analizar para que tipo de imágenes es conveniente utilizar el método.
+\end{frame}
+
+\begin{frame}[fragile]{Estrategia}
+	\justifying
+	El \textcolor{unahurverde}{\textbf{Método de Intercambio de Píxeles}} realiza una segmentación iterativa basada en diferencias de intensidad entre regiones vecinas.  
+	
+	\begin{block}{En cada iteración:}
+		\begin{enumerate}
+			\item Se calculan los parámetros $\theta_0$ y $\theta_1$ del fondo y el objeto (la media de sus intensidades).
+			\item Se identifican los bordes de la región del objeto.
+			\item Para cada píxel en $L_{out}$, evaluar la función de decisión $F_d(x)$.  
+			Si $F_d > 0$, el píxel pasa a la región interior.
+			\item Para cada píxel en $L_{in}$, evaluar $F_d(x)$.  
+			Si $F_d \le 0$, el píxel se mueve fuera de la región.
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Código}
+	\justifying
+	\begin{lstlisting}[language=Python]
+def obtener_segmentacion_cn_ip(imagen_np: np.ndarray, region1: np.ndarray) -> np.ndarray:
+	region0 = ~region1
+	
+	θ_0 = np.mean(imagen_np[region0], axis=0)
+	θ_1 = np.mean(imagen_np[region1], axis=0)
+	
+	L_out, L_in = encontrar_bordes(region1)
+	
+	region1_nueva = region1.copy()
+	
+	Fd_L_out = Fd(θ_0, θ_1, imagen_np[L_out])
+	region1_nueva[L_out] = Fd_L_out > 0 # Out = False
+	
+	Fd_L_in = Fd(θ_0, θ_1, imagen_np[L_in])
+	region1_nueva[L_in] = Fd_L_in > 0 # In = True
+	
+	return region1_nueva
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados}
+	\justifying
+	Se aplicó el \textcolor{unahurverde}{\textbf{Método de Intercambio de Píxeles}} sobre la imagen de la Figura~\ref{fig:primate}, realizando dos segmentaciones distintas para resaltar diferentes regiones de la imagen.
+	
+	{\footnotesize
+		\begin{itemize}
+			\item Figura~\ref{fig:primate}: imagen original utilizada.
+			\item Figura~\ref{fig:ej4a}: primera segmentación obtenida.
+			\item Figura~\ref{fig:ej4b}: segunda segmentación, enfocada en una región distinta.
+		\end{itemize}
+	}
+	
+	\vspace{0.3cm}
+	
+	\centering
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{mandril_color}
+		\captionof{figure}{Imagen original}
+		\label{fig:primate}
+	\end{minipage}\hfill
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej4a}
+		\captionof{figure}{Segm. 1}
+		\label{fig:ej4a}
+	\end{minipage}\hfill
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej4b}
+		\captionof{figure}{Segm. 2}
+		\label{fig:ej4b}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}[fragile]{Resultados con ruido}
+	\justifying
+	Se aplicó el \textcolor{unahurverde}{\textbf{Método de Intercambio de Píxeles}} sobre la imagen \textit{primate.png} contaminada con \textbf{ruido Gaussiano} ($\sigma = 60$) afectando el 30\% de los píxeles, realizando dos segmentaciones distintas para resaltar diferentes regiones bajo condiciones de ruido.
+	
+	{\footnotesize
+		\begin{itemize}
+			\item Figura~\ref{fig:primate_ruido}: imagen contaminada con ruido Gaussiano.
+			\item Figura~\ref{fig:ej4a_ruido}: primera segmentación obtenida.
+			\item Figura~\ref{fig:ej4b_ruido}: segunda segmentación, enfocada en una región distinta.
+		\end{itemize}
+	}
+	
+	\vspace{0.3cm}
+	
+	\centering
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{mandril_gauss}
+		\captionof{figure}{Ruido Gaussiano ($\sigma=60$, 30\%)}
+		\label{fig:primate_ruido}
+	\end{minipage}\hfill
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej4a_gauss}
+		\captionof{figure}{Segm. 1 (ruido)}
+		\label{fig:ej4a_ruido}
+	\end{minipage}\hfill
+	\begin{minipage}{0.32\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{ej4b_gauss}
+		\captionof{figure}{Segm. 2 (ruido)}
+		\label{fig:ej4b_ruido}
+	\end{minipage}
 \end{frame}
 
 \section{Repositorio}
