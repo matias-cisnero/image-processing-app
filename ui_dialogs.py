@@ -5,7 +5,7 @@ from typing import Callable
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+from utils import resource_path
 from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
                         aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
@@ -64,7 +64,7 @@ class DialogoBase(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self.resultado = None
-        self.iconbitmap("favicon.ico")
+        self.iconbitmap(resource_path("favicon.ico"))
 
     def _finalizar_y_posicionar(self, reference_widget=None):
         """Calcula el tamaño necesario para el contenido y posiciona la ventana."""
@@ -131,15 +131,31 @@ class DialogoResultado(DialogoBase):
     def __init__(self, parent, imagen_pil: Image.Image, titulo: str, guardar_callback: Callable):
         super().__init__(parent)
         self.title(titulo)
-        img_tk = ImageTk.PhotoImage(imagen_pil)
-        label_imagen = ttk.Label(self, image=img_tk)
-        label_imagen.image_ref = img_tk
-        label_imagen.pack(padx=10, pady=10)
+
+        MAX_ANCHO = 800
+        MAX_ALTO = 600
+
+        frame_visor = ttk.Frame(self, width=MAX_ANCHO, height=MAX_ALTO)
+        frame_visor.pack(padx=10, pady=10)
         
+        frame_visor.pack_propagate(False) 
+
+        imagen_copia = imagen_pil.copy()
+        imagen_copia.thumbnail((MAX_ANCHO, MAX_ALTO), Image.Resampling.LANCZOS)
+        
+        img_tk = ImageTk.PhotoImage(imagen_copia)
+        
+        label_imagen = ttk.Label(frame_visor, image=img_tk)
+        label_imagen.pack(expand=True) 
+        label_imagen.image_ref = img_tk
+
         frame_botones = ttk.Frame(self)
-        frame_botones.pack(pady=5, padx=10, fill=tk.X)
+        frame_botones.pack(pady=(0, 10), padx=10, fill=tk.X)
         ttk.Button(frame_botones, text="Guardar...", command=guardar_callback).pack(side=tk.LEFT, expand=True, padx=5)
         ttk.Button(frame_botones, text="Cerrar", command=self.destroy).pack(side=tk.RIGHT, expand=True, padx=5)
+        
+        self.resizable(False, False)
+        
         self._finalizar_y_posicionar()
         self.wait_window(self)
 
@@ -190,8 +206,8 @@ class DialogoHerramienta(DialogoBase):
         self.app = app_principal
         self.title(titulo)
 
-        self.icono_aceptar = tk.PhotoImage(file="icons/ui_aceptar.png").subsample(4,4)
-        self.icono_cancelar = tk.PhotoImage(file="icons/ui_cancelar.png").subsample(4,4)
+        self.icono_aceptar = tk.PhotoImage(file=resource_path("icons/ui_aceptar.png")).subsample(4,4)
+        self.icono_cancelar = tk.PhotoImage(file=resource_path("icons/ui_cancelar.png")).subsample(4,4)
         
         self.frame_herramienta = ttk.Frame(self, padding=10)
         self.frame_herramienta.pack(expand=True, fill=tk.BOTH)

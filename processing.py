@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional, Tuple
 from PIL import Image, ImageDraw
+import cv2
 
 """
 Archivo con la lógica del procesamiento de las imágenes (solo trabaja con arrays de numpy)
@@ -784,3 +785,53 @@ def marcar_borde(imagen_np: np.ndarray, region1: np.ndarray) -> np.ndarray:
     resultado_np[L_in] = [0, 255, 0]
 
     return resultado_np
+
+def aplicar_metodo_sift(imagen_np_1: np.ndarray, imagen_np_2: np.ndarray) -> np.ndarray:
+    """
+    Encuentra y dibuja los puntos de coincidencia (matches) SIFT entre dos imágenes.
+    """
+    
+    # 1. Convertir imágenes NumPy (RGB) a formato OpenCV (BGR)
+    img1_bgr = cv2.cvtColor(imagen_np_1, cv2.COLOR_RGB2BGR)
+    img2_bgr = cv2.cvtColor(imagen_np_2, cv2.COLOR_RGB2BGR)
+
+    # 2. Convertir a escala de grises (SIFT trabaja sobre grises)
+    img1_gray = cv2.cvtColor(img1_bgr, cv2.COLOR_BGR2GRAY)
+    img2_gray = cv2.cvtColor(img2_bgr, cv2.COLOR_BGR2GRAY)
+
+    # 3. Inicializar el detector SIFT
+    sift = cv2.SIFT_create()
+
+    # 4. Detectar Keypoints (kp) y Descriptores (des)
+    kp1, des1 = sift.detectAndCompute(img1_gray, None)
+    kp2, des2 = sift.detectAndCompute(img2_gray, None)
+
+    # 5. Crear el "emparejador" (Matcher)
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+    matches = bf.knnMatch(des1, des2, k=2)
+
+    # 6. Filtrar los "buenos" matches usando el test de ratio de Lowe
+    good_matches = []
+    for m, n in matches:
+        if m.distance < 0.75 * n.distance:
+            good_matches.append(m)
+
+    # 7. Dibujar los matches en una nueva imagen
+    img_matches_bgr = cv2.drawMatches(
+        img1_bgr, kp1,
+        img2_bgr, kp2,
+        good_matches, 
+        None,         
+        flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS
+    )
+    
+    # 8. Convertir la imagen final de BGR a RGB
+    img_matches_rgb = cv2.cvtColor(img_matches_bgr, cv2.COLOR_BGR2RGB)
+
+    # Devuelve el resultado como un np.ndarray (RGB, uint8)
+    print(f"Keypoints detectados: {len(kp1)}")
+    print(f"Coincidencias buenas: {len(good_matches)}")
+    similitud = len(good_matches) / max(len(kp1), 1)
+    print(f"'Similitud': {similitud}")
+    
+    return img_matches_rgb

@@ -10,6 +10,7 @@ __pycache__/
 examples/
 icons_legacy/
 test/
+build/
 *.pyc
 *.aux
 *.log
@@ -28,3 +29,6 @@ main_notebook.py
 main_qt.py
 main_legacy.py
 ui_dialogs_legacy.py
+SIFTalgorithm.py
+main.spec
+how-to-build.txt

@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 import webbrowser
 import os
 import sys
+import cv2
 
 # Importaciones de código en archivos
-from utils import requiere_imagen, refrescar_imagen, cargar_iconos
+from utils import requiere_imagen, refrescar_imagen, cargar_iconos, resource_path
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
                         DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP, DialogoHough
@@ -19,7 +20,7 @@ from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplic
                         crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
                         crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
                         restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb,
-                        aplicar_metodo_susan, aplicar_transformada_de_hough
+                        aplicar_metodo_susan, aplicar_metodo_sift
                         )
 
 class Redirector:
@@ -54,7 +55,7 @@ class EditorDeImagenes:
         self.root = root
         self.root.title("Procesador de Imágenes")
         self.root.geometry(self.GEOMETRIA_VENTANA)
-        self.root.iconbitmap("favicon.ico")
+        self.root.iconbitmap(resource_path("favicon.ico"))
 
         self.imagen_original: Optional[Image.Image] = None
         self.imagen_procesada: Optional[Image.Image] = None
@@ -133,7 +134,6 @@ class EditorDeImagenes:
         menu_ruido.add_command(label="Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_rayleigh))
         menu_ruido.add_command(label="Exponencial", image=self.iconos['h_e'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_exponencial))
         menu_ruido.add_command(label="Sal y Pimienta", image=self.iconos['h_syp'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_sal_y_pimienta))
-        #menu_ruido.add_command(label="Sal y Pimienta", image=self.icono_sal_y_pimienta, compound="left", command=lambda: self._iniciar_dialogo(DialogoRuidoSalYPimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
         config_filtro_media = {'titulo': "Filtro de la Media", 'gaussiano': False, 'filtro': crear_filtro_media, 'modo': 0, 'mediana': False}
@@ -188,6 +188,10 @@ class EditorDeImagenes:
         menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_lineas'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHough))
         menu_bordes_avanzados.add_separator()
         menu_bordes_avanzados.add_command(label="Segmentación CN e IP", image=self.iconos['h_expandir'], compound="left", command=self._iniciar_seleccion_contorno_activo)
+
+        menu_reconocimiento_objetos = tk.Menu(barra_menu, tearoff=0)
+        barra_menu.add_cascade(label="Reconocimiento de Objetos", menu=menu_reconocimiento_objetos)
+        menu_reconocimiento_objetos.add_command(label="Método de SIFT", image=self.iconos['h_ojo'], compound="left", command=self._iniciar_sift)
 
     def _crear_panel_superior(self):
     
@@ -354,28 +358,6 @@ class EditorDeImagenes:
         self.zoom_spinbox.grid(row=0, column=4, sticky="e")
         self.zoom_spinbox.bind("<Return>", self._actualizar_zoom_desde_spinbox)
 
-    def _cargar_iconos(self):
-        """
-        Carga automáticamente todos los iconos .png de la carpeta 'icons'
-        en el diccionario self.iconos.
-        """
-        icons_dir = "icons"
-        if not os.path.isdir(icons_dir):
-            print(f"Advertencia: No se encontró el directorio de iconos en '{icons_dir}'")
-            return
-        
-        for filename in os.listdir(icons_dir):
-            if filename.endswith(".png"):
-                nombre_clave = os.path.splitext(filename)[0]
-                ruta_completa = os.path.join(icons_dir, filename)
-                
-                try:
-                    imagen = tk.PhotoImage(file=ruta_completa).subsample(4, 4)
-                    self.iconos[nombre_clave] = imagen
-                except tk.TclError as e:
-                    print(f"Advertencia: No se pudo cargar el ícono '{filename}': {e}")
-
-
     # =======================================================================================
     #                              2. LÓGICA DE HERRAMIENTAS
     # =======================================================================================
@@ -455,21 +437,44 @@ class EditorDeImagenes:
             return
         
         print(f"Puntos seleccinados: (x1={box[0]}, y1={box[1]}, x2={box[2]}, y2={box[3]})")
-        #x1, y1, x2, y2 = box
-        
-        # 'box' es la tupla (x1, y1, x2, y2) que define el área inicial.
-        # Ahora, puedes pasar esta información a tu nuevo diálogo.
-        
-        # --- AQUÍ LLAMARÍAS A TU NUEVO DIÁLOGO ---
-        # Ejemplo (reemplaza con tu código real):
-        #
+
         config_contornos = {
              'region': box,
              'imagen': self.imagen_procesada
         }
         self._iniciar_dialogo(DialogoCNIP, config=config_contornos)
-        #self._aplicar_transformacion(self.imagen_procesada, aplicar_segmentacion_cn_ip, x1=x1, y1=y1, x2=x2, y2=y2)
         
+    @requiere_imagen
+    def _iniciar_sift(self):
+        """
+        Inicia el proceso de matching SIFT entre la imagen actual y una segunda imagen.
+        """
+        ruta_img2 = filedialog.askopenfilename(
+            title="Seleccionar SEGUNDA imagen para SIFT",
+            filetypes=self.FORMATOS_IMAGEN
+        )
+        if not ruta_img2: return
+
+        try:
+            img2_pil = Image.open(ruta_img2).convert("RGB")
+            
+            # 1. Convertimos las imágenes PIL a arrays de NumPy (RGB)
+            imagen_np_1 = np.array(self.imagen_procesada)
+            imagen_np_2 = np.array(img2_pil)
+
+            print("Calculando SIFT... esto puede tardar un momento.")
+            
+            # 2. Llamamos a la función de lógica pasándole solo arrays de NumPy
+            resultado_np = aplicar_metodo_sift(imagen_np_1, imagen_np_2)
+            
+            print("Cálculo de SIFT finalizado.")
+
+            # 3. El resultado ya es un np.ndarray, solo lo convertimos a PIL
+            resultado_pil = Image.fromarray(resultado_np) # No es necesario .astype() si el resultado es uint8
+            self._mostrar_ventana_resultado(resultado_pil, "Resultado de SIFT Matching")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo procesar SIFT.\n{e}")
 
     # ===========================((HERRAMIENTAS_GENERALES))==================================
 

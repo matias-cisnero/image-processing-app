@@ -1,6 +1,7 @@
 from tkinter import messagebox
 from typing import Callable
 import os
+import sys
 import tkinter as tk
 
 # --- DECORADORES ---
@@ -22,12 +23,20 @@ def refrescar_imagen(func: Callable) -> Callable:
         return resultado
     return wrapper
 
+def resource_path(relative_path):
+    """
+    Devuelve la ruta absoluta del recurso, compatible con PyInstaller.
+    """
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 def cargar_iconos(ruta= "icons") -> dict:
         """
         Carga automáticamente todos los iconos .png de la carpeta 'icons'
-        en el diccionario self.iconos.
+        en un diccionario.
         """
-        icons_dir = "icons"
+        icons_dir = resource_path("icons")
         if not os.path.isdir(icons_dir):
             print(f"Advertencia: No se encontró el directorio de iconos en '{icons_dir}'")
             return
@@ -44,3 +53,4 @@ def cargar_iconos(ruta= "icons") -> dict:
                 except tk.TclError as e:
                     print(f"Advertencia: No se pudo cargar el ícono '{filename}': {e}")
         return iconos
+
