@@ -808,12 +808,13 @@ def aplicar_metodo_sift(imagen_np_1: np.ndarray, imagen_np_2: np.ndarray) -> np.
 
     # 5. Crear el "emparejador" (Matcher)
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    matches = bf.knnMatch(des1, des2, k=2)
+    matches = bf.match(des1, des2)
 
-    # 6. Filtrar los "buenos" matches usando el test de ratio de Lowe
+    # 6. Filtrar los "buenos" matches
+    U_abs = 100
     good_matches = []
-    for m, n in matches:
-        if m.distance < 0.75 * n.distance:
+    for m in matches:
+        if m.distance < U_abs:
             good_matches.append(m)
 
     # 7. Dibujar los matches en una nueva imagen

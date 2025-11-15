@@ -83,9 +83,9 @@
 	emphstyle={[2]\color{teal}\bfseries},
 }
 
-\title{Trabajo Práctico 3 Procesamiento de Imágenes y Visión por Computadora}
+\title{Trabajo Práctico 4 Procesamiento de Imágenes y Visión por Computadora}
 \author{Matías Cisnero}
-\date{6 de Noviembre de 2025}
+\date{20 de Noviembre de 2025}
 
 \begin{document}
 
@@ -94,11 +94,11 @@
 	\centering
 	\includegraphics[width=0.25\textwidth]{UNAHUR.png}
 	\vfill
-	{\huge \textbf{Trabajo Práctico 3}}\\[0.2cm]
+	{\huge \textbf{Trabajo Práctico 4}}\\[0.2cm]
 	{\Large Procesamiento de Imágenes y Visión por Computadora}\\
 	\vfill
 	{\large Matías Cisnero}\\
-	{\small 6 de Noviembre de 2025}
+	{\small 20 de Noviembre de 2025}
 \end{frame}
 
 \section{Ejercicio 1}
@@ -108,69 +108,238 @@
 		\textcolor{unahurverde}{\textbf{Consigna 1:}}
 	\end{center}
 	\justifying
-	Implementar el detector de bordes de Canny. Aplicarlo a una imagen y a su versión contaminada con distintos tipo de ruido.
+	Utilizar el método SIFT para reconocimiento de objetos en una imagen. La idea de este ejercicio es reconocer si dos imágenes son, en realidad, la misma. Esto puede realizarse contando los descriptores de cada una y las coincidencias entre los descriptores.
+	
+	\begin{enumerate}
+		\item Aplicar el método a diferentes pares de imágenes, observando el comportamiento del método bajo rotación, traslación, cambios en la iluminación, cambios de escala y movimiento de perspectiva.
+		\item Agregar ruido gaussiano a una de las las imágenes y aplicar el método
+		\item Agregar ruido gaussiano a las dos imágenes y volver a aplicar el método.
+	\end{enumerate}
 \end{frame}
 
 \begin{frame}[fragile]{Estrategia}
 	\justifying
-	\begin{block}{Detector de Canny}
+	\begin{block}{Método de SIFT}
 		\begin{enumerate}
-			\item Aplicar un filtro Gaussiano.
-			\item Aplicar el método de Sobel para calcular aproximadamente el gradiente y con esto la Magnitud de Borde.
-			\item Calcular el ángulo del gradiente.
-			\item Discretizar los ángulos en 4 valores (0º, 45º, 90º, 135º).
-			\item Realizar la supresión de no máximos.
-			\item Aplicar umbralización con histéresis.
+			\item Detección de keypoints.
+			\item Construcción de descriptores.
 		\end{enumerate}
 	\end{block}
 	
 	\vfill
-	\footnotesize \textcolor{lightgray}{(*) Obviaremos el paso 1 y 2 porque ya lo hemos realizado anteriormente.}
+	\footnotesize \textcolor{lightgray}{(*) .}
 \end{frame}
 
-\section{Ejercicio 2}
+\begin{frame}[fragile]{Detección de Keypoints en SIFT}
+	\justifying
+	Los keypoints representan posiciones distintivas de la imagen, robustas a cambios de escala y rotación. Su detección se realiza dentro del espacio de escala.
+	
+	\begin{block}{Etapas de la detección de Keypoints}
+		\begin{enumerate}
+			\item Construcción del \textbf{espacio de escala Gaussiano} organizado en \textbf{octavas}.
+			\item Cálculo de la \textbf{Diferencia de Gaussianas (DoG)}.
+			\item Búsqueda de \textbf{extremos 3D} en el volumen DoG (comparación con vecinos en 3 niveles).
+			\item Selección de los mejores \textbf{keypoints} (eliminar los de las esquinas).
+			\item Obtención de la \textbf{orientación del gradiente} en una región de \(16 \times 16\) alrededor del keypoint.
+			\item Construcción de un \textbf{histograma de 36 bins}, ponderado por el módulo del gradiente.
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Construcción de Descriptores en SIFT}
+	\justifying
+	El descriptor SIFT representa la distribución de gradientes locales alrededor del keypoint. Es robusto a cambios de iluminación y pequeñas deformaciones.
+	
+	\begin{block}{Etapas de la construcción del descriptor}
+		\begin{enumerate}
+			\item Dividir la región alrededor del keypoint en \textbf{16 sub-regiones} de tamaño \(4 \times 4\).
+			\item Calcular un \textbf{histograma de orientaciones} en cada sub-región (8 bins).
+			\item Concatenar los 16 histogramas para formar el descriptor final:
+			\[
+			t = 128 = 16 \times 8
+			\]
+		\end{enumerate}
+	\end{block}
+\end{frame}
+
+\section{Ejercicio a}
 
 \begin{frame}
 	\begin{center}
-		\textcolor{unahurverde}{\textbf{Consigna 2:}}
+		\textcolor{unahurverde}{\textbf{Consigna a:}}
 	\end{center}
 	\justifying
-	Implementar el Método de Smallest Univaluate Assimilating Nucleus (SUSAN) para:
-	\begin{enumerate}
-		\item Detección de bordes.
-		\item Detección de esquinas.
-	\end{enumerate}
-	Aplicarlos a la imagen Test y a su versión contaminada.
+	Aplicar el método a diferentes pares de imágenes, observando el comportamiento del método bajo rotación, traslación, cambios en la iluminación, cambios de escala y movimiento de perspectiva.
 \end{frame}
 
-\begin{frame}[fragile]{Estrategia}
+\begin{frame}{Resultados: Rotación}
 	\justifying
-	\begin{block}{Método de SUSAN}
-		\begin{enumerate}
-			\item Ubicar una máscara circular alrededor de cada pixel.
-			\item Calcular la cantidad de pixeles dentro de la máscara que tienen el mismo nivel de gris que el núcleo, salvo un umbral.
-			\[
-			c(r, r_0) =
-			\begin{cases}
-				1, & \text{si } |I(r) - I(r_0)| < t,\\
-				0, & \text{si } |I(r) - I(r_0)| \geq t.
-			\end{cases}
-			\]
-			\item Luego se calculan $n(r_0)$ y $s(r_0)$.
-			\item Finalmente:
-			\[
-			r_0 =
-			\begin{cases}
-				\text{nada}, & \text{si } s(r_0) \approx 0,\\
-				\text{es un borde}, & \text{si } s(r_0) \approx 0,5,\\
-				\text{es esquina}, & \text{si } s(r_0) \approx 0,75.
-			\end{cases}
-			\]
-		\end{enumerate}
-	\end{block}
+	Emparejamiento entre imagen original y su versión rotada.  
+	Umbral utilizado: \textbf{$U_{\text{abs}} = 100$}.
 	
-	\vfill
-	\footnotesize \textcolor{lightgray}{(*) c.}
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{3017}
+		\item Coincidencias buenas: \textbf{1510}
+		\item Similitud: \textbf{0.5005}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_1rotacion}
+	\captionof{figure}{Emparejamiento bajo rotación.}
+\end{frame}
+
+\begin{frame}{Resultados: Rotación 3D}
+	\justifying
+	Emparejamiento entre imagen original y su versión con rotación en 3D (cambio de perspectiva).  
+	Umbral utilizado: \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{256}
+		\item Coincidencias buenas: \textbf{4}
+		\item Similitud: \textbf{0.0156}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_1rotacion3d}
+	\captionof{figure}{Emparejamiento bajo rotación 3D.}
+\end{frame}
+
+\begin{frame}{Resultados: Cambio de iluminación}
+	\justifying
+	Emparejamiento entre imagen original y su versión con variación de iluminación.  
+	Umbral utilizado: \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{3017}
+		\item Coincidencias buenas: \textbf{911}
+		\item Similitud: \textbf{0.3020}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_1iluminacion}
+	\captionof{figure}{Emparejamiento bajo cambios de iluminación.}
+\end{frame}
+
+\begin{frame}{Resultados: Cambio de escala}
+	\justifying
+	Emparejamiento entre imagen original y su versión escalada.  
+	Umbral utilizado: \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{11873}
+		\item Coincidencias buenas: \textbf{252}
+		\item Similitud: \textbf{0.0212}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_1escala}
+	\captionof{figure}{Emparejamiento bajo cambios de escala.}
+\end{frame}
+
+\begin{frame}{Resultados: Transformación de perspectiva}
+	\justifying
+	Emparejamiento entre imagen original y su versión transformada en perspectiva.  
+	Umbral utilizado: \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{11873}
+		\item Coincidencias buenas: \textbf{127}
+		\item Similitud: \textbf{0.0107}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_1perspectiva}
+	\captionof{figure}{Emparejamiento bajo cambios de perspectiva.}
+\end{frame}
+
+\section{Ejercicio b}
+
+\begin{frame}
+	\begin{center}
+		\textcolor{unahurverde}{\textbf{Consigna b:}}
+	\end{center}
+	\justifying
+	Agregar ruido gaussiano a una de las las imágenes y aplicar el método
+\end{frame}
+
+\begin{frame}{Resultados: Imagen original vs imagen con ruido gaussiano}
+	\justifying
+	Se agregó ruido Gaussiano (40\%, $\sigma = 20$) a la segunda imagen y se comparó contra la imagen original utilizando un umbral absoluto de \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{3017}
+		\item Coincidencias buenas: \textbf{400}
+		\item Similitud: \textbf{0.1326}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_b1}
+	\captionof{figure}{Emparejamiento entre imagen original y versión con ruido gaussiano.}
+\end{frame}
+
+\begin{frame}{Resultados: Imagen con ruido gaussiano vs imagen original}
+	\justifying
+	La imagen ruidosa (40\%, $\sigma = 20$) se toma como referencia y se compara contra la original, aplicando el umbral de \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{2256}
+		\item Coincidencias buenas: \textbf{405}
+		\item Similitud: \textbf{0.1795}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_b2}
+	\captionof{figure}{Emparejamiento tomando la imagen con ruido como referencia.}
+\end{frame}
+
+\section{Ejercicio c}
+
+\begin{frame}
+	\begin{center}
+		\textcolor{unahurverde}{\textbf{Consigna c:}}
+	\end{center}
+	\justifying
+	Agregar ruido gaussiano a las dos imágenes y volver a aplicar el método.
+\end{frame}
+
+\begin{frame}{Resultados: ruido gaussiano en ambas imágenes}
+	\justifying
+	Ambas imágenes fueron contaminadas con ruido Gaussiano (40\%, $\sigma = 20$) antes de aplicar SIFT.  
+	La selección de coincidencias se realizó con \textbf{$U_{\text{abs}} = 100$}.
+	
+	\vspace{0.2cm}
+	\textbf{Resultados:}
+	\begin{itemize}
+		\item Keypoints detectados: \textbf{2256}
+		\item Coincidencias buenas: \textbf{388}
+		\item Similitud: \textbf{0.1720}
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	\centering
+	\includegraphics[width=0.75\linewidth]{ej_c}
+	\captionof{figure}{Emparejamiento entre ambas imágenes ruidosas.}
 \end{frame}
 
 \begin{frame}{Repositorio de GitHub}
