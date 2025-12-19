@@ -6,12 +6,11 @@ import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from utils import resource_path
-from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
-                        aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
-                        aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
-                        )
-
-# --- TOOLTIP ---
+# from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
+#                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
+#                         aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
+#                         )
+from src import utilidades, operadores, ruidos, mascaras, filtros, bordes, segmentaciones
 
 class Tooltip:
     """
@@ -264,11 +263,11 @@ class DialogoGamma(DialogoHerramienta):
     def _actualizar_gamma(self, value, label):
         valor = float(value)
         label.config(text=f"{valor:.1f}")
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=valor)
+        self.app._aplicar_transformacion(self.copia_imagen, operadores.gamma, gamma=valor)
 
     def _on_apply(self):
         gamma = float(self.valor_gamma.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_gamma, gamma=gamma)
+        self.app._aplicar_transformacion(self.copia_imagen, operadores.gamma, gamma=gamma)
         self.destroy()
 
     def _on_cancel(self):
@@ -311,11 +310,11 @@ class DialogoUmbralizacion(DialogoHerramienta):
         """Actualiza el label y aplica la transformación mientras se mueve el slider."""
         valor = round(float(value))
         label.config(text=str(valor))
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, umbral=valor)
+        self.app._aplicar_transformacion(self.copia_imagen, operadores.umbral, umbral=valor)
 
     def _on_apply(self):
         umbral = float(self.valor_umbral.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_umbralizacion, umbral=umbral)
+        self.app._aplicar_transformacion(self.copia_imagen, operadores.umbral, umbral=umbral)
         self.destroy()
     
     def _on_cancel(self):
@@ -454,7 +453,7 @@ class DialogoHistogramaDist(DialogoBase):
     def _actualizar_grafico(self, *args):
         intensidad = int(self.intensidad.get())
         
-        vector_resultante = generar_vector_ruido(
+        vector_resultante = ruidos.generar_vector(
             distribucion = self.config['distribucion'],
             intensidad = intensidad,
             cantidad = self.num_muestras
@@ -553,7 +552,7 @@ class DialogoRuido(DialogoHerramienta):
             m, n = imagen_np.shape[:2]
             num_contaminados = int((d * (m * n)) / 100)
 
-            vector_ruido = generar_vector_ruido(
+            vector_ruido = ruidos.generar_vector(
                 distribucion=self.config['distribucion'],
                 intensidad=intensidad,
                 cantidad=num_contaminados
@@ -562,7 +561,7 @@ class DialogoRuido(DialogoHerramienta):
             if vector_ruido.size > 0:
                 self.app._aplicar_transformacion(
                     self.copia_imagen, 
-                    aplicar_ruido, 
+                    ruidos.aplicar, 
                     tipo=tipo, 
                     vector_ruido=vector_ruido, 
                     d=d
@@ -570,7 +569,7 @@ class DialogoRuido(DialogoHerramienta):
         else:
             d = int(self.valor_d.get()) / 2
             p = d / 100
-            self.app._aplicar_transformacion(self.copia_imagen, aplicar_ruido_sal_y_pimienta, p=p)
+            self.app._aplicar_transformacion(self.copia_imagen, ruidos.sal_y_pimienta, p=p)
         self.destroy()
     
     # ----- CANCELAR -----
@@ -650,7 +649,7 @@ class DialogoFiltro(DialogoHerramienta):
             k = int(self.tam_filtro.get())
         self.app._aplicar_transformacion(
             self.copia_imagen,
-            aplicar_filtro,
+            filtros.convolucionar,
             func_filtro=self.func_filtro,
             k=k,
             modo=self.modo,
@@ -723,7 +722,7 @@ class DialogoDifusion(DialogoHerramienta):
         sigma = int(self.sigma.get())
         self.app._aplicar_transformacion(
             self.copia_imagen,
-            aplicar_filtro_difusion,
+            filtros.difusion,
             sigma=sigma,
             t=t,
             isotropico=self.isotropico
@@ -826,7 +825,7 @@ class DialogoLaplaciano(DialogoHerramienta):
         
         self.app._aplicar_transformacion(
             self.copia_imagen,
-            aplicar_metodo_del_laplaciano,
+            bordes.laplaciano,
             log=log,
             pendiente=pendiente,
             umbral=umbral,
@@ -906,7 +905,7 @@ class DialogoBilateral(DialogoHerramienta):
         sigma_r = int(self.sigma_r.get())
         self.app._aplicar_transformacion(
             self.copia_imagen,
-            aplicar_filtro_bilateral,
+            filtros.bilateral,
             sigma_s=sigma_s,
             sigma_r=sigma_r
         )
@@ -971,7 +970,7 @@ class DialogoCanny(DialogoHerramienta):
         t2 = int(self.t2.get())
         self.app._aplicar_transformacion(
             self.copia_imagen,
-            aplicar_detector_canny,
+            bordes.canny,
             t1=t1,
             t2=t2,
             byn=True
@@ -1026,9 +1025,9 @@ class DialogoCNIP(DialogoHerramienta):
         self.iteracion.set(valor)
         label.config(text=f"{valor}")
 
-        self.region1 = obtener_segmentacion_cn_ip(imagen_np=self.imagen_np, region1=self.region1)
+        self.region1 = segmentaciones.contornos_activos_intercambio_pixeles(imagen_np=self.imagen_np, region1=self.region1)
 
-        self.app._aplicar_transformacion(self.imagen, marcar_borde, region1=self.region1)
+        self.app._aplicar_transformacion(self.imagen, segmentaciones.marcar_bordes, region1=self.region1)
 
     def _expandir_completo(self, label):
         for _ in range(50):
@@ -1081,7 +1080,7 @@ class DialogoHough(DialogoHerramienta):
 
     def _on_apply(self):
         umbral = float(self.valor_umbral.get())
-        self.app._aplicar_transformacion(self.copia_imagen, aplicar_transformada_de_hough, umbral=umbral, byn=True)
+        self.app._aplicar_transformacion(self.copia_imagen, bordes.transformada_de_hough, umbral=umbral, byn=True)
         self.destroy()
     
     def _on_cancel(self):

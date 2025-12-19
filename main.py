@@ -16,12 +16,7 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
                         DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP, DialogoHough
                         )
-from processing import (aplicar_negativo, aplicar_ecualizacion_histograma, aplicar_filtro,
-                        crear_filtro_media, crear_filtro_mediana, crear_filtro_mediana_ponderada, crear_filtro_gaussiano, crear_filtro_realce,
-                        crear_filtro_prewitt_x, crear_filtro_prewitt_y, crear_filtro_sobel_x, crear_filtro_sobel_y, aplicar_magnitud_del_gradiente,
-                        restar_imagenes, aplicar_umbralizacion_iterativa, aplicar_umbralizacion_de_otsu, aplicar_umbralizacion_rgb,
-                        aplicar_metodo_susan, aplicar_metodo_sift
-                        )
+from src import utilidades, operadores, mascaras, filtros, bordes, segmentaciones
 
 class Redirector:
     def __init__(self, text_widget):
@@ -110,7 +105,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.iconos['h_y'], compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
         menu_operadores_puntuales.add_command(label="Umbralización", image=self.iconos['h_u'], compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_invertir'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_negativo))
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_invertir'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, operadores.negativo))
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
@@ -118,7 +113,7 @@ class EditorDeImagenes:
         config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.iconos['h_barras'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_ecualizacion_histograma, byn=True))
+        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, operadores.ecualizar, byn=True))
         menu_histogramas.add_separator()
         menu_histogramas.add_command(label="Generador Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
         menu_histogramas.add_command(label="Generador Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
@@ -136,10 +131,10 @@ class EditorDeImagenes:
         menu_ruido.add_command(label="Sal y Pimienta", image=self.iconos['h_syp'], compound="left", command=lambda: self._iniciar_dialogo(DialogoRuido, config=config_sal_y_pimienta))
 
         menu_filtros = tk.Menu(barra_menu, tearoff=0)
-        config_filtro_media = {'titulo': "Filtro de la Media", 'gaussiano': False, 'filtro': crear_filtro_media, 'modo': 0, 'mediana': False}
-        config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': crear_filtro_gaussiano, 'modo': 0, 'mediana': False}
-        config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': crear_filtro_mediana, 'modo': 2, 'mediana': True}
-        config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': crear_filtro_mediana_ponderada, 'modo': 2, 'mediana': True}
+        config_filtro_media = {'titulo': "Filtro de la Media", 'gaussiano': False, 'filtro': mascaras.media, 'modo': 0, 'mediana': False}
+        config_filtro_gaussiano = {'titulo': "Filtro Gaussiano", 'gaussiano': True, 'filtro': mascaras.gaussiana, 'modo': 0, 'mediana': False}
+        config_filtro_mediana = {'titulo': "Filtro de la Mediana", 'gaussiano': False, 'filtro': mascaras.mediana, 'modo': 2, 'mediana': True}
+        config_filtro_mediana_ponderada = {'titulo': "Filtro de la Mediana ponderada", 'gaussiano': False, 'filtro': mascaras.mediana_ponderada, 'modo': 2, 'mediana': True}
         config_isotropico = {'titulo': "Difusión Isotrópica", 'isotropico': True}
         config_anisotropico = {'titulo': "Difusión Anisotrópica", 'isotropico': False}
         barra_menu.add_cascade(label="Filtros", menu=menu_filtros)
@@ -155,34 +150,34 @@ class EditorDeImagenes:
         menu_filtros.add_command(label="Filtro Bilateral", image=self.iconos['h_omega'], compound="left", command=lambda: self._iniciar_dialogo(DialogoBilateral))
         
         menu_bordes = tk.Menu(barra_menu, tearoff=0)
-        config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': crear_filtro_realce, 'modo': 0, 'mediana': False}
+        config_filtro_realce = {'titulo': "Filtro Realce de bordes", 'gaussiano': False, 'filtro': mascaras.realce, 'modo': 0, 'mediana': False}
         config_laplaciano = {'titulo': "Método del Laplaciano", 'log': False}
         config_log = {'titulo': "Método del LoG", 'log': True}
         barra_menu.add_cascade(label="Bordes", menu=menu_bordes)
         menu_bordes.add_command(label="Realce de Bordes", image=self.iconos['h_borde'], compound="left", command=lambda: self._iniciar_dialogo(DialogoFiltro, config=config_filtro_realce))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Prewitt X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_x, modo=1))
-        menu_bordes.add_command(label="Prewitt Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_prewitt_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_magnitud_del_gradiente, func_filtro1=crear_filtro_prewitt_x, func_filtro2=crear_filtro_prewitt_y))
+        menu_bordes.add_command(label="Prewitt X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, filtros.convolucionar, func_filtro=mascaras.prewitt_x, modo=1))
+        menu_bordes.add_command(label="Prewitt Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, filtros.convolucionar, func_filtro=mascaras.prewitt_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Prewitt)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, bordes.magnitud_gradiente, func_filtro1=mascaras.prewitt_x, func_filtro2=mascaras.prewitt_y))
         menu_bordes.add_separator()
-        menu_bordes.add_command(label="Sobel X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_x, modo=1))
-        menu_bordes.add_command(label="Sobel Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_filtro, func_filtro=crear_filtro_sobel_y, modo=1))
-        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_magnitud_del_gradiente, func_filtro1=crear_filtro_sobel_x, func_filtro2=crear_filtro_sobel_y))
+        menu_bordes.add_command(label="Sobel X", image=self.iconos['h_bordex'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, filtros.convolucionar, func_filtro=mascaras.sobel_x, modo=1))
+        menu_bordes.add_command(label="Sobel Y", image=self.iconos['h_bordey'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, filtros.convolucionar, func_filtro=mascaras.sobel_y, modo=1))
+        menu_bordes.add_command(label="Módulo del gradiente (Sobel)", image=self.iconos['h_gradiente'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, bordes.magnitud_gradiente, func_filtro1=mascaras.sobel_x, func_filtro2=mascaras.sobel_y))
         menu_bordes.add_separator()
         menu_bordes.add_command(label="Método del Laplaciano", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_laplaciano))
         menu_bordes.add_command(label="LoG (Marr-Hildreth)", image=self.iconos['h_laplaciano'], compound="left", command=lambda: self._iniciar_dialogo(DialogoLaplaciano, config=config_log))
 
         menu_umbralizacion = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Umbralización", menu=menu_umbralizacion)
-        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['h_ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_iterativa, byn=True))
-        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['h_umbral0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_de_otsu, byn=True))
+        menu_umbralizacion.add_command(label="Umbralización óptima iterativa", image=self.iconos['h_ciclo'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, segmentaciones.umbral_iterativo, byn=True))
+        menu_umbralizacion.add_command(label="Método de umbralización de Otsu", image=self.iconos['h_umbral0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, segmentaciones.otsu, byn=True))
         menu_umbralizacion.add_separator()
-        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['h_segmentar'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_umbralizacion_rgb))
+        menu_umbralizacion.add_command(label="Segmentación de imágenes en color", image=self.iconos['h_segmentar'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, segmentaciones.otsu_rgb))
 
         menu_bordes_avanzados = tk.Menu(barra_menu, tearoff=0)
         barra_menu.add_cascade(label="Bordes Avanzados", menu=menu_bordes_avanzados)
-        menu_bordes_avanzados.add_command(label="Método de SUSAN Bordes", image=self.iconos['h_borde0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="borde"))
-        menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, aplicar_metodo_susan, modo="esquina"))
+        menu_bordes_avanzados.add_command(label="Método de SUSAN Bordes", image=self.iconos['h_borde0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, bordes.susan, modo="borde"))
+        menu_bordes_avanzados.add_command(label="Método de SUSAN Esquinas", image=self.iconos['h_esquina0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, bordes.susan, modo="esquina"))
         menu_bordes_avanzados.add_command(label="Detector de Canny", image=self.iconos['h_borde_fino'], compound="left", command=lambda: self._iniciar_dialogo(DialogoCanny))
         menu_bordes_avanzados.add_separator()
         menu_bordes_avanzados.add_command(label="Transformada de Hough", image=self.iconos['h_lineas'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHough))
@@ -465,7 +460,7 @@ class EditorDeImagenes:
             print("Calculando SIFT... esto puede tardar un momento.")
             
             # 2. Llamamos a la función de lógica pasándole solo arrays de NumPy
-            resultado_np = aplicar_metodo_sift(imagen_np_1, imagen_np_2)
+            resultado_np = segmentaciones.sift(imagen_np_1, imagen_np_2)
             
             print("Cálculo de SIFT finalizado.")
 
@@ -502,7 +497,7 @@ class EditorDeImagenes:
             imagen_np1 = np.array(self.imagen_procesada.convert('RGB')).astype(float)
             imagen_np2 = np.array(img2.convert('RGB')).astype(float)
             
-            resultado_np = restar_imagenes(imagen_np1, imagen_np2)
+            resultado_np = utilidades.restar_imagenes(imagen_np1, imagen_np2)
 
             resultado = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
             self._mostrar_ventana_resultado(resultado, "Resultado de la Resta")
