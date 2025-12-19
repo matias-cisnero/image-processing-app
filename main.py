@@ -11,7 +11,7 @@ import sys
 import cv2
 
 # Importaciones de código en archivos
-from utils import requiere_imagen, refrescar_imagen, cargar_iconos, resource_path
+from src.utilidades import requiere_imagen, refrescar_imagen, cargar_iconos, resource_path
 from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConAnalisis, DialogoGamma, DialogoUmbralizacion,
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
                         DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP, DialogoHough

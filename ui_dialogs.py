@@ -5,7 +5,7 @@ from typing import Callable
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from utils import resource_path
+from src.utilidades import resource_path
 # from processing import (aplicar_gamma, aplicar_umbralizacion, generar_vector_ruido, aplicar_ruido, aplicar_ruido_sal_y_pimienta,
 #                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
 #                         aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
