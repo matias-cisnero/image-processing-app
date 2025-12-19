@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image, ImageDraw
-from src import utilidades, mascaras, filtros, segmentaciones
+from src import transformaciones, mascaras, filtros, segmentaciones
 
 def magnitud_gradiente(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.ndarray:
     """
@@ -11,7 +11,7 @@ def magnitud_gradiente(imagen_np: np.ndarray, func_filtro1, func_filtro2) -> np.
 
     magnitud = np.sqrt((ix**2)+(iy**2))
 
-    resultado_np = utilidades.escalar_255(magnitud)
+    resultado_np = transformaciones.escalar_255(magnitud)
 
     return resultado_np
 

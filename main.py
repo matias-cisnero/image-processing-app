@@ -16,7 +16,7 @@ from ui_dialogs import (DialogoDimensiones, DialogoResultado, DialogoRecorteConA
                         DialogoHistogramas, DialogoHistogramaDist, DialogoRuido, DialogoFiltro, Tooltip, DialogoDifusion,
                         DialogoLaplaciano, DialogoBilateral, DialogoCanny, DialogoCNIP, DialogoHough
                         )
-from src import utilidades, operadores, mascaras, filtros, bordes, segmentaciones
+from src import transformaciones, utilidades, mascaras, filtros, bordes, segmentaciones
 
 class Redirector:
     def __init__(self, text_widget):
@@ -105,7 +105,7 @@ class EditorDeImagenes:
         barra_menu.add_cascade(label="Operadores Puntuales", menu=menu_operadores_puntuales)
         menu_operadores_puntuales.add_command(label="Transformación Gamma", image=self.iconos['h_y'], compound="left", command=lambda: self._iniciar_dialogo(DialogoGamma))
         menu_operadores_puntuales.add_command(label="Umbralización", image=self.iconos['h_u'], compound="left", command=lambda: self._iniciar_dialogo(DialogoUmbralizacion))
-        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_invertir'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, operadores.negativo))
+        menu_operadores_puntuales.add_command(label="Negativo", image=self.iconos['h_invertir'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, transformaciones.negativo))
 
         menu_histogramas = tk.Menu(barra_menu, tearoff=0)
         config_dist_gaussiano = {'titulo': "Histograma Gaussiano", 'param_label': "Desviación Estándar (σ):", 'distribucion': np.random.normal}
@@ -113,7 +113,7 @@ class EditorDeImagenes:
         config_dist_exponencial = {'titulo': "Histograma Exponencial", 'param_label': "Lambda (λ):", 'distribucion': np.random.exponential}
         barra_menu.add_cascade(label="Histogramas", menu=menu_histogramas)
         menu_histogramas.add_command(label="Niveles de Gris y RGB", image=self.iconos['h_barras'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramas))
-        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, operadores.ecualizar, byn=True))
+        menu_histogramas.add_command(label="Ecualización", image=self.iconos['h_onda0'], compound="left", command=lambda: self._aplicar_transformacion(self.imagen_procesada, transformaciones.ecualizar, byn=True))
         menu_histogramas.add_separator()
         menu_histogramas.add_command(label="Generador Gaussiano", image=self.iconos['h_n'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_gaussiano))
         menu_histogramas.add_command(label="Generador Rayleigh", image=self.iconos['h_r'], compound="left", command=lambda: self._iniciar_dialogo(DialogoHistogramaDist, config=config_dist_rayleigh))
@@ -497,7 +497,7 @@ class EditorDeImagenes:
             imagen_np1 = np.array(self.imagen_procesada.convert('RGB')).astype(float)
             imagen_np2 = np.array(img2.convert('RGB')).astype(float)
             
-            resultado_np = utilidades.restar_imagenes(imagen_np1, imagen_np2)
+            resultado_np = transformaciones.restar_imagenes(imagen_np1, imagen_np2)
 
             resultado = Image.fromarray(resultado_np.astype('uint8')).convert('RGB')
             self._mostrar_ventana_resultado(resultado, "Resultado de la Resta")

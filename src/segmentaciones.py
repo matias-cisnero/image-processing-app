@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 import cv2
-from src import operadores
+from src import transformaciones
 
 def umbral_iterativo(imagen_np: np.ndarray, n: int = 50) -> np.ndarray:
     T = int(np.mean(imagen_np))
@@ -11,7 +11,7 @@ def umbral_iterativo(imagen_np: np.ndarray, n: int = 50) -> np.ndarray:
         if T == T_anterior: break
         T_anterior = T
 
-        imagen_binaria = operadores.umbral(imagen_np, T)
+        imagen_binaria = transformaciones.umbral(imagen_np, T)
         nG1 = np.sum(imagen_binaria == 255)
         nG2 = np.sum(imagen_binaria == 0)
 
@@ -21,7 +21,7 @@ def umbral_iterativo(imagen_np: np.ndarray, n: int = 50) -> np.ndarray:
         T = int(0.5 * (m1 + m2))
 
     print(f"Valor de umbral utilizado(T) = {T} en iteración {i}/{n}")
-    resultado_np = operadores.umbral(imagen_np, T)
+    resultado_np = transformaciones.umbral(imagen_np, T)
 
     return resultado_np
 
@@ -53,7 +53,7 @@ def otsu(imagen_np: np.ndarray) -> np.ndarray:
     t_estrella = np.argmax(sigma_B)
 
     print(f"Valor de umbral utilizado(T) = {t_estrella}")
-    resultado_np = operadores.umbral(imagen_np, t_estrella)
+    resultado_np = transformaciones.umbral(imagen_np, t_estrella)
 
     return resultado_np
 

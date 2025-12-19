@@ -1,5 +1,5 @@
 import numpy as np
-from src import utilidades
+from src import transformaciones
 
 def generar_vector(distribucion, intensidad, cantidad) -> np.ndarray:
     """
@@ -24,7 +24,7 @@ def aplicar(imagen_np: np.ndarray, tipo: str, vector_ruido: np.ndarray, d: int) 
     if tipo == "Aditivo": imagen_np[D] += vector_ruido
     elif tipo == "Multiplicativo": imagen_np[D] *= vector_ruido
     
-    resultado_np = utilidades.escalar_255(imagen_np)
+    resultado_np = transformaciones.escalar_255(imagen_np)
     
     return resultado_np
 

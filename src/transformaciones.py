@@ -1,5 +1,21 @@
 import numpy as np
-from src import utilidades
+
+def escalar_255(imagen_np: np.ndarray) -> np.ndarray:
+    """
+    Escala linealmente un array de numpy al rango [0, 255].
+    """
+    min_val = np.min(imagen_np)
+    max_val = np.max(imagen_np)
+    if max_val == min_val:
+        return np.zeros_like(imagen_np, dtype=np.uint8)
+    array_normalizado = 255 * (imagen_np - min_val) / (max_val - min_val)
+    return array_normalizado.astype(np.uint8)
+
+def restar_imagenes(imagen_np1: np.ndarray, imagen_np2: np.ndarray) -> np.ndarray:
+    resultado_np = imagen_np1 - imagen_np2
+
+    resultado_np = escalar_255(resultado_np)
+    return resultado_np
 
 def gamma(imagen_np: np.ndarray, gamma:float) -> np.ndarray:
     """Aplica la transformación gamma a la imagen."""
@@ -34,7 +50,7 @@ def ecualizar(imagen_np: np.ndarray) -> np.ndarray:
     for k in range(len(sk)):
         sk[k] = np.sum(h_r[0:k+1])
     
-    sk_sombrero = utilidades.escalar_255(sk) # Discretizamos
+    sk_sombrero = escalar_255(sk) # Discretizamos
     resultado_np = sk_sombrero[imagen_np] # Lookup table
 
     return resultado_np

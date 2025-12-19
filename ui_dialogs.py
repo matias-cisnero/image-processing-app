@@ -10,7 +10,7 @@ from utils import resource_path
 #                         aplicar_filtro, aplicar_metodo_del_laplaciano, aplicar_filtro_difusion, aplicar_filtro_bilateral,
 #                         aplicar_detector_canny, obtener_segmentacion_cn_ip, marcar_borde, aplicar_transformada_de_hough
 #                         )
-from src import utilidades, operadores, ruidos, mascaras, filtros, bordes, segmentaciones
+from src import transformaciones, ruidos, filtros, bordes, segmentaciones
 
 class Tooltip:
     """
@@ -263,11 +263,11 @@ class DialogoGamma(DialogoHerramienta):
     def _actualizar_gamma(self, value, label):
         valor = float(value)
         label.config(text=f"{valor:.1f}")
-        self.app._aplicar_transformacion(self.copia_imagen, operadores.gamma, gamma=valor)
+        self.app._aplicar_transformacion(self.copia_imagen, transformaciones.gamma, gamma=valor)
 
     def _on_apply(self):
         gamma = float(self.valor_gamma.get())
-        self.app._aplicar_transformacion(self.copia_imagen, operadores.gamma, gamma=gamma)
+        self.app._aplicar_transformacion(self.copia_imagen, transformaciones.gamma, gamma=gamma)
         self.destroy()
 
     def _on_cancel(self):
@@ -310,11 +310,11 @@ class DialogoUmbralizacion(DialogoHerramienta):
         """Actualiza el label y aplica la transformación mientras se mueve el slider."""
         valor = round(float(value))
         label.config(text=str(valor))
-        self.app._aplicar_transformacion(self.copia_imagen, operadores.umbral, umbral=valor)
+        self.app._aplicar_transformacion(self.copia_imagen, transformaciones.umbral, umbral=valor)
 
     def _on_apply(self):
         umbral = float(self.valor_umbral.get())
-        self.app._aplicar_transformacion(self.copia_imagen, operadores.umbral, umbral=umbral)
+        self.app._aplicar_transformacion(self.copia_imagen, transformaciones.umbral, umbral=umbral)
         self.destroy()
     
     def _on_cancel(self):

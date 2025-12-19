@@ -1,5 +1,5 @@
 import numpy as np
-from src import utilidades, mascaras
+from src import transformaciones, mascaras
 
 def convolucionar(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=False) -> np.ndarray:
     """
@@ -39,7 +39,7 @@ def convolucionar(imagen_np: np.ndarray, func_filtro, k=3, modo=0, mediana=False
                 imagen_filtrada[i, j, c] = valor
 
     if modo == 0:
-        resultado_np = utilidades.escalar_255(imagen_filtrada)
+        resultado_np = transformaciones.escalar_255(imagen_filtrada)
         print("Se aplicó un filtro con modo 0 (escalado)")
     elif modo == 1:
         resultado_np = np.clip(imagen_filtrada, 0, 255).astype(np.uint8)
@@ -83,7 +83,7 @@ def difusion(imagen_np: np.ndarray, t: float, sigma: int, isotropico: bool = Fal
                     # Actualización
                     imagen_filtrada[i, j, c] += lamb * (DN * cN + DE * cE + DO * cO + DS * cS)
     
-    resultado_np = utilidades.escalar_255(imagen_filtrada)
+    resultado_np = transformaciones.escalar_255(imagen_filtrada)
     return resultado_np
 
 def bilateral(imagen_np: np.ndarray, sigma_s: int = 1, sigma_r: int = 1) -> np.ndarray:
@@ -118,5 +118,5 @@ def bilateral(imagen_np: np.ndarray, sigma_s: int = 1, sigma_r: int = 1) -> np.n
             
             imagen_filtrada[i, j, :] = valor
     
-    resultado_np = utilidades.escalar_255(imagen_filtrada)
+    resultado_np = transformaciones.escalar_255(imagen_filtrada)
     return resultado_np
